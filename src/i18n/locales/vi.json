@@ -1,0 +1,94 @@
+{
+  "common": {
+    "appName": "Leafy",
+    "or": "HOẶC",
+    "back": "Quay lại"
+  },
+  "tabs": {
+    "home": "Trang chủ",
+    "explore": "Khám phá",
+    "farms": "Nông trại",
+    "profile": "Hồ sơ",
+    "settings": "Cài đặt"
+  },
+  "auth": {
+    "login": {
+      "tagline": "Giải pháp quản lý nông nghiệp thông minh",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "forgotPassword": "Quên mật khẩu?",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "submit": "Đăng nhập",
+      "orLoginWith": "HOẶC ĐĂNG NHẬP BẰNG",
+      "continueWithGoogle": "Tiếp tục với Google",
+      "noAccount": "Bạn chưa có tài khoản?",
+      "signupNow": "Đăng ký ngay"
+    },
+    "signup": {
+      "tagline": "Tạo tài khoản để bắt đầu hành trình nông nghiệp thông minh",
+      "email": "Email",
+      "phoneOptional": "Số điện thoại (tuỳ chọn)",
+      "phonePlaceholder": "+84 000 000 000",
+      "password": "Mật khẩu",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+      "agreeTerms": "Tôi đồng ý với Điều khoản sử dụng và Chính sách bảo mật",
+      "submit": "Tiếp tục",
+      "orSignupWith": "HOẶC ĐĂNG KÝ BẰNG",
+      "continueWithGoogle": "Tiếp tục với Google",
+      "haveAccount": "Bạn đã có tài khoản?",
+      "signin": "Đăng nhập"
+    },
+    "verifyOtp": {
+      "title": "Xác thực email",
+      "sentTo": "Mã OTP đã được gửi đến {{email}}",
+      "expiresIn": "Mã hết hạn sau",
+      "notReceived": "Chưa nhận được mã?",
+      "resend": "Gửi lại",
+      "resendWithTimer": "Gửi lại ({{time}})",
+      "submit": "Xác nhận và tạo tài khoản"
+    },
+    "legal": {
+      "terms": "Điều khoản sử dụng",
+      "privacy": "Chính sách bảo mật"
+    }
+  },
+  "screens": {
+    "modal": {
+      "title": "Màn hình Modal"
+    },
+    "notFound": {
+      "title": "Không tìm thấy",
+      "description": "Màn hình này không tồn tại.",
+      "goHome": "Về trang chủ"
+    },
+    "home": {
+      "title": "Trang chủ"
+    },
+    "explore": {
+      "title": "Khám phá"
+    },
+    "farms": {
+      "title": "Nông trại của tôi"
+    },
+    "profile": {
+      "title": "Hồ sơ"
+    },
+    "settings": {
+      "title": "Cài đặt",
+      "logout": "Đăng xuất",
+      "loggingOut": "Đang đăng xuất...",
+      "confirmTitle": "Đăng xuất",
+      "confirmMessage": "Bạn có chắc chắn muốn đăng xuất không?",
+      "cancel": "Huỷ",
+      "errorTitle": "Lỗi",
+      "errorMessage": "Không thể đăng xuất lúc này. Vui lòng thử lại."
+    }
+  },
+  "editScreenInfo": {
+    "openCode": "Mở mã nguồn của màn hình này:",
+    "autoUpdate": "Thay đổi bất kỳ nội dung nào, lưu tệp, ứng dụng sẽ tự động cập nhật.",
+    "help": "Nhấn vào đây nếu ứng dụng không tự cập nhật sau khi bạn thay đổi"
+  }
+}

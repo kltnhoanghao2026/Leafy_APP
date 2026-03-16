@@ -1,41 +1,65 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# ── Dependencies ────────────────────────────────────────────────────────────────
 node_modules/
 
-# Expo
+# ── Expo ────────────────────────────────────────────────────────────────────────
 .expo/
 dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# EAS
+.eas/
+
+# ── Native generated folders ────────────────────────────────────────────────────
+/ios/
+/android/
 .kotlin/
+
+# ── Native signing & credentials ────────────────────────────────────────────────
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.certSigningRequest
+google-services.json
+GoogleService-Info.plist
 
-# Metro
+# ── Metro bundler ───────────────────────────────────────────────────────────────
 .metro-health-check*
 
-# debug
+# ── Debug logs ──────────────────────────────────────────────────────────────────
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
 
-# macOS
+# ── Environment variables ────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── OS artefacts ────────────────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
 *.pem
 
-# local env files
-.env*.local
+# ── Editor / IDE ────────────────────────────────────────────────────────────────
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# typescript
+# ── TypeScript ──────────────────────────────────────────────────────────────────
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# ── Tamagui ─────────────────────────────────────────────────────────────────────
+.tamagui/
+
+# ── Agent & contributor guides ──────────────────────────────────────────────────
+AGENTS.md
