@@ -23,6 +23,8 @@ export const ROUTES = {
   MAIN: {
     HOME: "/",
     PROFILE: "/profile",
+    FARM: "/farm",
+    PLANTS: "/plants",
   },
 
   // Modal routes
@@ -79,6 +81,11 @@ export const API_ENDPOINTS = {
     GET_BY_USER: (userId: string) => `/profiles/user/${userId}`,
   },
 
+  FILES: {
+    UPLOAD: "/files/upload",
+    PRESIGNED_URL: (fileId: string) => `/files/presigned-url/${fileId}`,
+  },
+
   USERS: {
     ME: "/users/me",
     CREATE: "/users",
@@ -93,6 +100,50 @@ export const API_ENDPOINTS = {
     CHECK_PHONE: "/users/check-phone",
     ACTIVATE: (userId: string) => `/users/${userId}/activate`,
     DEACTIVATE: (userId: string) => `/users/${userId}/deactivate`,
+  },
+
+  COMMUNITY: {
+    FEED_POSTS: "/posts/feed",
+    COMMENTS_BY_POST: (postId: string) => `/comments/posts/${postId}`,
+    REPLIES_BY_COMMENT: (commentId: string) => `/comments/${commentId}/replies`,
+    VOTES_BY_POST: (postId: string) => `/votes/posts/${postId}`,
+    VOTE: (targetType: "POST" | "COMMENT", targetId: string) =>
+      `/votes/${targetType}/${targetId}`,
+  },
+
+  FARMS: {
+    PLOTS: "/farms/plots",
+    PLOT: (id: string) => `/farms/plots/${id}`,
+    PLOT_ZONES: (plotId: string) => `/farms/plots/${plotId}/zones`,
+    ZONE: (id: string) => `/farms/zones/${id}`,
+  },
+
+  PLANTS: {
+    LIST: "/plants",
+    ITEM: (id: string) => `/plants/${id}`,
+    BY_FARM_PLOT: (farmPlotId: string) => `/plants/farm-plot/${farmPlotId}`,
+    BY_SPECIES: (speciesId: string) => `/plants/species/${speciesId}`,
+  },
+
+  SPECIES: {
+    LIST: "/species",
+    ITEM: (id: string) => `/species/${id}`,
+  },
+
+  PLANT_EVENTS: {
+    CREATE: "/plant-events",
+    BULK_CREATE: "/plant-events/bulk",
+    ITEM: (eventId: string) => `/plant-events/${eventId}`,
+    BY_PLANT: (plantId: string) => `/plant-events/plant/${plantId}`,
+    BY_PLANT_TYPE: (plantId: string, eventType: string) =>
+      `/plant-events/plant/${plantId}/type/${eventType}`,
+    BY_PLANT_PLANNED: (plantId: string) =>
+      `/plant-events/plant/${plantId}/planned`,
+    BY_PLAN: (sourcePlanId: string) => `/plant-events/plan/${sourcePlanId}`,
+    BY_FARM_PLOT: (farmPlotId: string) =>
+      `/plant-events/farm-plot/${farmPlotId}`,
+    BY_FARM_ZONE: (farmZoneId: string) =>
+      `/plant-events/farm-zone/${farmZoneId}`,
   },
 } as const;
 
@@ -118,7 +169,7 @@ export const isProtectedRoute = (pathname?: string): boolean => {
     return true;
   }
 
-  return [ROUTES.MAIN.PROFILE].some(
+  return [ROUTES.MAIN.PROFILE, ROUTES.MAIN.FARM, ROUTES.MAIN.PLANTS].some(
     (route) =>
       normalizedPath === route || normalizedPath.startsWith(`${route}/`),
   );

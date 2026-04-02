@@ -16,25 +16,27 @@ import {
 } from "@/src/lib/axios";
 import { parseApiError } from "@/src/lib/error-handler";
 import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
-import type { UserProfile } from "@/src/features/user-profile/schema/user.schema";
+import type { ProfileResponse } from "@/src/features/user-profile/schema/user.schema";
 
 interface AuthContextType {
-  user: UserProfile | null;
+  user: ProfileResponse | null;
+  profileId: string | null;
   isAuthenticated: boolean;
   isRestoringAuth: boolean;
-  setAuthUser: (user: UserProfile | null) => void;
+  setAuthUser: (user: ProfileResponse | null) => void;
   logoutLocal: () => Promise<void>;
-  updateUser: (user: UserProfile) => void;
+  updateUser: (user: ProfileResponse) => void;
   refetchUser: () => Promise<void>;
-  loginSuccess: (authResponse: AuthResponse) => Promise<UserProfile>;
+  loginSuccess: (authResponse: AuthResponse) => Promise<ProfileResponse>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<ProfileResponse | null>(null);
   const [isRestoringAuth, setIsRestoringAuth] = useState(true);
   const queryClient = useQueryClient();
+  const profileId = user?.id ?? null;
 
   // On mount: check for an existing token and restore the user session
   useEffect(() => {
@@ -58,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     restore();
   }, [queryClient]);
 
-  const setAuthUser = useCallback((userData: UserProfile | null) => {
+  const setAuthUser = useCallback((userData: ProfileResponse | null) => {
     setUser(userData);
   }, []);
 
@@ -68,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     queryClient.clear();
   }, [queryClient]);
 
-  const updateUser = useCallback((userData: UserProfile) => {
+  const updateUser = useCallback((userData: ProfileResponse) => {
     setUser(userData);
   }, []);
 
@@ -102,6 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider
       value={{
         user,
+        profileId,
         isAuthenticated: user !== null,
         isRestoringAuth,
         setAuthUser,

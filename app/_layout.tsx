@@ -1,3 +1,4 @@
+import "@tamagui/native/setup-zeego";
 import "@/global.css";
 import { queryClient } from "@/src/lib";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
@@ -9,15 +10,17 @@ import {
 } from "@react-navigation/native";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { LogBox } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { TamaguiProvider } from "tamagui";
 import tamaguiConfig from "@/tamagui.config";
-import "@/src/i18n";
+import { initializeI18n } from "@/src/i18n";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -38,6 +41,7 @@ LogBox.ignoreLogs([
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [isI18nReady, setIsI18nReady] = useState(false);
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -48,12 +52,26 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
+    let mounted = true;
+
+    void initializeI18n().finally(() => {
+      if (mounted) {
+        setIsI18nReady(true);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (loaded && isI18nReady) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [loaded, isI18nReady]);
 
-  if (!loaded) {
+  if (!loaded || !isI18nReady) {
     return null;
   }
 
@@ -62,18 +80,36 @@ export default function RootLayout() {
       config={tamaguiConfig}
       defaultTheme={colorScheme ?? "light"}
     >
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RootLayoutNav />
-        </AuthProvider>
-      </QueryClientProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <RootLayoutNav />
+          </AuthProvider>
+        </QueryClientProvider>
+      </GestureHandlerRootView>
     </TamaguiProvider>
   );
 }
 
 function RootLayoutNav() {
+  const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const { isAuthenticated, isRestoringAuth } = useAuthContext();
+  const router = useRouter();
+  const segments = useSegments();
+
+  // Redirect based on auth state
+  useEffect(() => {
+    if (isRestoringAuth) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace("/login");
+    } else if (isAuthenticated && inAuthGroup) {
+      router.replace("/");
+    }
+  }, [isAuthenticated, isRestoringAuth, segments]);
 
   // Show splash while restoring authentication state
   if (isRestoringAuth) {
@@ -84,14 +120,23 @@ function RootLayoutNav() {
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
         <Stack>
-          {!isAuthenticated ? (
-            // Public (auth) routes
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          ) : (
-            // Protected (main) routes
-            <Stack.Screen name="(main)" options={{ headerShown: false }} />
-          )}
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(main)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="composer"
+            options={{
+              title: t("community.composer.title"),
+            }}
+          />
+          <Stack.Screen
+            name="modal"
+            options={{
+              presentation: "transparentModal",
+              animation: "slide_from_bottom",
+              headerShown: false,
+              contentStyle: { backgroundColor: "transparent" },
+            }}
+          />
         </Stack>
       </SafeAreaProvider>
     </ThemeProvider>

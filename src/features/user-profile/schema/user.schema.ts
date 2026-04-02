@@ -1,4 +1,4 @@
-export interface UserProfile {
+export interface ProfileResponse {
   id: string;
   userId: string;
   fullName?: string;
@@ -13,4 +13,11 @@ export interface UserProfile {
   phoneNumber?: string;
   createdAt: string;
   lastModifiedAt?: string;
+}
+
+export interface ProfileUpdateRequest {
+  avatar?: string;
+  role?: "FARMER" | "EXPERT";
+  specialty?: string;
+  bio?: string;
 }

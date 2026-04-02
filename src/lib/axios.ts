@@ -7,6 +7,7 @@ import * as SecureStore from "expo-secure-store";
 import { getDeviceId } from "../utils/device";
 import { API_ENDPOINTS, ROUTES } from "./routes";
 import { type ApiResponse } from "../shared/api";
+import { ERROR_CODES } from "./routes";
 
 export type { ApiResponse };
 
@@ -95,6 +96,23 @@ const notifyRefreshSubscribers = (token: string | null): void => {
   refreshSubscribers = [];
 };
 
+const isRefreshableAuthError = (error: AxiosError): boolean => {
+  const status = error.response?.status;
+  const apiError = error.response?.data as ApiResponse<unknown> | undefined;
+  const code = apiError?.code;
+
+  if (status === 401) {
+    return true;
+  }
+
+  return (
+    code === ERROR_CODES.AUTH_UNAUTHENTICATED ||
+    code === ERROR_CODES.JWT_INVALID_TOKEN ||
+    code === ERROR_CODES.JWT_EXPIRED_TOKEN ||
+    code === ERROR_CODES.TOKEN_REVOKED
+  );
+};
+
 const refreshAccessToken = async (): Promise<string | null> => {
   try {
     const refreshToken = await getRefreshToken();
@@ -150,7 +168,7 @@ http.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
 
-    if (!originalRequest || error.response?.status !== 401) {
+    if (!originalRequest || !isRefreshableAuthError(error)) {
       return Promise.reject(error);
     }
 

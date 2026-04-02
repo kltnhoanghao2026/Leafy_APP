@@ -3,7 +3,7 @@ import { authApi } from "../api/auth.api";
 import { authKeys } from "./keys";
 import type {
   LoginRequest,
-  InitRegisterRequest,
+  InitialRegisterRequest,
   VerifyOtpRequest,
   ResendOtpRequest,
   RefreshTokenRequest,
@@ -19,7 +19,7 @@ export const useLoginMutation = () =>
 export const useInitiateRegistrationMutation = () =>
   useMutation({
     mutationKey: authKeys.initiateRegistration(),
-    mutationFn: (body: InitRegisterRequest) =>
+    mutationFn: (body: InitialRegisterRequest) =>
       authApi.initiateRegistration(body),
   });
 

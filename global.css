@@ -1,3 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 47 127 52; /* #2F7F34 */
+    --color-secondary: 109 76 65; /* #6D4C41 */
+    --color-accent: 255 152 0; /* #FF9800 */
+    --color-background-light: 246 248 246; /* #F6F8F6 */
+    --color-background-dark: 15 23 42; /* #0F172A */
+  }
+
+  html,
+  body {
+    font-family: "Be Vietnam Pro", sans-serif;
+  }
+
+  body {
+    background-color: rgb(var(--color-background-light));
+    color: rgb(15 23 42); /* slate-900 */
+  }
+
+  .dark body {
+    background-color: rgb(var(--color-background-dark));
+    color: rgb(248 250 252); /* slate-50 */
+  }
+}
+
+@layer utilities {
+  .bg-primary {
+    background-color: rgb(var(--color-primary));
+  }
+
+  .bg-secondary {
+    background-color: rgb(var(--color-secondary));
+  }
+
+  .bg-accent {
+    background-color: rgb(var(--color-accent));
+  }
+
+  .bg-background-light {
+    background-color: rgb(var(--color-background-light));
+  }
+
+  .bg-background-dark {
+    background-color: rgb(var(--color-background-dark));
+  }
+
+  .text-primary {
+    color: rgb(var(--color-primary));
+  }
+
+  .text-secondary {
+    color: rgb(var(--color-secondary));
+  }
+
+  .text-accent {
+    color: rgb(var(--color-accent));
+  }
+
+  .border-primary {
+    border-color: rgb(var(--color-primary));
+  }
+}

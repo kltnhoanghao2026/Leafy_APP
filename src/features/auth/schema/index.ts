@@ -7,7 +7,7 @@ export {
 } from "./signup";
 export type {
   LoginRequest,
-  InitRegisterRequest,
+  InitialRegisterRequest,
   VerifyOtpRequest,
   ResendOtpRequest,
   RefreshTokenRequest,

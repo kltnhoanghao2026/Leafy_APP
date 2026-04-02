@@ -10,6 +10,7 @@ import Svg, { Defs, LinearGradient, Path, Rect, Stop } from "react-native-svg";
 import { Eye, EyeOff, Languages } from "lucide-react-native";
 import * as Tamagui from "tamagui";
 import { useTranslation } from "react-i18next";
+import { changeAppLanguage, getCurrentLanguage } from "@/src/i18n";
 import type { UseLoginScreenResult } from "../hooks/useLoginScreen";
 
 const { Button, Input, Separator, Spinner, Text, View, XStack, YStack } =
@@ -57,11 +58,11 @@ export function LoginScreenView({
   handleTogglePassword,
   handlePressSignup,
 }: LoginScreenViewProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const currentLanguage = getCurrentLanguage();
 
   const handleToggleLanguage = async () => {
-    const currentLanguage = i18n.resolvedLanguage ?? i18n.language;
-    await i18n.changeLanguage(currentLanguage === "vi" ? "en" : "vi");
+    await changeAppLanguage(currentLanguage === "vi" ? "en" : "vi");
   };
 
   const fieldContainerStyle = {
@@ -116,9 +117,7 @@ export function LoginScreenView({
                   fontWeight="700"
                   color={palette.textInputPlaceholder}
                 >
-                  {(i18n.resolvedLanguage ?? i18n.language) === "vi"
-                    ? "EN"
-                    : "VI"}
+                  {currentLanguage === "vi" ? "EN" : "VI"}
                 </Text>
               </XStack>
             </TouchableOpacity>

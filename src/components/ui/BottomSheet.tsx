@@ -1,0 +1,48 @@
+import { X } from "lucide-react-native";
+import React, { type ReactNode } from "react";
+import { Pressable, Text, View, type DimensionValue } from "react-native";
+
+type BottomSheetProps = {
+  title: string;
+  titleColor: string;
+  heightPct?: DimensionValue;
+  onClose: () => void;
+  children: ReactNode;
+};
+
+export function BottomSheet({
+  title,
+  titleColor,
+  heightPct = "82%",
+  onClose,
+  children,
+}: BottomSheetProps) {
+  return (
+    <View
+      className="flex-1 justify-end"
+      style={{ backgroundColor: "rgba(15, 23, 42, 0.45)" }}
+    >
+      <Pressable className="absolute inset-0" onPress={onClose} />
+
+      <View
+        className="rounded-t-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-black"
+        style={{ height: heightPct }}
+      >
+        <View className="items-center pt-3">
+          <View className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
+        </View>
+
+        <View className="flex-row items-center justify-between border-b border-slate-200 px-4 py-4 dark:border-slate-800">
+          <Text className="text-lg font-semibold" style={{ color: titleColor }}>
+            {title}
+          </Text>
+          <Pressable onPress={onClose} className="rounded-full p-1">
+            <X size={20} color={titleColor} />
+          </Pressable>
+        </View>
+
+        <View className="flex-1">{children}</View>
+      </View>
+    </View>
+  );
+}

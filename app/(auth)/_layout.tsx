@@ -12,6 +12,7 @@ export default function AuthLayout() {
         name="signup/verify-otp"
         options={{
           headerShown: true,
+          headerTitleAlign: "center",
           headerTitle: t("auth.verifyOtp.title"),
           headerBackTitle: t("common.back"),
           headerTintColor: "#16a34a",

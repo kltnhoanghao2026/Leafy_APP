@@ -3,7 +3,7 @@ import { type ApiResponse } from "@/src/shared/api";
 import { API_ENDPOINTS } from "@/src/lib/routes";
 import type {
   LoginRequest,
-  InitRegisterRequest,
+  InitialRegisterRequest,
   VerifyOtpRequest,
   ResendOtpRequest,
   RefreshTokenRequest,
@@ -18,7 +18,7 @@ export const authApi = {
   login: (body: LoginRequest) =>
     apiClient.post<ApiResponse<AuthResponse>>(API_ENDPOINTS.AUTH.LOGIN, body),
 
-  initiateRegistration: (body: InitRegisterRequest) =>
+  initiateRegistration: (body: InitialRegisterRequest) =>
     apiClient.post<ApiResponse<RegistrationInitResponse>>(
       API_ENDPOINTS.AUTH.REGISTER_INIT,
       body,
