@@ -1,18 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   RefreshControl,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { Home, Plus, Search, SlidersHorizontal } from "lucide-react-native";
+import { Home, Plus, SlidersHorizontal } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
+import { EmptyState } from "@/src/components/ui/EmptyState";
+import { SearchInput } from "@/src/components/ui/SearchInput";
+import { LoadingView } from "@/src/components/ui/LoadingView";
+import { usePaginatedList } from "@/src/hooks/usePaginatedList";
+import { useFilteredList } from "@/src/hooks/useFilteredList";
 import { getSpeciesLabel, type PlantResponse } from "./plant.types";
 import { PlantCard } from "./PlantCard";
 import {
@@ -41,7 +45,6 @@ export function PlantScreen() {
 
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [plantsCache, setPlantsCache] = useState<PlantResponse[]>([]);
 
   const pageParams = useMemo(
     () => ({
@@ -68,27 +71,33 @@ export function PlantScreen() {
 
   useEffect(() => {
     setPage(0);
-    setPlantsCache([]);
+    resetCache();
   }, [farmPlotId]);
 
-  useEffect(() => {
-    const incomingPlants = activeQuery.data?.content ?? [];
+  const {
+    items: plantsCache,
+    setCache: setPlantsCache,
+    resetCache,
+  } = usePaginatedList({
+    data: activeQuery.data?.content,
+    page,
+  });
 
-    if (page === 0) {
-      setPlantsCache(incomingPlants);
-      return;
-    }
+  const plantSearchFields = useCallback(
+    () => [
+      (p: PlantResponse) => p.plantNumber,
+      (p: PlantResponse) => p.nickName,
+      (p: PlantResponse) => p.tagCode,
+      (p: PlantResponse) => p.plantStatus,
+    ],
+    [],
+  );
 
-    setPlantsCache((previousPlants) => {
-      const mapById = new Map(previousPlants.map((plant) => [plant.id, plant]));
-
-      for (const plant of incomingPlants) {
-        mapById.set(plant.id, plant);
-      }
-
-      return Array.from(mapById.values());
-    });
-  }, [activeQuery.data, page]);
+  const filteredPlants = useFilteredList({
+    items: plantsCache,
+    searchQuery,
+    fields: plantSearchFields(),
+  });
 
   const speciesById = useMemo(
     () =>
@@ -100,22 +109,6 @@ export function PlantScreen() {
       ),
     [speciesPage?.content],
   );
-
-  const filteredPlants = useMemo(() => {
-    const normalizedSearch = searchQuery.trim().toLowerCase();
-
-    if (!normalizedSearch) {
-      return plantsCache;
-    }
-
-    return plantsCache.filter((plant) =>
-      [plant.plantNumber, plant.nickName, plant.tagCode, plant.plantStatus]
-        .filter(Boolean)
-        .some((value) =>
-          String(value).toLowerCase().includes(normalizedSearch),
-        ),
-    );
-  }, [plantsCache, searchQuery]);
 
   const handleRefresh = () => {
     setPage(0);
@@ -219,16 +212,11 @@ export function PlantScreen() {
       </View>
 
       <View className="mb-6 flex-row items-center gap-3">
-        <View className="mr-1 flex-1 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <Search size={20} className="text-slate-400 dark:text-slate-500" />
-          <TextInput
-            placeholder={t("plant.list.searchPlaceholder")}
-            placeholderTextColor="#94A3B8"
-            className="ml-2 flex-1 text-[15px] text-slate-800 dark:text-slate-100"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+        <SearchInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={t("plant.list.searchPlaceholder")}
+        />
         <TouchableOpacity className="items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <SlidersHorizontal
             size={20}
@@ -237,53 +225,35 @@ export function PlantScreen() {
         </TouchableOpacity>
       </View>
 
-      {activeQuery.isLoading && page === 0 ? (
-        <View className="flex-1 items-center justify-center py-12">
-          <ActivityIndicator size="large" color="#10B981" />
-          <Text className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-            {t("common.loading")}
-          </Text>
-        </View>
-      ) : null}
+      {activeQuery.isLoading && page === 0 ? <LoadingView /> : null}
 
       {activeQuery.isError && page === 0 ? (
-        <View className="flex-1 items-center justify-center py-12">
-          <Text className="mb-3 text-[15px] font-semibold text-red-500">
-            {t("plant.list.loadFailed")}
-          </Text>
-          <TouchableOpacity
-            onPress={() => void activeQuery.refetch()}
-            className="mt-0 flex-row items-center justify-center rounded-xl bg-emerald-600 px-6 py-3.5 shadow-sm"
-          >
-            <Text className="text-sm font-bold text-white">
-              {t("common.retry")}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          icon={Home}
+          title={t("plant.list.loadFailed")}
+          actionLabel={t("common.retry")}
+          onAction={() => void activeQuery.refetch()}
+        />
       ) : null}
 
       {!activeQuery.isLoading &&
       !activeQuery.isError &&
       filteredPlants.length === 0 ? (
-        <View className="flex-1 items-center justify-center py-12">
-          <Home
-            size={48}
-            className="text-slate-400 dark:text-slate-500"
-            strokeWidth={1.5}
-          />
-          <Text className="mt-4 text-center text-[15px] font-semibold text-slate-500 dark:text-slate-400">
-            {searchQuery
+        <EmptyState
+          icon={Home}
+          title={
+            searchQuery
               ? t("plant.list.emptySearchTitle")
               : farmPlotId
                 ? t("plant.list.emptyByFarmTitle")
-                : t("plant.list.emptyTitle")}
-          </Text>
-          <Text className="mt-1 text-center text-[13px] text-slate-400 dark:text-slate-500">
-            {searchQuery
+                : t("plant.list.emptyTitle")
+          }
+          subtitle={
+            searchQuery
               ? t("plant.list.emptySearchMessage")
-              : t("plant.list.emptyMessage")}
-          </Text>
-        </View>
+              : t("plant.list.emptyMessage")
+          }
+        />
       ) : null}
 
       {!activeQuery.isError ? (

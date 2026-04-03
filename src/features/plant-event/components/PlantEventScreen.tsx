@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -22,6 +22,12 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
+import { EmptyState } from "@/src/components/ui/EmptyState";
+import { SearchInput } from "@/src/components/ui/SearchInput";
+import { LoadingView } from "@/src/components/ui/LoadingView";
+import { StatusBadge } from "@/src/components/ui/StatusBadge";
+import { usePaginatedList } from "@/src/hooks/usePaginatedList";
+import { useFilteredList } from "@/src/hooks/useFilteredList";
 import type { EventTargetType, PlantEventResponse } from "./plant-event.types";
 import { PlantEventCard } from "./PlantEventCard";
 import {
@@ -96,7 +102,6 @@ export function PlantEventScreen() {
 
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [eventsCache, setEventsCache] = useState<PlantEventResponse[]>([]);
 
   const pageParams = useMemo(
     () => ({
@@ -133,38 +138,32 @@ export function PlantEventScreen() {
 
   useEffect(() => {
     setPage(0);
-    setEventsCache([]);
+    resetCache();
   }, [selectedId, targetType]);
 
-  useEffect(() => {
-    const incomingEvents = eventsQuery.data?.content ?? [];
+  const {
+    items: eventsCache,
+    setCache: setEventsCache,
+    resetCache,
+  } = usePaginatedList({
+    data: eventsQuery.data?.content,
+    page,
+  });
 
-    if (page === 0) {
-      setEventsCache(incomingEvents);
-      return;
-    }
+  const eventSearchFields = useCallback(
+    () => [
+      (e: PlantEventResponse) => e.note,
+      (e: PlantEventResponse) => e.eventType,
+      (e: PlantEventResponse) => e.description,
+    ],
+    [],
+  );
 
-    setEventsCache((previous) => {
-      const mapById = new Map(previous.map((e) => [e.id, e]));
-      for (const event of incomingEvents) {
-        mapById.set(event.id, event);
-      }
-      return Array.from(mapById.values());
-    });
-  }, [eventsQuery.data, page]);
-
-  const filteredEvents = useMemo(() => {
-    const normalizedSearch = searchQuery.trim().toLowerCase();
-    if (!normalizedSearch) return eventsCache;
-
-    return eventsCache.filter((event) =>
-      [event.note, event.eventType, event.description]
-        .filter(Boolean)
-        .some((value) =>
-          String(value).toLowerCase().includes(normalizedSearch),
-        ),
-    );
-  }, [eventsCache, searchQuery]);
+  const filteredEvents = useFilteredList({
+    items: eventsCache,
+    searchQuery,
+    fields: eventSearchFields(),
+  });
 
   const handleRefresh = () => {
     setPage(0);
@@ -247,7 +246,7 @@ export function PlantEventScreen() {
     setSelectedName("");
     setSelectedPlotIdForZones("");
     setPage(0);
-    setEventsCache([]);
+    resetCache();
     setSearchQuery("");
     setPickerSearchQuery("");
   };
@@ -259,7 +258,7 @@ export function PlantEventScreen() {
     setSelectedName("");
     setSelectedPlotIdForZones("");
     setPage(0);
-    setEventsCache([]);
+    resetCache();
     setSearchQuery("");
     setPickerSearchQuery("");
   };
@@ -823,16 +822,11 @@ export function PlantEventScreen() {
       </View>
 
       <View className="mb-6 flex-row items-center gap-3">
-        <View className="mr-1 flex-1 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <Search size={20} className="text-slate-400 dark:text-slate-500" />
-          <TextInput
-            placeholder={t("plantEvent.list.searchPlaceholder")}
-            placeholderTextColor="#94A3B8"
-            className="ml-2 flex-1 text-[15px] text-slate-800 dark:text-slate-100"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+        <SearchInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={t("plantEvent.list.searchPlaceholder")}
+        />
         <TouchableOpacity className="items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <SlidersHorizontal
             size={20}
@@ -841,51 +835,33 @@ export function PlantEventScreen() {
         </TouchableOpacity>
       </View>
 
-      {eventsQuery.isLoading && page === 0 ? (
-        <View className="flex-1 items-center justify-center py-12">
-          <ActivityIndicator size="large" color="#10B981" />
-          <Text className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-            {t("common.loading")}
-          </Text>
-        </View>
-      ) : null}
+      {eventsQuery.isLoading && page === 0 ? <LoadingView /> : null}
 
       {eventsQuery.isError && page === 0 ? (
-        <View className="flex-1 items-center justify-center py-12">
-          <Text className="mb-3 text-[15px] font-semibold text-red-500">
-            {t("plantEvent.list.loadFailed")}
-          </Text>
-          <TouchableOpacity
-            onPress={() => void eventsQuery.refetch()}
-            className="mt-0 flex-row items-center justify-center rounded-xl bg-emerald-600 px-6 py-3.5 shadow-sm"
-          >
-            <Text className="text-sm font-bold text-white">
-              {t("common.retry")}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <EmptyState
+          icon={CalendarDays}
+          title={t("plantEvent.list.loadFailed")}
+          actionLabel={t("common.retry")}
+          onAction={() => void eventsQuery.refetch()}
+        />
       ) : null}
 
       {!eventsQuery.isLoading &&
       !eventsQuery.isError &&
       filteredEvents.length === 0 ? (
-        <View className="flex-1 items-center justify-center py-12">
-          <CalendarDays
-            size={48}
-            className="text-slate-400 dark:text-slate-500"
-            strokeWidth={1.5}
-          />
-          <Text className="mt-4 text-center text-[15px] font-semibold text-slate-500 dark:text-slate-400">
-            {searchQuery
+        <EmptyState
+          icon={CalendarDays}
+          title={
+            searchQuery
               ? t("plantEvent.list.emptySearchTitle")
-              : t("plantEvent.list.emptyTitle")}
-          </Text>
-          <Text className="mt-1 text-center text-[13px] text-slate-400 dark:text-slate-500">
-            {searchQuery
+              : t("plantEvent.list.emptyTitle")
+          }
+          subtitle={
+            searchQuery
               ? t("plantEvent.list.emptySearchMessage")
-              : t("plantEvent.list.emptyMessage")}
-          </Text>
-        </View>
+              : t("plantEvent.list.emptyMessage")
+          }
+        />
       ) : null}
 
       {!eventsQuery.isError ? (

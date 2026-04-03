@@ -11,6 +11,7 @@ import {
 import { Check, X } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
+import { ErrorAlert } from "@/src/components/ui/ErrorAlert";
 import { useFarmFormScreen } from "../hooks/useFarmFormScreen";
 import { FarmFormDetailsCard } from "./FarmFormDetailsCard";
 import type { ActivePicker } from "./FarmFormDetailsCard";
@@ -90,32 +91,18 @@ export function FarmFormScreen() {
         </View>
 
         {isEditMode && isEditingPlotLoading ? (
-          <View className="border border-red-500/35 rounded-xl px-3 py-2.5 bg-red-500/10">
-            <Text className="text-red-700 dark:text-red-500 text-[13px] font-semibold">
-              {t("farm.form.loadingEditData")}
-            </Text>
-          </View>
+          <ErrorAlert message={t("farm.form.loadingEditData")} />
         ) : null}
 
         {isEditMode && isEditingPlotError ? (
-          <View className="border border-red-500/35 rounded-xl px-3 py-2.5 bg-red-500/10">
-            <Text className="text-red-700 dark:text-red-500 text-[13px] font-semibold">
-              {t("farm.form.loadEditDataFailed")}
-            </Text>
-            <TouchableOpacity onPress={() => void refetchEditingPlot()}>
-              <Text className="text-green-600 dark:text-green-400 mt-1.5 font-bold text-[13px]">
-                {t("common.retry")}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <ErrorAlert
+            message={t("farm.form.loadEditDataFailed")}
+            onRetry={() => void refetchEditingPlot()}
+          />
         ) : null}
 
         {errors.root?.message ? (
-          <View className="border border-red-500/35 rounded-xl px-3 py-2.5 bg-red-500/10">
-            <Text className="text-red-700 dark:text-red-500 text-[13px] font-semibold">
-              {errors.root.message}
-            </Text>
-          </View>
+          <ErrorAlert message={errors.root.message} />
         ) : null}
 
         <FarmFormDetailsCard

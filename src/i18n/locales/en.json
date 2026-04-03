@@ -181,6 +181,7 @@
       "manageFarm": "Manage farms",
       "managePlants": "Manage plants",
       "manageEvents": "Manage events",
+      "eventCalendar": "Event calendar",
       "more": "More options",
       "notifications": "Notifications",
       "viewAllNotifications": "View all notifications"
@@ -520,6 +521,16 @@
       "HEALTH_MEDICAL": "Health & medical",
       "GROWTH_LIFECYCLE": "Growth & lifecycle"
     },
+    "eventCategoryShort": {
+      "ROUTINE_CARE": "Routine",
+      "HEALTH_MEDICAL": "Health",
+      "GROWTH_LIFECYCLE": "Growth"
+    },
+    "category": {
+      "ROUTINE_CARE": "Routine care",
+      "HEALTH_MEDICAL": "Health & medical",
+      "GROWTH_LIFECYCLE": "Growth & lifecycle"
+    },
     "eventTypeModal": {
       "title": "Select event type",
       "searchPlaceholder": "Search event types...",
@@ -625,11 +636,70 @@
       "endDate": "End",
       "duration": "Duration",
       "days": "days",
-      "cost": "Est. cost"
+      "cost": "Est. cost",
+      "description": "Description",
+      "phi": "PHI",
+      "ppe": "PPE",
+      "mrl": "MRL note",
+      "viewDetails": "View details"
+    },
+    "detail": {
+      "title": "Event details",
+      "editEvent": "Edit event",
+      "datesSection": "Dates & duration",
+      "safetySection": "Agricultural safety",
+      "costSection": "Cost & resources",
+      "metaSection": "Record info",
+      "daysFromNow": "Days from now",
+      "createdAt": "Created at",
+      "modifiedAt": "Last modified",
+      "createdBy": "Created by",
+      "modifiedBy": "Modified by",
+      "inactive": "Inactive",
+      "loadFailed": "Could not load event details"
     },
     "alerts": {
       "deleteFailedTitle": "Delete failed",
       "deleteFailedMessage": "Could not delete the event. Please try again."
+    }
+  },
+  "calendar": {
+    "title": "Event Calendar",
+    "timeline": "Event Timeline",
+    "timelineShort": "Timeline",
+    "listView": "List",
+    "monthView": "Month",
+    "weekView": "Week",
+    "targetFarmPlot": "Farm Plot",
+    "targetFarmZone": "Farm Zone",
+    "targetPlant": "Plant",
+    "selectTarget": "Select a target",
+    "selectTargetHint": "Choose a farm plot, zone, or plant to view its events on the calendar",
+    "farmPlots": "Plots",
+    "farmZones": "Zones",
+    "plants": "Plants",
+    "noFarmPlots": "No farm plots found",
+    "noFarmZones": "No zones found for this plot",
+    "noPlants": "No plants found",
+    "selectPlotForZone": "Select a farm plot first",
+    "backToPlots": "Back to plots",
+    "event": "event",
+    "events": "events",
+    "noEventsOnDay": "No events on this day",
+    "addEvent": "Add Event",
+    "today": "Today",
+    "upcomingEvents": "Events this month",
+    "eventsThisWeek": "Events this week",
+    "noEventsThisMonth": "No events this month",
+    "noEventsThisWeek": "No events this week",
+    "filter": {
+      "title": "Filter events",
+      "button": "Filter",
+      "active": "{{count}} filter(s)",
+      "clearAll": "Clear all",
+      "apply": "Apply filter",
+      "targetSection": "Target",
+      "typeSection": "Event type"
     }
   }
 }

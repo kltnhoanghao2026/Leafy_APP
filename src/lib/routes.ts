@@ -144,6 +144,7 @@ export const API_ENDPOINTS = {
       `/plant-events/farm-plot/${farmPlotId}`,
     BY_FARM_ZONE: (farmZoneId: string) =>
       `/plant-events/farm-zone/${farmZoneId}`,
+    CALENDAR: "/plant-events/calendar",
   },
 } as const;
 

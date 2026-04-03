@@ -181,6 +181,7 @@
       "manageFarm": "Quản lý nông trại",
       "managePlants": "Quản lý cây trồng",
       "manageEvents": "Quản lý sự kiện",
+      "eventCalendar": "Lịch sự kiện",
       "more": "Tùy chọn khác",
       "notifications": "Thông báo",
       "viewAllNotifications": "Xem tất cả thông báo"
@@ -520,6 +521,16 @@
       "HEALTH_MEDICAL": "Sức khỏe & y tế",
       "GROWTH_LIFECYCLE": "Sinh trưởng & vòng đời"
     },
+    "eventCategoryShort": {
+      "ROUTINE_CARE": "Chăm sóc",
+      "HEALTH_MEDICAL": "Sức khỏe",
+      "GROWTH_LIFECYCLE": "Sinh trưởng"
+    },
+    "category": {
+      "ROUTINE_CARE": "Chăm sóc hàng ngày",
+      "HEALTH_MEDICAL": "Sức khỏe & y tế",
+      "GROWTH_LIFECYCLE": "Sinh trưởng & vòng đời"
+    },
     "eventTypeModal": {
       "title": "Chọn loại sự kiện",
       "searchPlaceholder": "Tìm loại sự kiện...",
@@ -625,11 +636,70 @@
       "endDate": "Kết thúc",
       "duration": "Thời lượng",
       "days": "ngày",
-      "cost": "Chi phí ước tính"
+      "cost": "Chi phí ước tính",
+      "description": "Mô tả",
+      "phi": "PHI",
+      "ppe": "BHLĐ",
+      "mrl": "Ghi chú MRL",
+      "viewDetails": "Xem chi tiết"
+    },
+    "detail": {
+      "title": "Chi tiết sự kiện",
+      "editEvent": "Chỉnh sửa",
+      "datesSection": "Ngày & thời gian",
+      "safetySection": "An toàn nông nghiệp",
+      "costSection": "Chi phí & tài nguyên",
+      "metaSection": "Thông tin bản ghi",
+      "daysFromNow": "Số ngày từ bây giờ",
+      "createdAt": "Ngày tạo",
+      "modifiedAt": "Lần sửa cuối",
+      "createdBy": "Người tạo",
+      "modifiedBy": "Người sửa cuối",
+      "inactive": "Không hoạt động",
+      "loadFailed": "Không thể tải chi tiết sự kiện"
     },
     "alerts": {
       "deleteFailedTitle": "Xóa thất bại",
       "deleteFailedMessage": "Không thể xóa sự kiện. Vui lòng thử lại."
+    }
+  },
+  "calendar": {
+    "title": "Lịch sự kiện",
+    "timeline": "Dòng thời gian",
+    "timelineShort": "Dòng TG",
+    "listView": "Danh sách",
+    "monthView": "Tháng",
+    "weekView": "Tuần",
+    "targetFarmPlot": "Lô canh tác",
+    "targetFarmZone": "Vùng canh tác",
+    "targetPlant": "Cây trồng",
+    "selectTarget": "Chọn đối tượng",
+    "selectTargetHint": "Chọn lô, vùng canh tác hoặc cây trồng để xem sự kiện trên lịch",
+    "farmPlots": "Lô",
+    "farmZones": "Vùng",
+    "plants": "Cây trồng",
+    "noFarmPlots": "Không tìm thấy lô canh tác",
+    "noFarmZones": "Không tìm thấy vùng cho lô này",
+    "noPlants": "Không tìm thấy cây trồng",
+    "selectPlotForZone": "Chọn lô canh tác trước",
+    "backToPlots": "Quay lại lô",
+    "event": "sự kiện",
+    "events": "sự kiện",
+    "noEventsOnDay": "Không có sự kiện trong ngày này",
+    "addEvent": "Thêm sự kiện",
+    "today": "Hôm nay",
+    "upcomingEvents": "Sự kiện trong tháng",
+    "eventsThisWeek": "Sự kiện trong tuần",
+    "noEventsThisMonth": "Không có sự kiện trong tháng này",
+    "noEventsThisWeek": "Không có sự kiện trong tuần này",
+    "filter": {
+      "title": "Lọc sự kiện",
+      "button": "Lọc",
+      "active": "{{count}} bộ lọc",
+      "clearAll": "Xóa tất cả",
+      "apply": "Áp dụng",
+      "targetSection": "Đối tượng",
+      "typeSection": "Loại sự kiện"
     }
   }
 }

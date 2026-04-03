@@ -202,6 +202,11 @@ export default function MainLayout() {
     router.push("/(main)/plant-events");
   };
 
+  const openCalendarPage = () => {
+    closeMoreDrawer();
+    router.push("/(main)/plant-events-calendar");
+  };
+
   type BackFallbackPath =
     | "/"
     | "/(main)/farm"
@@ -252,6 +257,13 @@ export default function MainLayout() {
           <CalendarDays size={20} color={palette.primary} />
           <Text style={[styles.drawerItemText, { color: palette.text }]}>
             {t("mainNav.drawer.manageEvents")}
+          </Text>
+        </Pressable>
+
+        <Pressable style={styles.drawerItem} onPress={openCalendarPage}>
+          <CalendarDays size={20} color={palette.primary} />
+          <Text style={[styles.drawerItemText, { color: palette.text }]}>
+            {t("mainNav.drawer.eventCalendar")}
           </Text>
         </Pressable>
 
@@ -543,6 +555,60 @@ export default function MainLayout() {
         />
 
         <Tabs.Screen
+          name="plant-events-week"
+          options={{
+            href: null,
+            headerTitle: t("calendar.title"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => (
+              <Pressable
+                style={styles.headerIconButton}
+                onPress={() => router.back()}
+              >
+                <ChevronLeft size={20} color={palette.primary} />
+              </Pressable>
+            ),
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="plant-events-calendar"
+          options={{
+            href: null,
+            headerTitle: t("calendar.title"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => (
+              <Pressable
+                style={styles.headerIconButton}
+                onPress={() => router.back()}
+              >
+                <ChevronLeft size={20} color={palette.primary} />
+              </Pressable>
+            ),
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="plant-events-timeline"
+          options={{
+            href: null,
+            headerTitle: t("calendar.title"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => (
+              <Pressable
+                style={styles.headerIconButton}
+                onPress={() => router.back()}
+              >
+                <ChevronLeft size={20} color={palette.primary} />
+              </Pressable>
+            ),
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
           name="plant-events/add"
           options={{
             href: null,
@@ -569,7 +635,25 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/")}
+                onPress={() => router.back()}
+              >
+                <ChevronLeft size={20} color={palette.primary} />
+              </Pressable>
+            ),
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="plant-events/[id]"
+          options={{
+            href: null,
+            headerTitle: t("plantEvent.detail.title"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => (
+              <Pressable
+                style={styles.headerIconButton}
+                onPress={() => router.back()}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>

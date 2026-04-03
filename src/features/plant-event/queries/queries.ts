@@ -1,7 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { plantEventApi } from "../api/plant-event.api";
 import { plantEventKeys, withPlantEventPageDefaults } from "./keys";
-import type { PageParams } from "../components/plant-event.types";
+import type {
+  CalendarParams,
+  PageParams,
+} from "../components/plant-event.types";
 
 export const usePlantEventsByPlant = (plantId: string, params?: PageParams) => {
   const resolvedParams = withPlantEventPageDefaults(params);
@@ -71,3 +74,16 @@ export const usePlantEventsByFarmZone = (
     enabled: !!farmZoneId,
   });
 };
+
+export const usePlantEventsCalendar = (params: CalendarParams) =>
+  useQuery({
+    queryKey: plantEventKeys.calendar(params),
+    queryFn: () => plantEventApi.getEventsForCalendar(params),
+    select: (response) => response.data.data,
+    enabled:
+      !!(params.farmPlotId || params.farmZoneId || params.plantId) &&
+      !!params.startDate &&
+      !!params.endDate,
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });

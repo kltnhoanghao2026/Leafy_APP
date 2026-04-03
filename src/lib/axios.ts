@@ -22,6 +22,8 @@ type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
 };
 
+type RequestLogSource = "apiClient" | "axios";
+
 const ACCESS_TOKEN_KEY = "auth_token";
 const REFRESH_TOKEN_KEY = "refresh_token";
 
@@ -60,6 +62,70 @@ export const clearAuthTokens = async (): Promise<void> => {
 
 const apiBaseUrl =
   process.env.EXPO_PUBLIC_API_URL || "http://192.168.100.34:8060/api";
+
+const SENSITIVE_KEY_PATTERN =
+  /(authorization|token|password|secret|cookie|api[-_]?key)/i;
+
+const buildRequestUrl = (config: InternalAxiosRequestConfig): string => {
+  const url = config.url ?? "";
+
+  if (!config.baseURL || /^https?:\/\//i.test(url)) {
+    return url;
+  }
+
+  return `${config.baseURL.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
+};
+
+const extractHeaders = (
+  headers: InternalAxiosRequestConfig["headers"],
+): Record<string, unknown> => {
+  if (!headers) {
+    return {};
+  }
+
+  if (typeof headers.toJSON === "function") {
+    return headers.toJSON() as Record<string, unknown>;
+  }
+
+  return headers as unknown as Record<string, unknown>;
+};
+
+const sanitizeForLog = (value: unknown, key = ""): unknown => {
+  if (SENSITIVE_KEY_PATTERN.test(key)) {
+    return "[REDACTED]";
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeForLog(item));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>).reduce<
+      Record<string, unknown>
+    >((acc, [entryKey, entryValue]) => {
+      acc[entryKey] = sanitizeForLog(entryValue, entryKey);
+      return acc;
+    }, {});
+  }
+
+  return value;
+};
+
+const logAxiosRequest = (
+  source: RequestLogSource,
+  config: InternalAxiosRequestConfig,
+): void => {
+  console.info("[Axios Request]", {
+    source,
+    method: (config.method ?? "GET").toUpperCase(),
+    url: buildRequestUrl(config),
+    timeout: config.timeout,
+    headers: sanitizeForLog(extractHeaders(config.headers)),
+    params: sanitizeForLog(config.params),
+    data: sanitizeForLog(config.data),
+    timestamp: new Date().toISOString(),
+  });
+};
 
 const isAuthEndpoint = (url?: string): boolean => {
   if (!url) {
@@ -147,18 +213,23 @@ const refreshAccessToken = async (): Promise<string | null> => {
   }
 };
 
+axios.interceptors.request.use((config) => {
+  logAxiosRequest("axios", config);
+  return config;
+}, Promise.reject);
+
 http.interceptors.request.use(async (config) => {
   const deviceId = await getDeviceId();
   config.headers.set("X-Device-ID", deviceId);
 
-  if (isAuthEndpoint(config.url)) {
-    return config;
+  if (!isAuthEndpoint(config.url)) {
+    const token = await getAccessToken();
+    if (token) {
+      config.headers.set("Authorization", `Bearer ${token}`);
+    }
   }
 
-  const token = await getAccessToken();
-  if (token) {
-    config.headers.set("Authorization", `Bearer ${token}`);
-  }
+  logAxiosRequest("apiClient", config);
 
   return config;
 }, Promise.reject);

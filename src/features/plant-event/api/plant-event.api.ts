@@ -7,6 +7,7 @@ import type {
   PlantEventCreateRequest,
   PlantEventResponse,
   PlantEventUpdateRequest,
+  CalendarParams,
 } from "../components/plant-event.types";
 
 export const plantEventApi = {
@@ -68,5 +69,11 @@ export const plantEventApi = {
   deleteEvent: (eventId: string) =>
     apiClient.delete<ApiResponse<void>>(
       API_ENDPOINTS.PLANT_EVENTS.ITEM(eventId),
+    ),
+
+  getEventsForCalendar: (params: CalendarParams) =>
+    apiClient.get<ApiResponse<PlantEventResponse[]>>(
+      API_ENDPOINTS.PLANT_EVENTS.CALENDAR,
+      { params },
     ),
 };

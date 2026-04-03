@@ -5,16 +5,16 @@ import type {
 } from "../../plant/components/plant.types";
 import {
   Droplets,
-  Leaf,
+  Beaker,
+  Trash2,
   Scissors,
-  Sprout,
   Search,
   Bug,
   Syringe,
   ShieldAlert,
   HeartPulse,
-  Flower2,
-  ArrowUpFromLine,
+  Activity,
+  PackageOpen,
   Wheat,
 } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
@@ -94,21 +94,21 @@ export const getEventCategoryColors = (eventType: EventType) =>
 
 export const EVENT_TYPE_ICONS: Record<EventType, LucideIcon> = {
   IRRIGATION: Droplets,
-  NUTRITION: Leaf,
-  WEED_CONTROL: Sprout,
+  NUTRITION: Beaker,
+  WEED_CONTROL: Trash2,
   PRUNING: Scissors,
   SCOUTING: Search,
   DISEASE_DETECTED: Bug,
   TREATMENT_APPLICATION: Syringe,
   QUARANTINE: ShieldAlert,
   HEALTH_RECOVERY: HeartPulse,
-  PHENOLOGY: Flower2,
-  REPOT: ArrowUpFromLine,
+  PHENOLOGY: Activity,
+  REPOT: PackageOpen,
   HARVEST: Wheat,
 };
 
 export const getEventTypeIcon = (eventType: EventType): LucideIcon =>
-  EVENT_TYPE_ICONS[eventType] ?? Leaf;
+  EVENT_TYPE_ICONS[eventType] ?? Droplets;
 
 // ── Event target ─────────────────────────────────────────────────────────
 
@@ -163,3 +163,11 @@ export type PlantEventCreateRequest = {
 export type PlantEventUpdateRequest = Partial<
   Omit<PlantEventCreateRequest, "plantId" | "farmPlotId" | "farmZoneId">
 >;
+
+export type CalendarParams = {
+  farmPlotId?: string;
+  farmZoneId?: string;
+  plantId?: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string; // YYYY-MM-DD
+};

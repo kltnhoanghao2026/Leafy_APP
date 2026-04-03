@@ -5,6 +5,7 @@ export {
   usePlantEventById,
   usePlantEventsByFarmPlot,
   usePlantEventsByFarmZone,
+  usePlantEventsCalendar,
 } from "./queries";
 export {
   useCreatePlantEventMutation,

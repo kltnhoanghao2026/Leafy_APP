@@ -13,6 +13,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { BaseBottomSheet } from "@/src/shared/components/BaseBottomSheet";
+import { FormField } from "@/src/components/ui/FormField";
 import type { FarmZoneResponse } from "./farm.types";
 
 export type ZonePayload = {
@@ -180,10 +181,10 @@ export function FarmZoneFormModal({
         className="max-h-[460px]"
         showsVerticalScrollIndicator={false}
       >
-        <View className="mb-3">
-          <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-            {t("farm.zoneForm.zoneName")}
-          </Text>
+        <FormField
+          label={t("farm.zoneForm.zoneName")}
+          error={errors.zoneName?.message}
+        >
           <Controller
             control={control}
             name="zoneName"
@@ -198,17 +199,14 @@ export function FarmZoneFormModal({
               />
             )}
           />
-          {errors.zoneName && (
-            <Text className="text-red-500 text-xs mt-1 font-semibold">
-              {errors.zoneName.message}
-            </Text>
-          )}
-        </View>
+        </FormField>
 
-        <View className="mb-3">
-          <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-            {t("farm.zoneForm.zoneCode")}
-          </Text>
+        <View className="h-3" />
+
+        <FormField
+          label={t("farm.zoneForm.zoneCode")}
+          error={errors.zoneCode?.message}
+        >
           <Controller
             control={control}
             name="zoneCode"
@@ -224,17 +222,11 @@ export function FarmZoneFormModal({
               />
             )}
           />
-          {errors.zoneCode && (
-            <Text className="text-red-500 text-xs mt-1 font-semibold">
-              {errors.zoneCode.message}
-            </Text>
-          )}
-        </View>
+        </FormField>
 
-        <View className="mb-3">
-          <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-            {t("farm.zoneForm.description")}
-          </Text>
+        <View className="h-3" />
+
+        <FormField label={t("farm.zoneForm.description")}>
           <Controller
             control={control}
             name="description"
@@ -252,12 +244,11 @@ export function FarmZoneFormModal({
               />
             )}
           />
-        </View>
+        </FormField>
 
-        <View className="mb-3">
-          <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-            {t("farm.zoneForm.area")}
-          </Text>
+        <View className="h-3" />
+
+        <FormField label={t("farm.zoneForm.area")}>
           <Controller
             control={control}
             name="areaM2"
@@ -273,12 +264,11 @@ export function FarmZoneFormModal({
               />
             )}
           />
-        </View>
+        </FormField>
 
-        <View className="mb-3">
-          <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-            {t("farm.zoneForm.soilType")}
-          </Text>
+        <View className="h-3" />
+
+        <FormField label={t("farm.zoneForm.soilType")}>
           <Controller
             control={control}
             name="soilType"
@@ -293,12 +283,11 @@ export function FarmZoneFormModal({
               />
             )}
           />
-        </View>
+        </FormField>
 
-        <View className="mb-3">
-          <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-            {t("farm.zoneForm.cropType")}
-          </Text>
+        <View className="h-3" />
+
+        <FormField label={t("farm.zoneForm.cropType")}>
           <Controller
             control={control}
             name="cropType"
@@ -313,12 +302,11 @@ export function FarmZoneFormModal({
               />
             )}
           />
-        </View>
+        </FormField>
 
-        <View className="mb-3">
-          <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-            {t("farm.zoneForm.plantingDate")}
-          </Text>
+        <View className="h-3" />
+
+        <FormField label={t("farm.zoneForm.plantingDate")}>
           <Controller
             control={control}
             name="plantingDate"
@@ -333,12 +321,11 @@ export function FarmZoneFormModal({
               />
             )}
           />
-        </View>
+        </FormField>
 
-        <View className="mb-3">
-          <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-            {t("farm.zoneForm.elevation")}
-          </Text>
+        <View className="h-3" />
+
+        <FormField label={t("farm.zoneForm.elevation")}>
           <Controller
             control={control}
             name="elevationM"
@@ -354,7 +341,7 @@ export function FarmZoneFormModal({
               />
             )}
           />
-        </View>
+        </FormField>
       </BottomSheetScrollView>
 
       <View className="flex-row gap-2.5 mt-3">

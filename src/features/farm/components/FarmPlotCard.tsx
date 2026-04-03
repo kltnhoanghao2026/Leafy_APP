@@ -11,6 +11,7 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { useColorScheme } from "@/src/hooks/useColorScheme";
+import { StatusBadge } from "@/src/components/ui/StatusBadge";
 import { PlotZonesList } from "./PlotZonesList";
 import type { FarmPlotResponse, FarmZoneResponse } from "./farm.types";
 
@@ -92,25 +93,14 @@ export function FarmPlotCard({
           </Text>
         </View>
         {plot.status && (
-          <View
-            className={`flex-row items-center rounded-lg px-2.5 py-1.5 ${
+          <StatusBadge
+            label={
               plot.status === "ACTIVE"
-                ? "bg-emerald-50 dark:bg-emerald-900/20"
-                : "bg-amber-50 dark:bg-amber-900/20"
-            }`}
-          >
-            <Text
-              className={`text-[11px] font-extrabold ${
-                plot.status === "ACTIVE"
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-amber-500 dark:text-amber-400"
-              }`}
-            >
-              {plot.status === "ACTIVE"
                 ? t("common.status.active")
-                : t("common.status.inactive")}
-            </Text>
-          </View>
+                : t("common.status.inactive")
+            }
+            variant={plot.status === "ACTIVE" ? "success" : "warning"}
+          />
         )}
       </View>
 

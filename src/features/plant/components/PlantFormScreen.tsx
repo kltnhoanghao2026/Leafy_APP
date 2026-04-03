@@ -20,31 +20,14 @@ import {
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 
+import { ErrorAlert } from "@/src/components/ui/ErrorAlert";
+import { FormField } from "@/src/components/ui/FormField";
+import { FormSection } from "@/src/components/ui/FormSection";
+import { toDateInputValue, formatDateOnly } from "@/src/utils/date";
 import { FarmPlotPickerModal } from "./FarmPlotPickerModal";
 import { SpeciesPickerModal } from "./SpeciesPickerModal";
 import { PLANT_STATUS_VALUES } from "./plant.types";
 import { usePlantFormScreen } from "../hooks/usePlantFormScreen";
-
-const toDateInputValue = (value?: string): Date => {
-  if (!value) return new Date();
-
-  const normalizedDate = value.includes("T") ? value.split("T")[0] : value;
-  const parsedDate = new Date(`${normalizedDate}T00:00:00`);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return new Date();
-  }
-
-  return parsedDate;
-};
-
-const formatDateOnly = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
 
 export function PlantFormScreen() {
   const { t } = useTranslation();
@@ -120,229 +103,184 @@ export function PlantFormScreen() {
         </View>
 
         {isEditMode && isEditingPlantLoading ? (
-          <View className="border border-red-500/35 rounded-xl px-3 py-2.5 bg-red-500/10">
-            <Text className="text-red-700 dark:text-red-500 text-[13px] font-semibold">
-              {t("plant.form.loadingEditData")}
-            </Text>
-          </View>
+          <ErrorAlert message={t("plant.form.loadingEditData")} />
         ) : null}
 
         {isEditMode && isEditingPlantError ? (
-          <View className="border border-red-500/35 rounded-xl px-3 py-2.5 bg-red-500/10">
-            <Text className="text-red-700 dark:text-red-500 text-[13px] font-semibold">
-              {t("plant.form.loadEditDataFailed")}
-            </Text>
-            <TouchableOpacity onPress={() => void refetchEditingPlant()}>
-              <Text className="text-green-600 dark:text-green-400 mt-1.5 font-bold text-[13px]">
-                {t("common.retry")}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <ErrorAlert
+            message={t("plant.form.loadEditDataFailed")}
+            onRetry={() => void refetchEditingPlant()}
+          />
         ) : null}
 
         {errors.root?.message ? (
-          <View className="border border-red-500/35 rounded-xl px-3 py-2.5 bg-red-500/10">
-            <Text className="text-red-700 dark:text-red-500 text-[13px] font-semibold">
-              {errors.root.message}
-            </Text>
-          </View>
+          <ErrorAlert message={errors.root.message} />
         ) : null}
 
-        <View className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <Text className="text-sm font-bold text-slate-900 dark:text-white mb-3">
-            {t("plant.form.coreSection")}
-          </Text>
+        <FormSection title={t("plant.form.coreSection")}>
+          <FormField
+            label={t("plant.form.plantNumber")}
+            error={errors.plantNumber?.message}
+          >
+            <Controller
+              control={control}
+              name="plantNumber"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 text-sm font-medium text-slate-900 dark:text-white"
+                  placeholder={t("plant.form.plantNumberPlaceholder")}
+                  placeholderTextColor="#9ca3af"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
+            />
+          </FormField>
 
-          <View className="gap-3">
-            <View>
-              <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-                {t("plant.form.plantNumber")}
-              </Text>
-              <Controller
-                control={control}
-                name="plantNumber"
-                render={({ field: { onChange, onBlur, value } }) => (
-                  <TextInput
-                    className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 text-sm font-medium text-slate-900 dark:text-white"
-                    placeholder={t("plant.form.plantNumberPlaceholder")}
-                    placeholderTextColor="#9ca3af"
-                    onBlur={onBlur}
-                    onChangeText={onChange}
-                    value={value}
-                  />
-                )}
-              />
-              {errors.plantNumber ? (
-                <Text className="text-red-500 text-xs mt-1 font-semibold">
-                  {errors.plantNumber.message}
-                </Text>
-              ) : null}
-            </View>
+          <FormField
+            label={t("plant.form.plantStatus")}
+            error={errors.plantStatus?.message}
+          >
+            <Controller
+              control={control}
+              name="plantStatus"
+              render={({ field: { onChange, value } }) => (
+                <View className="flex-row flex-wrap gap-2">
+                  {PLANT_STATUS_VALUES.map((status) => {
+                    const isSelected = value === status;
 
-            <View>
-              <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-                {t("plant.form.plantStatus")}
-              </Text>
-              <Controller
-                control={control}
-                name="plantStatus"
-                render={({ field: { onChange, value } }) => (
-                  <View className="flex-row flex-wrap gap-2">
-                    {PLANT_STATUS_VALUES.map((status) => {
-                      const isSelected = value === status;
-
-                      return (
-                        <TouchableOpacity
-                          key={status}
-                          className={`rounded-full border px-3.5 py-2 ${isSelected ? "border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/25" : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"}`}
-                          onPress={() => onChange(status)}
+                    return (
+                      <TouchableOpacity
+                        key={status}
+                        className={`rounded-full border px-3.5 py-2 ${isSelected ? "border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/25" : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"}`}
+                        onPress={() => onChange(status)}
+                      >
+                        <Text
+                          className={`text-xs font-bold ${isSelected ? "text-emerald-700 dark:text-emerald-400" : "text-slate-600 dark:text-slate-300"}`}
                         >
-                          <Text
-                            className={`text-xs font-bold ${isSelected ? "text-emerald-700 dark:text-emerald-400" : "text-slate-600 dark:text-slate-300"}`}
-                          >
-                            {t(
-                              `plant.form.statusOptions.${status.toLowerCase()}`,
-                            )}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                )}
-              />
-              {errors.plantStatus ? (
-                <Text className="text-red-500 text-xs mt-1 font-semibold">
-                  {errors.plantStatus.message}
-                </Text>
-              ) : null}
-            </View>
+                          {t(
+                            `plant.form.statusOptions.${status.toLowerCase()}`,
+                          )}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            />
+          </FormField>
 
-            <View>
-              <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-                {t("plant.form.species")}
-              </Text>
-              <TouchableOpacity
-                className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 justify-center bg-white dark:bg-slate-900"
-                onPress={() => setIsSpeciesPickerVisible(true)}
-                disabled={isSpeciesLoading}
-              >
-                {isSpeciesLoading ? (
-                  <Text className="text-sm text-slate-500 dark:text-slate-400">
-                    {t("plant.form.speciesLoading")}
-                  </Text>
-                ) : (
-                  <Text
-                    className={`text-sm font-medium ${selectedSpeciesLabel ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}
-                  >
-                    {selectedSpeciesLabel || t("plant.form.speciesPlaceholder")}
-                  </Text>
-                )}
+          <FormField
+            label={t("plant.form.species")}
+            error={errors.speciesId?.message}
+          >
+            <TouchableOpacity
+              className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 justify-center bg-white dark:bg-slate-900"
+              onPress={() => setIsSpeciesPickerVisible(true)}
+              disabled={isSpeciesLoading}
+            >
+              {isSpeciesLoading ? (
+                <Text className="text-sm text-slate-500 dark:text-slate-400">
+                  {t("plant.form.speciesLoading")}
+                </Text>
+              ) : (
+                <Text
+                  className={`text-sm font-medium ${selectedSpeciesLabel ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}
+                >
+                  {selectedSpeciesLabel || t("plant.form.speciesPlaceholder")}
+                </Text>
+              )}
+            </TouchableOpacity>
+            {isSpeciesError ? (
+              <TouchableOpacity onPress={() => void refetchSpecies()}>
+                <Text className="text-xs mt-1 font-semibold text-red-500">
+                  {t("plant.form.speciesLoadFailed")}
+                </Text>
               </TouchableOpacity>
-              {isSpeciesError ? (
-                <TouchableOpacity onPress={() => void refetchSpecies()}>
-                  <Text className="text-xs mt-1 font-semibold text-red-500">
-                    {t("plant.form.speciesLoadFailed")}
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-              {errors.speciesId ? (
-                <Text className="text-red-500 text-xs mt-1 font-semibold">
-                  {errors.speciesId.message}
-                </Text>
-              ) : null}
-            </View>
+            ) : null}
+          </FormField>
 
-            <View>
-              <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-                {t("plant.form.farmPlotId")}
-              </Text>
-              <Controller
-                control={control}
-                name="farmPlotId"
-                render={() => (
-                  <TouchableOpacity
-                    className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 justify-center bg-white dark:bg-slate-900"
-                    onPress={() => setIsFarmPlotPickerVisible(true)}
-                    disabled={isFarmPlotsLoading}
-                  >
-                    {isFarmPlotsLoading ? (
-                      <Text className="text-sm text-slate-500 dark:text-slate-400">
-                        {t("plant.form.farmPlotLoading")}
-                      </Text>
-                    ) : (
-                      <Text
-                        className={`text-sm font-medium ${selectedFarmPlotLabel ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}
-                      >
-                        {selectedFarmPlotLabel ||
-                          t("plant.form.farmPlotIdPlaceholder")}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                )}
-              />
-              {isFarmPlotsError ? (
-                <TouchableOpacity onPress={() => void refetchFarmPlots()}>
-                  <Text className="text-xs mt-1 font-semibold text-red-500">
-                    {t("plant.form.farmPlotLoadFailed")}
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-              {errors.farmPlotId ? (
-                <Text className="text-red-500 text-xs mt-1 font-semibold">
-                  {errors.farmPlotId.message}
-                </Text>
-              ) : null}
-            </View>
-
-            <View>
-              <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-                {t("plant.form.plantingDate")}
-              </Text>
-              <Controller
-                control={control}
-                name="plantingDate"
-                render={({ field: { onChange, value } }) => (
-                  <View>
-                    <TouchableOpacity
-                      className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 flex-row items-center justify-between bg-white dark:bg-slate-900"
-                      onPress={() => setIsPlantingDatePickerVisible(true)}
+          <FormField
+            label={t("plant.form.farmPlotId")}
+            error={errors.farmPlotId?.message}
+          >
+            <Controller
+              control={control}
+              name="farmPlotId"
+              render={() => (
+                <TouchableOpacity
+                  className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 justify-center bg-white dark:bg-slate-900"
+                  onPress={() => setIsFarmPlotPickerVisible(true)}
+                  disabled={isFarmPlotsLoading}
+                >
+                  {isFarmPlotsLoading ? (
+                    <Text className="text-sm text-slate-500 dark:text-slate-400">
+                      {t("plant.form.farmPlotLoading")}
+                    </Text>
+                  ) : (
+                    <Text
+                      className={`text-sm font-medium ${selectedFarmPlotLabel ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}
                     >
-                      <Text
-                        className={`text-sm font-medium ${value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}
-                      >
-                        {value || t("plant.form.datePlaceholder")}
-                      </Text>
-                      <CalendarDays
-                        size={18}
-                        className="text-slate-400 dark:text-slate-500"
-                      />
-                    </TouchableOpacity>
-
-                    {isPlantingDatePickerVisible ? (
-                      <DateTimePicker
-                        value={toDateInputValue(value)}
-                        mode="date"
-                        display={Platform.OS === "ios" ? "spinner" : "default"}
-                        onChange={(_, selectedDate) => {
-                          setIsPlantingDatePickerVisible(false);
-
-                          if (selectedDate) {
-                            onChange(formatDateOnly(selectedDate));
-                          }
-                        }}
-                      />
-                    ) : null}
-                  </View>
-                )}
-              />
-              {errors.plantingDate ? (
-                <Text className="text-red-500 text-xs mt-1 font-semibold">
-                  {errors.plantingDate.message}
+                      {selectedFarmPlotLabel ||
+                        t("plant.form.farmPlotIdPlaceholder")}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+            {isFarmPlotsError ? (
+              <TouchableOpacity onPress={() => void refetchFarmPlots()}>
+                <Text className="text-xs mt-1 font-semibold text-red-500">
+                  {t("plant.form.farmPlotLoadFailed")}
                 </Text>
-              ) : null}
-            </View>
-          </View>
-        </View>
+              </TouchableOpacity>
+            ) : null}
+          </FormField>
+
+          <FormField
+            label={t("plant.form.plantingDate")}
+            error={errors.plantingDate?.message}
+          >
+            <Controller
+              control={control}
+              name="plantingDate"
+              render={({ field: { onChange, value } }) => (
+                <View>
+                  <TouchableOpacity
+                    className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 flex-row items-center justify-between bg-white dark:bg-slate-900"
+                    onPress={() => setIsPlantingDatePickerVisible(true)}
+                  >
+                    <Text
+                      className={`text-sm font-medium ${value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}
+                    >
+                      {value || t("plant.form.datePlaceholder")}
+                    </Text>
+                    <CalendarDays
+                      size={18}
+                      className="text-slate-400 dark:text-slate-500"
+                    />
+                  </TouchableOpacity>
+
+                  {isPlantingDatePickerVisible ? (
+                    <DateTimePicker
+                      value={toDateInputValue(value)}
+                      mode="date"
+                      display={Platform.OS === "ios" ? "spinner" : "default"}
+                      onChange={(_, selectedDate) => {
+                        setIsPlantingDatePickerVisible(false);
+
+                        if (selectedDate) {
+                          onChange(formatDateOnly(selectedDate));
+                        }
+                      }}
+                    />
+                  ) : null}
+                </View>
+              )}
+            />
+          </FormField>
+        </FormSection>
 
         <TouchableOpacity
           className="rounded-xl border border-slate-200 bg-white px-4 py-3 flex-row items-center justify-between dark:border-slate-800 dark:bg-slate-900"
@@ -394,10 +332,15 @@ export function PlantFormScreen() {
                   "plant.form.motherPlantIdPlaceholder",
                 ],
               ].map(([name, labelKey, placeholderKey]) => (
-                <View key={name}>
-                  <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-                    {t(labelKey)}
-                  </Text>
+                <FormField
+                  key={name}
+                  label={t(labelKey)}
+                  error={
+                    String(
+                      errors[name as keyof typeof errors]?.message ?? "",
+                    ) || undefined
+                  }
+                >
                   <Controller
                     control={control}
                     name={name as never}
@@ -412,20 +355,13 @@ export function PlantFormScreen() {
                       />
                     )}
                   />
-                  {errors[name as keyof typeof errors] ? (
-                    <Text className="text-red-500 text-xs mt-1 font-semibold">
-                      {String(
-                        errors[name as keyof typeof errors]?.message ?? "",
-                      )}
-                    </Text>
-                  ) : null}
-                </View>
+                </FormField>
               ))}
 
-              <View>
-                <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-                  {t("plant.form.germinationDate")}
-                </Text>
+              <FormField
+                label={t("plant.form.germinationDate")}
+                error={errors.germinationDate?.message}
+              >
                 <Controller
                   control={control}
                   name="germinationDate"
@@ -465,17 +401,12 @@ export function PlantFormScreen() {
                     </View>
                   )}
                 />
-                {errors.germinationDate ? (
-                  <Text className="text-red-500 text-xs mt-1 font-semibold">
-                    {errors.germinationDate.message}
-                  </Text>
-                ) : null}
-              </View>
+              </FormField>
 
-              <View>
-                <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-                  {t("plant.form.actualHarvestDate")}
-                </Text>
+              <FormField
+                label={t("plant.form.actualHarvestDate")}
+                error={errors.actualHarvestDate?.message}
+              >
                 <Controller
                   control={control}
                   name="actualHarvestDate"
@@ -517,17 +448,12 @@ export function PlantFormScreen() {
                     </View>
                   )}
                 />
-                {errors.actualHarvestDate ? (
-                  <Text className="text-red-500 text-xs mt-1 font-semibold">
-                    {errors.actualHarvestDate.message}
-                  </Text>
-                ) : null}
-              </View>
+              </FormField>
 
-              <View>
-                <Text className="text-[13px] font-semibold mb-1 text-slate-900 dark:text-white">
-                  {t("plant.form.totalYieldKg")}
-                </Text>
+              <FormField
+                label={t("plant.form.totalYieldKg")}
+                error={errors.totalYieldKg?.message}
+              >
                 <Controller
                   control={control}
                   name="totalYieldKg"
@@ -543,12 +469,7 @@ export function PlantFormScreen() {
                     />
                   )}
                 />
-                {errors.totalYieldKg ? (
-                  <Text className="text-red-500 text-xs mt-1 font-semibold">
-                    {errors.totalYieldKg.message}
-                  </Text>
-                ) : null}
-              </View>
+              </FormField>
             </View>
           </View>
         ) : null}

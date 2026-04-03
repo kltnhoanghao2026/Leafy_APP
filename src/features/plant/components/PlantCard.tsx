@@ -2,6 +2,8 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { Leaf, Pencil, Trash2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
+import { StatusBadge } from "@/src/components/ui/StatusBadge";
+import { formatDate } from "@/src/utils/date";
 import type { PlantResponse } from "./plant.types";
 
 type Props = {
@@ -9,16 +11,6 @@ type Props = {
   speciesName?: string;
   onEdit: (plantId: string) => void;
   onDelete: (plant: PlantResponse) => void;
-};
-
-const formatDate = (value?: string | null) => {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value.replace("T", " ").slice(0, 16);
-  }
-
-  return date.toLocaleString();
 };
 
 export function PlantCard({ plant, speciesName, onEdit, onDelete }: Props) {
@@ -68,11 +60,7 @@ export function PlantCard({ plant, speciesName, onEdit, onDelete }: Props) {
       </View>
 
       <View className="px-4 pb-3">
-        <View className="self-start rounded-lg bg-emerald-50 px-2.5 py-1 dark:bg-emerald-900/20">
-          <Text className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400">
-            {plant.plantStatus}
-          </Text>
-        </View>
+        <StatusBadge label={plant.plantStatus} variant="success" />
 
         <View className="mt-3 gap-1.5">
           <Text className="text-xs text-slate-500 dark:text-slate-400">

@@ -1,4 +1,7 @@
-import type { PageParams } from "../components/plant-event.types";
+import type {
+  CalendarParams,
+  PageParams,
+} from "../components/plant-event.types";
 
 type RequiredPageParams = Required<PageParams>;
 
@@ -63,4 +66,7 @@ export const plantEventKeys = {
 
   detail: (eventId: string) =>
     [...plantEventKeys.all(), "detail", eventId] as const,
+
+  calendar: (params: CalendarParams) =>
+    [...plantEventKeys.all(), "calendar", params] as const,
 };

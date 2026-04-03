@@ -4,14 +4,16 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  TextInput,
-  ActivityIndicator,
   Alert,
   RefreshControl,
 } from "react-native";
-import { Search, SlidersHorizontal, Home, Plus } from "lucide-react-native";
+import { SlidersHorizontal, Home, Plus } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+
+import { EmptyState } from "@/src/components/ui/EmptyState";
+import { SearchInput } from "@/src/components/ui/SearchInput";
+import { LoadingView } from "@/src/components/ui/LoadingView";
 
 import { useAuthContext } from "@/src/features/auth/context/AuthContext";
 
@@ -179,16 +181,11 @@ export function FarmScreen() {
 
       {/* Search & Action Row */}
       <View className="mb-6 flex-row items-center gap-3">
-        <View className="mr-1 flex-1 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <Search size={20} className="text-slate-400 dark:text-slate-500" />
-          <TextInput
-            placeholder={t("farm.list.searchPlaceholder")}
-            placeholderTextColor="#94A3B8"
-            className="ml-2 flex-1 text-[15px] text-slate-800 dark:text-slate-100"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
+        <SearchInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={t("farm.list.searchPlaceholder")}
+        />
         <TouchableOpacity className="items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <SlidersHorizontal
             size={20}
@@ -198,14 +195,7 @@ export function FarmScreen() {
       </View>
 
       {/* Loading State */}
-      {isLoading && (
-        <View className="flex-1 items-center justify-center py-12">
-          <ActivityIndicator size="large" color="#10B981" />
-          <Text className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-            {t("common.loading")}
-          </Text>
-        </View>
-      )}
+      {isLoading && <LoadingView />}
 
       {/* Error State */}
       {isError && !isLoading && (
@@ -226,23 +216,19 @@ export function FarmScreen() {
 
       {/* Empty State */}
       {!isLoading && !isError && filteredPlots.length === 0 && (
-        <View className="flex-1 items-center justify-center py-12">
-          <Home
-            size={48}
-            className="text-slate-400 dark:text-slate-500"
-            strokeWidth={1.5}
-          />
-          <Text className="mt-4 text-center text-[15px] font-semibold text-slate-500 dark:text-slate-400">
-            {searchQuery
+        <EmptyState
+          icon={Home}
+          title={
+            searchQuery
               ? t("farm.list.emptySearchTitle")
-              : t("farm.list.emptyTitle")}
-          </Text>
-          <Text className="mt-1 text-center text-[13px] text-slate-400 dark:text-slate-500">
-            {searchQuery
+              : t("farm.list.emptyTitle")
+          }
+          subtitle={
+            searchQuery
               ? t("farm.list.emptySearchMessage")
-              : t("farm.list.emptyMessage")}
-          </Text>
-        </View>
+              : t("farm.list.emptyMessage")
+          }
+        />
       )}
 
       {/* Farm Plots List */}

@@ -2,6 +2,8 @@ import { Text, TouchableOpacity, View } from "react-native";
 import { CalendarDays, Pencil, Trash2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
+import { StatusBadge } from "@/src/components/ui/StatusBadge";
+import { formatDateShort } from "@/src/utils/date";
 import type { PlantEventResponse } from "./plant-event.types";
 import { getEventCategoryColors } from "./plant-event.types";
 
@@ -9,11 +11,6 @@ type Props = {
   event: PlantEventResponse;
   onEdit: (eventId: string) => void;
   onDelete: (event: PlantEventResponse) => void;
-};
-
-const formatDate = (value?: string | null) => {
-  if (!value) return "—";
-  return value.slice(0, 10);
 };
 
 export function PlantEventCard({ event, onEdit, onDelete }: Props) {
@@ -100,11 +97,11 @@ export function PlantEventCard({ event, onEdit, onDelete }: Props) {
           ) : null}
           <Text className="text-xs text-slate-500 dark:text-slate-400">
             {t("plantEvent.card.startDate")}:{" "}
-            {formatDate(event.calculatedStartDate)}
+            {formatDateShort(event.calculatedStartDate)}
           </Text>
           <Text className="text-xs text-slate-500 dark:text-slate-400">
             {t("plantEvent.card.endDate")}:{" "}
-            {formatDate(event.calculatedEndDate)}
+            {formatDateShort(event.calculatedEndDate)}
           </Text>
           {event.durationDays != null ? (
             <Text className="text-xs text-slate-500 dark:text-slate-400">
