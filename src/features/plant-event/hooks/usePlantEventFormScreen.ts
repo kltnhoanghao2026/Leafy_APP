@@ -290,8 +290,29 @@ export function usePlantEventFormScreen() {
   };
 
   const handleCancel = () => {
+    const fallbackToEventHub = () => {
+      const nextParams: Record<string, string> = {};
+      if (routePlantId) nextParams.plantId = routePlantId;
+      if (routePlantName) nextParams.plantName = routePlantName;
+      if (routeFarmPlotId) nextParams.farmPlotId = routeFarmPlotId;
+      if (routeFarmPlotName) nextParams.farmPlotName = routeFarmPlotName;
+      if (routeFarmZoneId) nextParams.farmZoneId = routeFarmZoneId;
+      if (routeFarmZoneName) nextParams.farmZoneName = routeFarmZoneName;
+      if (routeTargetType) nextParams.targetType = routeTargetType;
+
+      router.replace({
+        pathname: "/(main)/plant-events",
+        params: nextParams,
+      });
+    };
+
     if (!isDirty) {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
+
+      fallbackToEventHub();
       return;
     }
 
@@ -303,7 +324,14 @@ export function usePlantEventFormScreen() {
         {
           text: t("plantEvent.form.leave"),
           style: "destructive",
-          onPress: () => router.back(),
+          onPress: () => {
+            if (router.canGoBack()) {
+              router.back();
+              return;
+            }
+
+            fallbackToEventHub();
+          },
         },
       ],
     );

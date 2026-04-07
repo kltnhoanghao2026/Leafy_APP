@@ -2,6 +2,8 @@ import { apiClient } from "@/src/lib/axios";
 import { type ApiResponse } from "@/src/shared/api";
 import { API_ENDPOINTS } from "@/src/lib/routes";
 import type {
+  ApprovalRequestResponse,
+  CreateApprovalRequest,
   ProfileUpdateRequest,
   ProfileResponse,
 } from "../schema/user.schema";
@@ -45,6 +47,17 @@ export const profileApi = {
   ): Promise<ProfileResponse> => {
     const response = await apiClient.put<ApiResponse<ProfileResponse>>(
       API_ENDPOINTS.PROFILES.GET_BY_USER(userId),
+      body,
+    );
+    return response.data.data;
+  },
+
+  submitApprovalRequest: async (
+    profileId: string,
+    body: CreateApprovalRequest,
+  ): Promise<ApprovalRequestResponse> => {
+    const response = await apiClient.post<ApiResponse<ApprovalRequestResponse>>(
+      API_ENDPOINTS.PROFILES.APPROVAL_REQUESTS(profileId),
       body,
     );
     return response.data.data;

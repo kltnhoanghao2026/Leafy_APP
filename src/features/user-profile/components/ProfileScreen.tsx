@@ -106,7 +106,14 @@ export function ProfileScreen() {
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="mx-4 mt-5 items-center rounded-[20px] border border-gray-200 bg-white px-6 py-8 shadow-sm dark:border-slate-800 dark:bg-slate-800/80">
+        <Pressable
+          className="mx-4 mt-5 items-center rounded-[20px] border border-gray-200 bg-white px-6 py-8 shadow-sm active:opacity-80 dark:border-slate-800 dark:bg-slate-800/80"
+          onPress={() =>
+            profile.id
+              ? router.push(`/(main)/profile/${profile.id}` as any)
+              : undefined
+          }
+        >
           <View className="mb-3 h-28 w-28 overflow-hidden rounded-full border-4 border-gray-100 dark:border-slate-700">
             {shouldShowLetterAvatar ? (
               <View className="h-full w-full items-center justify-center bg-primary/20">
@@ -131,7 +138,7 @@ export function ProfileScreen() {
           <Text className="mt-0.5 text-[13px] text-slate-500">
             {displayRole}
           </Text>
-        </View>
+        </Pressable>
 
         <View className="mx-4 mt-6">
           <Text className="mb-3 ml-1 text-base font-bold tracking-wide text-slate-900 dark:text-slate-100">

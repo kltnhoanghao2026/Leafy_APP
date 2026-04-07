@@ -147,6 +147,7 @@ export function usePlantFormScreen() {
       (farmPlots ?? []).map((plot) => ({
         id: plot.id,
         label: `${plot.name} (${plot.code})`,
+        address: plot.addressLine?.trim() || undefined,
       })),
     [farmPlots],
   );
@@ -308,8 +309,33 @@ export function usePlantFormScreen() {
   };
 
   const handleCancel = () => {
+    const fallbackToPlants = () => {
+      if (routeFarmPlotId) {
+        const nextParams: Record<string, string> = {
+          farmPlotId: routeFarmPlotId,
+        };
+
+        if (routeFarmName) {
+          nextParams.farmName = routeFarmName;
+        }
+
+        router.replace({
+          pathname: "/(main)/plants",
+          params: nextParams,
+        });
+        return;
+      }
+
+      router.replace("/(main)/plants");
+    };
+
     if (!isDirty) {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
+
+      fallbackToPlants();
       return;
     }
 
@@ -324,7 +350,14 @@ export function usePlantFormScreen() {
         {
           text: t("plant.form.leave"),
           style: "destructive",
-          onPress: () => router.back(),
+          onPress: () => {
+            if (router.canGoBack()) {
+              router.back();
+              return;
+            }
+
+            fallbackToPlants();
+          },
         },
       ],
     );

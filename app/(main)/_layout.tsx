@@ -1,4 +1,4 @@
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, useGlobalSearchParams, useRouter } from "expo-router";
 import {
   Home,
   Cpu,
@@ -164,6 +164,7 @@ function CenterActionButton({
 export default function MainLayout() {
   const { t } = useTranslation();
   const router = useRouter();
+  const routeParams = useGlobalSearchParams<{ returnTo?: string | string[] }>();
   const insets = useSafeAreaInsets();
   const [moreDrawerVisible, setMoreDrawerVisible] = useState(false);
   const [notiDrawerVisible, setNotiDrawerVisible] = useState(false);
@@ -207,11 +208,18 @@ export default function MainLayout() {
     router.push("/(main)/plant-events-calendar");
   };
 
+  const returnToParam = Array.isArray(routeParams.returnTo)
+    ? routeParams.returnTo[0]
+    : routeParams.returnTo;
+
   type BackFallbackPath =
     | "/"
     | "/(main)/farm"
     | "/(main)/plants"
-    | "/(main)/profile";
+    | "/(main)/profile"
+    | "/(main)/plant-events"
+    | "/(main)/community"
+    | "/(main)/ai-chat";
 
   const goBackInHistory = (fallbackPath: BackFallbackPath) => {
     if (router.canGoBack()) {
@@ -421,7 +429,7 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/")}
+                onPress={() => goBackInHistory("/(main)/profile")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -457,7 +465,7 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/")}
+                onPress={() => goBackInHistory("/(main)/farm")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -474,7 +482,7 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => router.navigate("/(main)/farm")}
+                onPress={() => goBackInHistory("/(main)/farm")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -492,7 +500,7 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => router.navigate("/(main)/farm")}
+                onPress={() => goBackInHistory("/(main)/farm")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -563,7 +571,7 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => router.back()}
+                onPress={() => goBackInHistory("/(main)/plant-events")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -581,7 +589,7 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => router.back()}
+                onPress={() => goBackInHistory("/(main)/plant-events")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -599,7 +607,7 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => router.back()}
+                onPress={() => goBackInHistory("/(main)/plant-events")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -617,7 +625,7 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/")}
+                onPress={() => goBackInHistory("/(main)/plant-events")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -635,7 +643,7 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => router.back()}
+                onPress={() => goBackInHistory("/(main)/plant-events")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -653,7 +661,31 @@ export default function MainLayout() {
             headerLeft: () => (
               <Pressable
                 style={styles.headerIconButton}
-                onPress={() => router.back()}
+                onPress={() => {
+                  if (returnToParam) {
+                    router.replace(returnToParam as never);
+                    return;
+                  }
+                  goBackInHistory("/(main)/plant-events");
+                }}
+              >
+                <ChevronLeft size={20} color={palette.primary} />
+              </Pressable>
+            ),
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="conversation/[threadId]"
+          options={{
+            href: null,
+            headerTitle: t("community.conversation.title"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => (
+              <Pressable
+                style={styles.headerIconButton}
+                onPress={() => goBackInHistory("/(main)/community")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>
@@ -672,6 +704,78 @@ export default function MainLayout() {
               <Pressable
                 style={styles.headerIconButton}
                 onPress={() => goBackInHistory("/(main)/profile")}
+              >
+                <ChevronLeft size={20} color={palette.primary} />
+              </Pressable>
+            ),
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="profile/certificate"
+          options={{
+            href: null,
+            headerTitle: t("screens.profileCertificate.title"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => (
+              <Pressable
+                style={styles.headerIconButton}
+                onPress={() => goBackInHistory("/(main)/profile")}
+              >
+                <ChevronLeft size={20} color={palette.primary} />
+              </Pressable>
+            ),
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="profile/[profileId]"
+          options={{
+            href: null,
+            headerTitle: t("profileDetail.infoSection"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => (
+              <Pressable
+                style={styles.headerIconButton}
+                onPress={() => goBackInHistory("/(main)/profile")}
+              >
+                <ChevronLeft size={20} color={palette.primary} />
+              </Pressable>
+            ),
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="ai-chat"
+          options={{
+            href: null,
+            headerTitle: t("ragChat.title", "Trợ lý AI"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => (
+              <Pressable
+                style={styles.headerIconButton}
+                onPress={() => goBackInHistory("/")}
+              >
+                <ChevronLeft size={20} color={palette.primary} />
+              </Pressable>
+            ),
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="treatment-plan-review"
+          options={{
+            href: null,
+            headerTitle: t("ragChat.reviewer.title", "Treatment Plan Reviewer"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => (
+              <Pressable
+                style={styles.headerIconButton}
+                onPress={() => goBackInHistory("/(main)/ai-chat")}
               >
                 <ChevronLeft size={20} color={palette.primary} />
               </Pressable>

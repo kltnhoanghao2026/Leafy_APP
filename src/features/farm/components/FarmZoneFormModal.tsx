@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import { Check, X } from "lucide-react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { CalendarDays, Check, X } from "lucide-react-native";
 import { BottomSheetScrollView, BottomSheetModal } from "@gorhom/bottom-sheet";
 import { z } from "zod";
 import { useForm, Controller } from "react-hook-form";
@@ -14,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslation } from "react-i18next";
 import { BaseBottomSheet } from "@/src/shared/components/BaseBottomSheet";
 import { FormField } from "@/src/components/ui/FormField";
+import { formatDateOnly, toDateInputValue } from "@/src/utils/date";
 import type { FarmZoneResponse } from "./farm.types";
 
 export type ZonePayload = {
@@ -24,7 +27,6 @@ export type ZonePayload = {
   soilType?: string;
   cropType?: string;
   plantingDate?: string;
-  elevationM?: number;
 };
 
 type Props = {
@@ -45,7 +47,6 @@ type FormValues = {
   soilType?: string;
   cropType?: string;
   plantingDate?: string;
-  elevationM?: string;
 };
 
 export function FarmZoneFormModal({
@@ -59,6 +60,8 @@ export function FarmZoneFormModal({
 }: Props) {
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const [isPlantingDatePickerVisible, setIsPlantingDatePickerVisible] =
+    useState(false);
   const zoneSchema = useMemo(
     () =>
       z.object({
@@ -69,7 +72,6 @@ export function FarmZoneFormModal({
         soilType: z.string().optional(),
         cropType: z.string().optional(),
         plantingDate: z.string().optional(),
-        elevationM: z.string().optional(),
       }),
     [t],
   );
@@ -89,7 +91,6 @@ export function FarmZoneFormModal({
       soilType: "",
       cropType: "",
       plantingDate: "",
-      elevationM: "",
     },
   });
 
@@ -104,10 +105,6 @@ export function FarmZoneFormModal({
           soilType: initialZone.soilType ?? "",
           cropType: initialZone.cropType ?? "",
           plantingDate: initialZone.plantingDate ?? "",
-          elevationM:
-            initialZone.elevationM != null
-              ? String(initialZone.elevationM)
-              : "",
         });
       } else {
         reset({
@@ -118,7 +115,6 @@ export function FarmZoneFormModal({
           soilType: "",
           cropType: "",
           plantingDate: "",
-          elevationM: "",
         });
       }
       // Give small delay for layout calculation
@@ -126,6 +122,7 @@ export function FarmZoneFormModal({
         bottomSheetRef.current?.expand();
       }, 50);
     } else {
+      setIsPlantingDatePickerVisible(false);
       bottomSheetRef.current?.close();
     }
   }, [visible, mode, initialZone, reset]);
@@ -139,7 +136,6 @@ export function FarmZoneFormModal({
       soilType: data.soilType?.trim() || undefined,
       cropType: data.cropType?.trim() || undefined,
       plantingDate: data.plantingDate?.trim() || undefined,
-      elevationM: data.elevationM ? Number(data.elevationM) : undefined,
     };
     await onSubmit(payload);
   };
@@ -310,35 +306,38 @@ export function FarmZoneFormModal({
           <Controller
             control={control}
             name="plantingDate"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 text-sm font-medium text-slate-900 dark:text-white"
-                placeholder={t("farm.zoneForm.plantingDatePlaceholder")}
-                placeholderTextColor="#9ca3af"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
-            )}
-          />
-        </FormField>
+            render={({ field: { onChange, value } }) => (
+              <View>
+                <TouchableOpacity
+                  className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 flex-row items-center justify-between bg-white dark:bg-slate-900"
+                  onPress={() => setIsPlantingDatePickerVisible(true)}
+                >
+                  <Text
+                    className={`text-sm font-medium ${value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}
+                  >
+                    {value || t("farm.zoneForm.plantingDatePlaceholder")}
+                  </Text>
+                  <CalendarDays
+                    size={18}
+                    className="text-slate-400 dark:text-slate-500"
+                  />
+                </TouchableOpacity>
 
-        <View className="h-3" />
+                {isPlantingDatePickerVisible ? (
+                  <DateTimePicker
+                    value={toDateInputValue(value)}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    onChange={(_, selectedDate) => {
+                      setIsPlantingDatePickerVisible(false);
 
-        <FormField label={t("farm.zoneForm.elevation")}>
-          <Controller
-            control={control}
-            name="elevationM"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 text-sm font-medium text-slate-900 dark:text-white"
-                placeholder={t("farm.zoneForm.elevationPlaceholder")}
-                placeholderTextColor="#9ca3af"
-                keyboardType="decimal-pad"
-                onBlur={onBlur}
-                onChangeText={onChange}
-                value={value}
-              />
+                      if (selectedDate) {
+                        onChange(formatDateOnly(selectedDate));
+                      }
+                    }}
+                  />
+                ) : null}
+              </View>
             )}
           />
         </FormField>

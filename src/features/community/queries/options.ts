@@ -5,6 +5,8 @@ export const communityKeys = {
   all: () => ["community"] as const,
   feed: (page: number, size: number) =>
     [...communityKeys.all(), "feed", page, size] as const,
+  userPosts: (userId: string, page: number, size: number) =>
+    [...communityKeys.all(), "userPosts", userId, page, size] as const,
   commentsByPost: (postId: string, page: number, size: number) =>
     [...communityKeys.all(), "comments", postId, page, size] as const,
   repliesByComment: (commentId: string, page: number, size: number) =>
@@ -21,6 +23,13 @@ export const getFeedPostsQueryOptions = (page = 0, size = 20) =>
   queryOptions({
     queryKey: communityKeys.feed(page, size),
     queryFn: () => communityApi.getFeedPosts(page, size),
+  });
+
+export const getUserPostsQueryOptions = (userId: string, page = 0, size = 20) =>
+  queryOptions({
+    queryKey: communityKeys.userPosts(userId, page, size),
+    queryFn: () => communityApi.getPostsByUserId(userId, page, size),
+    enabled: Boolean(userId),
   });
 
 export const getCommentsByPostQueryOptions = (

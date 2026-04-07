@@ -2,6 +2,10 @@ import { z } from "zod";
 
 export const signupStep1Schema = z
   .object({
+    fullName: z
+      .string()
+      .min(1, "Full name is required")
+      .max(100, "Full name is too long"),
     email: z.string().min(1, "Email is required").email("Invalid email format"),
     phoneNumber: z
       .string()

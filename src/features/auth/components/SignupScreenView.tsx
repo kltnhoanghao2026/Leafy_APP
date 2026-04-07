@@ -202,6 +202,55 @@ export function SignupScreenView({
           <YStack gap="$3" paddingHorizontal="$2" paddingTop="$1" flex={1}>
             <Controller
               control={control}
+              name="fullName"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <YStack gap="$2">
+                  {(() => {
+                    const hasFullNameError =
+                      touchedFields.fullName && errors.fullName;
+
+                    return (
+                      <>
+                        <Text
+                          fontSize={16}
+                          fontWeight="600"
+                          color={palette.text}
+                        >
+                          Full Name
+                        </Text>
+                        <XStack
+                          {...fieldContainerStyle}
+                          borderColor={
+                            hasFullNameError
+                              ? "$red9"
+                              : palette.textInputPlaceholder
+                          }
+                        >
+                          <Input
+                            {...fieldInputStyle}
+                            placeholder="John Doe"
+                            placeholderTextColor={palette.textInputPlaceholder}
+                            value={value}
+                            onChangeText={onChange}
+                            onBlur={onBlur}
+                            editable={!isLoading}
+                            autoCapitalize="words"
+                          />
+                        </XStack>
+                        {hasFullNameError && (
+                          <Text color="$red10" fontSize="$2">
+                            {errors.fullName?.message}
+                          </Text>
+                        )}
+                      </>
+                    );
+                  })()}
+                </YStack>
+              )}
+            />
+
+            <Controller
+              control={control}
               name="email"
               render={({ field: { onChange, onBlur, value } }) => (
                 <YStack gap="$2">

@@ -42,12 +42,14 @@ export function UpdateProfileScreen() {
 
   const [avatar, setAvatar] = useState("");
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [bio, setBio] = useState("");
 
   useEffect(() => {
     if (!profile) return;
-    setAvatar(profile.avatar ?? "");
+    setAvatar(profile.avatar ?? profile.profilePicture ?? "");
+    setFullName(profile.fullName ?? "");
     setSpecialty(profile.specialty ?? "");
     setBio(profile.bio ?? "");
   }, [profile]);
@@ -63,7 +65,12 @@ export function UpdateProfileScreen() {
         t("screens.profileEdit.successTitle"),
         t("screens.profileEdit.successMessage"),
       );
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
+
+      router.replace("/(main)/profile");
     },
     onError: (mutationError) => {
       const parsed = parseApiError(mutationError);
@@ -74,17 +81,19 @@ export function UpdateProfileScreen() {
   const isDirty = useMemo(() => {
     if (!profile) return false;
     return (
-      (profile.avatar ?? "") !== avatar ||
+      (profile.avatar ?? profile.profilePicture ?? "") !== avatar ||
+      (profile.fullName ?? "") !== fullName ||
       (profile.specialty ?? "") !== specialty ||
       (profile.bio ?? "") !== bio
     );
-  }, [avatar, bio, profile, specialty]);
+  }, [avatar, bio, fullName, profile, specialty]);
 
   const onSave = () => {
     if (!profile) return;
 
     const body: ProfileUpdateRequest = {
       avatar: avatar.trim() || undefined,
+      fullName: fullName.trim() || undefined,
       specialty: specialty.trim() || undefined,
       bio: bio.trim() || undefined,
     };
@@ -228,6 +237,26 @@ export function UpdateProfileScreen() {
               )}
             </Text>
           </View>
+
+          <Pressable
+            className="mt-4 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 dark:border-emerald-700/40 dark:bg-emerald-900/20"
+            onPress={() => router.push("/(main)/profile/certificate")}
+          >
+            <Text className="text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+              {t("screens.profileEdit.expertCertificate")}
+            </Text>
+          </Pressable>
+
+          <Text className="mt-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {t("screens.profileEdit.fullNameLabel")}
+          </Text>
+          <TextInput
+            value={fullName}
+            onChangeText={setFullName}
+            placeholder={t("screens.profileEdit.fullNamePlaceholder")}
+            placeholderTextColor="#94A3B8"
+            className="mt-2 rounded-xl border border-gray-300 px-3 py-3 text-slate-900 dark:border-gray-700 dark:text-slate-100"
+          />
 
           <Text className="mt-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
             {t("screens.profileEdit.specialtyLabel")}

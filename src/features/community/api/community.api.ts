@@ -157,6 +157,25 @@ export const communityApi = {
     };
   },
 
+  getPostsByUserId: async (
+    userId: string,
+    page = 0,
+    size = 20,
+  ): Promise<CommunityPage<Post>> => {
+    const response = await apiClient.get<
+      ApiResponse<CommunityPage<BackendPost>>
+    >(API_ENDPOINTS.COMMUNITY.POSTS_BY_USER(userId), {
+      params: { page, size },
+    });
+
+    const payload = response.data.data;
+
+    return {
+      ...payload,
+      content: (payload.content ?? []).map(mapBackendPostToUiPost),
+    };
+  },
+
   getCommentsByPostId: async (
     postId: string,
     page = 0,

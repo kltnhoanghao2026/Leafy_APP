@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 type FarmPlotOption = {
   id: string;
   label: string;
+  address?: string;
 };
 
 type Props = {
@@ -36,7 +37,8 @@ export function FarmPlotPickerModal({
       emptyText={t("plant.farmPlotModal.noData")}
       keyExtractor={(item) => item.id}
       labelExtractor={(item) => item.label}
-      subtitleExtractor={(item) => item.id}
+      subtitleExtractor={(item) => item.address}
+      searchFields={[(item) => item.label, (item) => item.address]}
       onClose={onClose}
       onSelect={onSelect}
     />

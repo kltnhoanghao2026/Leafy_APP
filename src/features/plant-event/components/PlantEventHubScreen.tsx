@@ -1,12 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Modal,
-  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
 } from "react-native";
 import { Calendar, type DateData } from "react-native-calendars";
@@ -46,16 +43,9 @@ import type {
   CalendarParams,
   EventCategory,
   EventTargetType,
-  EventType,
   PlantEventResponse,
 } from "./plant-event.types";
-import {
-  EVENT_CATEGORY_MAP,
-  EVENT_TYPE_VALUES,
-  getEventCategory,
-  getEventCategoryColors,
-  getEventTypeIcon,
-} from "./plant-event.types";
+import { EVENT_CATEGORY_MAP, getEventCategory } from "./plant-event.types";
 import { usePlantEventsCalendar } from "../queries";
 import { usePlants } from "../../plant/queries";
 import { useFarmPlotsByOwner, useFarmZonesByPlot } from "../../farm/queries";
@@ -64,465 +54,26 @@ import { useColorScheme } from "@/src/hooks/useColorScheme";
 import Colors from "@/src/constants/Colors";
 
 import { CATEGORY_DOT_COLORS, initCalendarLocale } from "./calendarConstants";
-import { EventCard } from "./EventCard";
-import { TargetPickerDropdown } from "./TargetPickerDropdown";
+import { PlantEventHubCategorySection } from "./PlantEventHubCategorySection";
+import {
+  PlantEventHubFilterSheet,
+  type FilterState,
+} from "./PlantEventHubFilterSheet";
 
 const SELECTED_DAY_COLOR = "#2F7F34";
 
 type ViewType = "month" | "week" | "timeline";
 
-// ── Filter constants ─────────────────────────────────────────────────────
-
-const FILTER_CATEGORY_ORDER: EventCategory[] = [
-  "ROUTINE_CARE",
-  "HEALTH_MEDICAL",
-  "GROWTH_LIFECYCLE",
-];
-
-const GROUPED_EVENT_TYPES: { category: EventCategory; types: EventType[] }[] =
-  FILTER_CATEGORY_ORDER.map((category) => ({
-    category,
-    types: EVENT_TYPE_VALUES.filter((t) => EVENT_CATEGORY_MAP[t] === category),
-  }));
-
-// ── Filter sheet ─────────────────────────────────────────────────────────
-
-type FilterState = {
-  categories: Set<EventCategory>;
-  types: Set<EventType>;
-};
-
-type FarmPlot = { id: string; name: string };
-type FarmZone = { id: string; zoneName: string };
-type Plant = { id: string; nickName?: string | null; plantNumber: string };
-
-type TargetProps = {
-  targetType: EventTargetType;
-  setTargetType: (t: EventTargetType) => void;
-  selectedId: string;
-  selectedName: string;
-  farmPlots: FarmPlot[];
-  plants: Plant[];
-  farmZonesData: FarmZone[];
-  farmZonesLoading: boolean;
-  selectedPlotIdForZones: string;
-  setSelectedPlotIdForZones: (id: string) => void;
-  onSelectTarget: (id: string, name: string, type: EventTargetType) => void;
-  primaryColor: string;
-};
-
-function EventFilterSheet({
-  visible,
-  filter,
-  onApply,
-  onClose,
-  targetProps,
-}: {
-  visible: boolean;
-  filter: FilterState;
-  onApply: (f: FilterState) => void;
-  onClose: () => void;
-  targetProps: TargetProps;
-}) {
-  const { t } = useTranslation();
-  const { height: viewportHeight } = useWindowDimensions();
-  const [local, setLocal] = useState<FilterState>(() => ({
-    categories: new Set(filter.categories),
-    types: new Set(filter.types),
-  }));
-
-  // Re-sync local state when sheet opens
-  useEffect(() => {
-    if (!visible) return;
-    setLocal({
-      categories: new Set(filter.categories),
-      types: new Set(filter.types),
-    });
-  }, [visible, filter.categories, filter.types]);
-
-  const toggleCategory = (cat: EventCategory) => {
-    setLocal((prev) => {
-      const cats = new Set(prev.categories);
-      const types = new Set(prev.types);
-      if (cats.has(cat)) {
-        cats.delete(cat);
-        // also clear any individual types from this category
-        GROUPED_EVENT_TYPES.find((g) => g.category === cat)?.types.forEach(
-          (tp) => types.delete(tp),
-        );
-      } else {
-        cats.add(cat);
-        // clear individual type overrides for this category
-        GROUPED_EVENT_TYPES.find((g) => g.category === cat)?.types.forEach(
-          (tp) => types.delete(tp),
-        );
-      }
-      return { categories: cats, types };
-    });
-  };
-
-  const toggleType = (type: EventType, category: EventCategory) => {
-    setLocal((prev) => {
-      const cats = new Set(prev.categories);
-      const types = new Set(prev.types);
-      // If whole category was selected, switch to individual selection
-      if (cats.has(category)) {
-        cats.delete(category);
-        // activate all siblings except this one
-        GROUPED_EVENT_TYPES.find((g) => g.category === category)?.types.forEach(
-          (tp) => {
-            if (tp !== type) types.add(tp);
-          },
-        );
-      } else if (types.has(type)) {
-        types.delete(type);
-      } else {
-        types.add(type);
-        // if all siblings are now selected, promote to category-level
-        const siblings =
-          GROUPED_EVENT_TYPES.find((g) => g.category === category)?.types ?? [];
-        if (siblings.every((tp) => types.has(tp))) {
-          siblings.forEach((tp) => types.delete(tp));
-          cats.add(category);
-        }
-      }
-      return { categories: cats, types };
-    });
-  };
-
-  const isAnythingActive = local.categories.size > 0 || local.types.size > 0;
-
-  const isTypeVisible = (type: EventType, category: EventCategory) =>
-    local.categories.has(category) || local.types.has(type);
-
-  const clearAll = () => setLocal({ categories: new Set(), types: new Set() });
-
-  return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <Pressable
-        style={{
-          flex: 1,
-          backgroundColor: "rgba(0,0,0,0.4)",
-          justifyContent: "flex-end",
-        }}
-        onPress={onClose}
-      >
-        <Pressable onPress={(e) => e.stopPropagation()}>
-          <View
-            className="rounded-t-3xl bg-white dark:bg-slate-900 px-4 pt-2 pb-5"
-            style={{ height: viewportHeight }}
-          >
-            {/* Drag Handle */}
-            <View className="items-center mb-1.5">
-              <View className="w-12 h-1 rounded-full bg-slate-200 dark:bg-slate-700" />
-            </View>
-
-            {/* Header */}
-            <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-base font-bold text-slate-800 dark:text-slate-100">
-                {t("calendar.filter.title")}
-              </Text>
-              <View className="flex-row items-center gap-3">
-                {isAnythingActive && (
-                  <TouchableOpacity onPress={clearAll} activeOpacity={0.7}>
-                    <Text className="text-xs font-semibold text-red-500">
-                      {t("calendar.filter.clearAll")}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-                <TouchableOpacity
-                  onPress={onClose}
-                  className="rounded-full bg-slate-100 p-1.5 dark:bg-slate-800"
-                  activeOpacity={0.7}
-                >
-                  <X size={16} className="text-slate-500 dark:text-slate-400" />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Category + type list */}
-            <ScrollView
-              className="flex-1"
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 8 }}
-            >
-              {/* Target section */}
-              <Text className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t("calendar.filter.targetSection")}
-              </Text>
-              <View className="mb-4 rounded-2xl bg-slate-50 p-3 dark:bg-slate-800">
-                <TargetPickerDropdown
-                  targetType={targetProps.targetType}
-                  setTargetType={targetProps.setTargetType}
-                  selectedId={targetProps.selectedId}
-                  farmPlots={targetProps.farmPlots}
-                  plants={targetProps.plants}
-                  farmZonesData={targetProps.farmZonesData}
-                  farmZonesLoading={targetProps.farmZonesLoading}
-                  selectedPlotIdForZones={targetProps.selectedPlotIdForZones}
-                  setSelectedPlotIdForZones={
-                    targetProps.setSelectedPlotIdForZones
-                  }
-                  onSelectTarget={(id, name, type) => {
-                    targetProps.onSelectTarget(id, name, type);
-                  }}
-                  primaryColor={targetProps.primaryColor}
-                />
-              </View>
-
-              {/* Event type section */}
-              <Text className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t("calendar.filter.typeSection")}
-              </Text>
-              {GROUPED_EVENT_TYPES.map(({ category, types }) => {
-                const catColors = {
-                  ROUTINE_CARE: {
-                    activeBg: "#EFF6FF",
-                    activeBorder: "#93C5FD",
-                    activeText: "#2563EB",
-                    dot: CATEGORY_DOT_COLORS.ROUTINE_CARE,
-                  },
-                  HEALTH_MEDICAL: {
-                    activeBg: "#FFF7ED",
-                    activeBorder: "#FDBA74",
-                    activeText: "#EA580C",
-                    dot: CATEGORY_DOT_COLORS.HEALTH_MEDICAL,
-                  },
-                  GROWTH_LIFECYCLE: {
-                    activeBg: "#ECFDF5",
-                    activeBorder: "#6EE7B7",
-                    activeText: "#059669",
-                    dot: CATEGORY_DOT_COLORS.GROWTH_LIFECYCLE,
-                  },
-                }[category];
-
-                const catActive = local.categories.has(category);
-                const someTypesActive = types.some((tp) => local.types.has(tp));
-
-                return (
-                  <View key={category} className="mb-4">
-                    {/* Category row */}
-                    <TouchableOpacity
-                      className="flex-row items-center gap-2 rounded-xl px-3 py-2.5 mb-2"
-                      style={{
-                        backgroundColor: catActive
-                          ? catColors.activeBg
-                          : "#F8FAFC",
-                        borderWidth: 1.5,
-                        borderColor: catActive
-                          ? catColors.activeBorder
-                          : "#E2E8F0",
-                      }}
-                      onPress={() => toggleCategory(category)}
-                      activeOpacity={0.7}
-                    >
-                      <View
-                        style={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: 5,
-                          backgroundColor: catColors.dot,
-                        }}
-                      />
-                      <Text
-                        className="flex-1 text-sm font-bold"
-                        style={{
-                          color: catActive ? catColors.activeText : "#475569",
-                        }}
-                      >
-                        {t(`plantEvent.eventCategory.${category}`)}
-                      </Text>
-                      {/* check indicator */}
-                      <View
-                        style={{
-                          width: 18,
-                          height: 18,
-                          borderRadius: 9,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          backgroundColor: catActive
-                            ? catColors.activeBorder
-                            : "#E2E8F0",
-                        }}
-                      >
-                        {catActive && (
-                          <View
-                            style={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: 4,
-                              backgroundColor: catColors.activeText,
-                            }}
-                          />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-
-                    {/* Individual types */}
-                    <View className="flex-row flex-wrap gap-2 pl-2">
-                      {types.map((type) => {
-                        const Icon = getEventTypeIcon(type);
-                        const colors = getEventCategoryColors(type);
-                        const typeActive = isTypeVisible(type, category);
-                        return (
-                          <TouchableOpacity
-                            key={type}
-                            className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${
-                              typeActive
-                                ? `${colors.bg} ${colors.darkBg}`
-                                : "bg-slate-100 dark:bg-slate-800"
-                            }`}
-                            style={{
-                              borderWidth: 1,
-                              borderColor: typeActive
-                                ? catColors.activeBorder
-                                : "transparent",
-                            }}
-                            onPress={() => toggleType(type, category)}
-                            activeOpacity={0.7}
-                          >
-                            <Icon
-                              size={12}
-                              className={
-                                typeActive
-                                  ? `${colors.text} ${colors.darkText}`
-                                  : "text-slate-400 dark:text-slate-500"
-                              }
-                            />
-                            <Text
-                              className={`text-[11px] font-semibold ${
-                                typeActive
-                                  ? `${colors.text} ${colors.darkText}`
-                                  : "text-slate-500 dark:text-slate-400"
-                              }`}
-                            >
-                              {t(`plantEvent.eventType.${type}`)}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-                  </View>
-                );
-              })}
-            </ScrollView>
-
-            {/* Apply button */}
-            <TouchableOpacity
-              className="mt-2 items-center rounded-2xl bg-green-700 py-3 active:bg-green-800"
-              onPress={() => {
-                onApply(local);
-                onClose();
-              }}
-              activeOpacity={0.85}
-            >
-              <Text className="text-sm font-bold text-white">
-                {t("calendar.filter.apply")}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-}
-
-// ── Collapsible category section ─────────────────────────────────────────
-
-const CATEGORY_ACCENT: Record<
-  EventCategory,
-  { border: string; headerBg: string; countBg: string; countText: string }
-> = {
-  ROUTINE_CARE: {
-    border: "border-blue-200 dark:border-blue-800",
-    headerBg: "bg-blue-50 dark:bg-blue-900/20",
-    countBg: "bg-blue-100 dark:bg-blue-800/40",
-    countText: "text-blue-600 dark:text-blue-400",
-  },
-  HEALTH_MEDICAL: {
-    border: "border-orange-200 dark:border-orange-800",
-    headerBg: "bg-orange-50 dark:bg-orange-900/20",
-    countBg: "bg-orange-100 dark:bg-orange-800/40",
-    countText: "text-orange-600 dark:text-orange-400",
-  },
-  GROWTH_LIFECYCLE: {
-    border: "border-emerald-200 dark:border-emerald-800",
-    headerBg: "bg-emerald-50 dark:bg-emerald-900/20",
-    countBg: "bg-emerald-100 dark:bg-emerald-800/40",
-    countText: "text-emerald-600 dark:text-emerald-400",
-  },
-};
-
-function CollapsibleCategorySection({
-  category,
-  events,
-  onPressEvent,
-}: {
-  category: EventCategory;
-  events: PlantEventResponse[];
-  onPressEvent?: (eventId: string) => void;
-}) {
-  const { t } = useTranslation();
-  const [collapsed, setCollapsed] = useState(false);
-  const accent = CATEGORY_ACCENT[category];
-
-  return (
-    <View
-      className={`mb-2 overflow-hidden rounded-2xl border ${accent.border}`}
-    >
-      {/* Header row */}
-      <TouchableOpacity
-        className={`flex-row items-center justify-between px-3 py-2.5 ${accent.headerBg}`}
-        onPress={() => setCollapsed((v) => !v)}
-        activeOpacity={0.7}
-      >
-        <View className="flex-row items-center gap-2">
-          <Text className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-            {t(`plantEvent.eventCategory.${category}`)}
-          </Text>
-          <View className={`rounded-full px-1.5 py-0.5 ${accent.countBg}`}>
-            <Text className={`text-[10px] font-bold ${accent.countText}`}>
-              {events.length}
-            </Text>
-          </View>
-        </View>
-        {collapsed ? (
-          <ChevronDown
-            size={14}
-            className="text-slate-400 dark:text-slate-500"
-          />
-        ) : (
-          <ChevronUp size={14} className="text-slate-400 dark:text-slate-500" />
-        )}
-      </TouchableOpacity>
-
-      {/* Events */}
-      {!collapsed && (
-        <View className="px-2 pt-1 pb-2">
-          {events.map((event) => (
-            <EventCard
-              key={event.id}
-              event={event}
-              onPressEvent={onPressEvent}
-            />
-          ))}
-        </View>
-      )}
-    </View>
-  );
-}
-
 export type PlantEventHubScreenProps = {
   defaultView?: ViewType;
+  hideFilter?: boolean;
+  detailReturnTo?: "/(main)/plant-events" | "/(main)/diagnosis";
 };
 
 export function PlantEventHubScreen({
   defaultView = "month",
+  hideFilter = false,
+  detailReturnTo = "/(main)/plant-events",
 }: PlantEventHubScreenProps) {
   const { t, i18n } = useTranslation();
   const router = useRouter();
@@ -665,7 +216,13 @@ export function PlantEventHubScreen({
   };
 
   const handleNavigateToEvent = (eventId: string) => {
-    router.push(`/(main)/plant-events/${eventId}`);
+    router.push({
+      pathname: "/(main)/plant-events/[id]",
+      params: {
+        id: eventId,
+        returnTo: detailReturnTo,
+      },
+    });
   };
 
   const handleAddEvent = () => {
@@ -878,7 +435,7 @@ export function PlantEventHubScreen({
           const catEvents = grouped[cat];
           if (catEvents.length === 0) return null;
           return (
-            <CollapsibleCategorySection
+            <PlantEventHubCategorySection
               key={cat}
               category={cat}
               events={catEvents}
@@ -1451,70 +1008,72 @@ export function PlantEventHubScreen({
               </View>
 
               {/* Filter bar */}
-              <TouchableOpacity
-                className="mt-2 w-full flex-row items-center justify-between rounded-xl px-3 py-2"
-                style={{
-                  backgroundColor: isFiltered
-                    ? palette.primary + "14"
-                    : scheme === "dark"
-                      ? "#1e293b"
-                      : "#f8fafc",
-                  borderWidth: 1,
-                  borderColor: isFiltered
-                    ? palette.primary + "55"
-                    : scheme === "dark"
-                      ? "#334155"
-                      : "#e2e8f0",
-                }}
-                onPress={() => setShowFilter(true)}
-                activeOpacity={0.7}
-              >
-                <View className="flex-row items-center gap-2 flex-1">
-                  <ListFilter
-                    size={14}
-                    color={isFiltered ? palette.primary : palette.textGray}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "600",
-                      color: isFiltered ? palette.primary : palette.textGray,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {isFiltered
-                      ? t("calendar.filter.active", {
-                          count:
-                            activeFilter.categories.size +
-                            activeFilter.types.size,
-                        })
-                      : t("calendar.filter.button")}
-                  </Text>
-                </View>
-
-                <View className="ml-2 flex-row items-center gap-2">
-                  {isFiltered && (
-                    <TouchableOpacity
-                      onPress={(e) => {
-                        e.stopPropagation();
-                        setActiveFilter({
-                          categories: new Set(),
-                          types: new Set(),
-                        });
+              {!hideFilter && (
+                <TouchableOpacity
+                  className="mt-2 w-full flex-row items-center justify-between rounded-xl px-3 py-2"
+                  style={{
+                    backgroundColor: isFiltered
+                      ? palette.primary + "14"
+                      : scheme === "dark"
+                        ? "#1e293b"
+                        : "#f8fafc",
+                    borderWidth: 1,
+                    borderColor: isFiltered
+                      ? palette.primary + "55"
+                      : scheme === "dark"
+                        ? "#334155"
+                        : "#e2e8f0",
+                  }}
+                  onPress={() => setShowFilter(true)}
+                  activeOpacity={0.7}
+                >
+                  <View className="flex-row items-center gap-2 flex-1">
+                    <ListFilter
+                      size={14}
+                      color={isFiltered ? palette.primary : palette.textGray}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: "600",
+                        color: isFiltered ? palette.primary : palette.textGray,
                       }}
-                      className="rounded-full p-1"
-                      hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                      activeOpacity={0.6}
+                      numberOfLines={1}
                     >
-                      <X size={12} color={palette.primary} />
-                    </TouchableOpacity>
-                  )}
-                  <ChevronRight
-                    size={14}
-                    color={isFiltered ? palette.primary : palette.textGray}
-                  />
-                </View>
-              </TouchableOpacity>
+                      {isFiltered
+                        ? t("calendar.filter.active", {
+                            count:
+                              activeFilter.categories.size +
+                              activeFilter.types.size,
+                          })
+                        : t("calendar.filter.button")}
+                    </Text>
+                  </View>
+
+                  <View className="ml-2 flex-row items-center gap-2">
+                    {isFiltered && (
+                      <TouchableOpacity
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          setActiveFilter({
+                            categories: new Set(),
+                            types: new Set(),
+                          });
+                        }}
+                        className="rounded-full p-1"
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        activeOpacity={0.6}
+                      >
+                        <X size={12} color={palette.primary} />
+                      </TouchableOpacity>
+                    )}
+                    <ChevronRight
+                      size={14}
+                      color={isFiltered ? palette.primary : palette.textGray}
+                    />
+                  </View>
+                </TouchableOpacity>
+              )}
 
               {/* Week view: sticky week nav + day strip */}
               {activeView === "week" && (
@@ -1721,7 +1280,7 @@ export function PlantEventHubScreen({
       )}
 
       {/* ── Filter sheet ─────────────────────────────────────────────── */}
-      <EventFilterSheet
+      <PlantEventHubFilterSheet
         visible={showFilter}
         filter={activeFilter}
         onApply={(f) => setActiveFilter(f)}

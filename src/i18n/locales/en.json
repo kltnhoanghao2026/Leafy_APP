@@ -112,17 +112,23 @@
       "avatarUploaded": "Avatar uploaded successfully.",
       "avatarPermissionDenied": "Photo library permission is required to change avatar.",
       "roleLabel": "Role",
+      "fullNameLabel": "Full Name",
+      "fullNamePlaceholder": "Enter your full name",
       "specialtyLabel": "Specialty",
       "specialtyPlaceholder": "Enter your specialty",
       "bioLabel": "Bio",
       "bioPlaceholder": "A short bio about you",
       "save": "Save Changes",
       "saving": "Saving...",
+      "expertCertificate": "Apply for expert certificate",
       "retry": "Retry",
       "successTitle": "Success",
       "successMessage": "Profile updated successfully.",
       "errorTitle": "Error",
       "loadErrorTitle": "Failed to load profile"
+    },
+    "profileCertificate": {
+      "title": "Expert Certificate"
     },
     "settings": {
       "title": "Settings",
@@ -150,6 +156,33 @@
     }
   },
   "community": {
+    "tabs": {
+      "feed": "Feed",
+      "messages": "Messages"
+    },
+    "messages": {
+      "title": "Messages",
+      "subtitle": "Stay close to your farming circle",
+      "searchPlaceholder": "Search people or threads",
+      "newMessage": "New message",
+      "requests": "Requests",
+      "loading": "Syncing conversations...",
+      "typing": "Typing...",
+      "you": "You",
+      "emptyTitle": "No conversations yet",
+      "emptyDescription": "Start a chat with experts or nearby farmers to get quick advice.",
+      "emptyAction": "Start your first message",
+      "pinned": "Pinned"
+    },
+    "conversation": {
+      "title": "Conversation",
+      "startHint": "Start of conversation",
+      "placeholder": "Type your message...",
+      "send": "Send",
+      "noThreadTitle": "Conversation not found",
+      "noThreadDescription": "This thread may have been removed or is currently unavailable.",
+      "backToMessages": "Back to messages"
+    },
     "composer": {
       "title": "Create Post",
       "placeholder": "Share your garden status...",
@@ -173,7 +206,43 @@
     "aboutUs": "About us",
     "logout": "Log out",
     "logoutConfirmTitle": "Log out",
-    "logoutConfirmMessage": "Are you sure you want to log out?"
+    "logoutConfirmMessage": "Are you sure you want to log out?",
+    "expertApplication": {
+      "sectionTitle": "Expert verification",
+      "applyTitle": "Apply to become an expert",
+      "applyDescription": "Submit your professional certificate for admin review.",
+      "alreadyExpertTitle": "You are an expert",
+      "alreadyExpertDescription": "Your profile is already verified as an expert.",
+      "approvedCertificates": "Approved certificates",
+      "certificateTitle": "Certificate title",
+      "certificateTitlePlaceholder": "Example: Plant Pathology Certificate",
+      "issuedBy": "Issued by",
+      "issuedByPlaceholder": "Example: Vietnam Plant Protection Association",
+      "issueDate": "Issue date",
+      "proof": "Certificate proof",
+      "uploadProof": "Upload proof image",
+      "uploadingProof": "Uploading proof...",
+      "proofUploaded": "Certificate proof uploaded successfully.",
+      "proofPermissionDenied": "Photo library permission is required to upload proof.",
+      "submit": "Submit application",
+      "submitting": "Submitting...",
+      "successTitle": "Submitted",
+      "successMessage": "Your certificate application has been sent and is pending review.",
+      "errorTitle": "Application error",
+      "requiredFields": "Please fill in title, issuer, issue date and upload proof.",
+      "invalidIssueDate": "Issue date must be in format YYYY-MM-DD.",
+      "pendingLabel": "Application pending review. Request ID: {{requestId}}"
+    }
+  },
+  "profileDetail": {
+    "infoSection": "Information",
+    "specialty": "Specialty",
+    "email": "Email",
+    "phone": "Phone",
+    "joinedDate": "Member since",
+    "about": "About",
+    "posts": "Posts",
+    "noPosts": "No posts found."
   },
   "mainNav": {
     "drawer": {
@@ -281,8 +350,8 @@
       "soilTypePlaceholder": "Example: Basalt red soil",
       "cropType": "Crop type",
       "cropTypePlaceholder": "Example: Coffee",
-      "plantingDate": "Planting date (YYYY-MM-DD)",
-      "plantingDatePlaceholder": "Example: 2026-04-01",
+      "plantingDate": "Planting date",
+      "plantingDatePlaceholder": "Select planting date",
       "elevation": "Elevation (m)",
       "elevationPlaceholder": "Example: 120"
     },
@@ -700,6 +769,53 @@
       "apply": "Apply filter",
       "targetSection": "Target",
       "typeSection": "Event type"
+    }
+  },
+  "ragChat": {
+    "title": "AI Assistant",
+    "inputPlaceholder": "Ask AI about your crops...",
+    "errorProcessing": "Sorry, an error occurred. Please try again later.",
+    "askAI": "Ask AI",
+    "startChatWithAI": "Start chatting with the AI assistant for recommendations...",
+    "reviewer": {
+      "title": "Treatment Plan Reviewer",
+      "subtitle": "Review, edit, and submit this plan to create plant events.",
+      "cardTitle": "Treatment plan",
+      "cardSchedule": "Schedule",
+      "openAction": "Review, edit, and submit",
+      "missingDraftTitle": "No treatment plan to review",
+      "missingDraftDescription": "Please generate a treatment plan from AI chat first.",
+      "backToChat": "Back to AI chat",
+      "selectedTarget": "Selected",
+      "targetTitle": "Event target",
+      "scheduleTitle": "Planned events",
+      "requiredInputsTitle": "Required inputs",
+      "safetyTitle": "Safety warnings",
+      "successIndicatorsTitle": "Success indicators",
+      "step": "Step",
+      "dayOffset": "Day",
+      "schedule": "Schedule",
+      "chemicalHint": "Treatment application events should include PHI and PPE safety details.",
+      "moreEvents": "+{{count}} more events in reviewer",
+      "noEventsOnSelectedDate": "No events on this day. Select another date to review events.",
+      "undatedEvents": "Events without date",
+      "cancel": "Cancel",
+      "submit": "Submit plan",
+      "summary": {
+        "disease": "Disease",
+        "severity": "Severity",
+        "urgency": "Urgency",
+        "confidence": "Confidence",
+        "cost": "Estimated cost",
+        "planId": "RAG Plan ID"
+      },
+      "errors": {
+        "missingDraft": "No treatment plan draft found.",
+        "targetRequired": "Please select a target before submitting.",
+        "diseaseRequired": "Disease name is required before submission.",
+        "scheduleRequired": "The plan must contain at least one event.",
+        "submitFailed": "Could not submit treatment plan. Please try again."
+      }
     }
   }
 }

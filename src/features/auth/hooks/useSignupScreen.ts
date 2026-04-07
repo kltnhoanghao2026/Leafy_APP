@@ -27,6 +27,7 @@ export function useSignupScreen() {
     resolver: zodResolver(signupStep1Schema),
     mode: "onChange",
     defaultValues: {
+      fullName: "",
       email: "",
       phoneNumber: "",
       password: "",
@@ -37,6 +38,7 @@ export function useSignupScreen() {
   const onSubmit = async (data: SignupStep1Values) => {
     try {
       const response = await initiateMutation.mutateAsync({
+        fullName: data.fullName,
         email: data.email,
         phoneNumber: data.phoneNumber || undefined,
         password: data.password,

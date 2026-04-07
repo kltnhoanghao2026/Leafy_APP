@@ -25,6 +25,7 @@ export const ROUTES = {
     PROFILE: "/profile",
     FARM: "/farm",
     PLANTS: "/plants",
+    AI_CHAT: "/ai-chat",
   },
 
   // Modal routes
@@ -79,6 +80,8 @@ export const API_ENDPOINTS = {
     ME: "/profiles/me",
     GET: (profileId: string) => `/profiles/${profileId}`,
     GET_BY_USER: (userId: string) => `/profiles/user/${userId}`,
+    APPROVAL_REQUESTS: (profileId: string) =>
+      `/profiles/${profileId}/approval-requests`,
   },
 
   FILES: {
@@ -104,6 +107,7 @@ export const API_ENDPOINTS = {
 
   COMMUNITY: {
     FEED_POSTS: "/posts/feed",
+    POSTS_BY_USER: (userId: string) => `/posts/user/${userId}`,
     COMMENTS_BY_POST: (postId: string) => `/comments/posts/${postId}`,
     REPLIES_BY_COMMENT: (commentId: string) => `/comments/${commentId}/replies`,
     VOTES_BY_POST: (postId: string) => `/votes/posts/${postId}`,
@@ -145,6 +149,22 @@ export const API_ENDPOINTS = {
     BY_FARM_ZONE: (farmZoneId: string) =>
       `/plant-events/farm-zone/${farmZoneId}`,
     CALENDAR: "/plant-events/calendar",
+  },
+
+  TREATMENT_PLANS: {
+    CREATE: "/treatment-plans",
+    ITEM: (planId: string) => `/treatment-plans/${planId}`,
+    MY: "/treatment-plans/me",
+    BY_PLANT: (plantId: string) => `/treatment-plans/plant/${plantId}`,
+    BY_FARM_PLOT: (farmPlotId: string) =>
+      `/treatment-plans/farm-plot/${farmPlotId}`,
+    BY_FARM_ZONE: (farmZoneId: string) =>
+      `/treatment-plans/farm-zone/${farmZoneId}`,
+  },
+
+  RAG: {
+    CHAT: "/rag/v1/chat",
+    CHAT_STREAM: "/rag/v1/chat/stream",
   },
 } as const;
 

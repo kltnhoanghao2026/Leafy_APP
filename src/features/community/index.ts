@@ -1,9 +1,18 @@
 // Public API for the community feature
-export { CommunityScreen, ComposerScreen } from "./components";
+export {
+  CommunityScreen,
+  CommunityMessagesPanel,
+  ConversationScreen,
+  ComposerScreen,
+  PostCard,
+  ComposerCard,
+} from "./components";
+export type { Post } from "./components/community.types";
 export { communityApi } from "./api/community.api";
 export {
   communityKeys,
   getFeedPostsQueryOptions,
+  getUserPostsQueryOptions,
   getCommentsByPostQueryOptions,
 } from "./queries/options";
 export { useHandleVoteMutation } from "./queries/mutations";

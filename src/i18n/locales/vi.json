@@ -10,10 +10,10 @@
     "save": "Lưu",
     "add": "Thêm",
     "update": "Cập nhật",
-    "edit": "Sửa",
+    "edit": "Chỉnh sửa",
     "loading": "Đang tải dữ liệu...",
     "status": {
-      "active": "Đang hoạt động",
+      "active": "Hoạt động",
       "inactive": "Tạm dừng",
       "archived": "Lưu trữ",
       "online": "Trực tuyến",
@@ -112,17 +112,23 @@
       "avatarUploaded": "Ảnh đại diện đã được tải lên.",
       "avatarPermissionDenied": "Bạn cần cấp quyền thư viện ảnh để đổi ảnh đại diện.",
       "roleLabel": "Vai trò",
+      "fullNameLabel": "Họ và tên",
+      "fullNamePlaceholder": "Nhập họ và tên",
       "specialtyLabel": "Chuyên môn",
       "specialtyPlaceholder": "Nhập chuyên môn của bạn",
       "bioLabel": "Giới thiệu",
       "bioPlaceholder": "Mô tả ngắn về bạn",
       "save": "Lưu thay đổi",
       "saving": "Đang lưu...",
+      "expertCertificate": "Đăng ký chứng chỉ chuyên gia",
       "retry": "Thử lại",
       "successTitle": "Thành công",
       "successMessage": "Hồ sơ đã được cập nhật.",
       "errorTitle": "Lỗi",
       "loadErrorTitle": "Không thể tải hồ sơ"
+    },
+    "profileCertificate": {
+      "title": "Chứng chỉ chuyên gia"
     },
     "settings": {
       "title": "Cài đặt",
@@ -150,6 +156,33 @@
     }
   },
   "community": {
+    "tabs": {
+      "feed": "Bảng tin",
+      "messages": "Tin nhắn"
+    },
+    "messages": {
+      "title": "Tin nhắn",
+      "subtitle": "Kết nối nhanh với cộng đồng nông dân",
+      "searchPlaceholder": "Tìm người hoặc cuộc trò chuyện",
+      "newMessage": "Tin nhắn mới",
+      "requests": "Lời mời",
+      "loading": "Đang đồng bộ cuộc trò chuyện...",
+      "typing": "Đang nhập...",
+      "you": "Bạn",
+      "emptyTitle": "Chưa có cuộc trò chuyện nào",
+      "emptyDescription": "Hãy nhắn cho chuyên gia hoặc nông dân gần bạn để nhận tư vấn nhanh.",
+      "emptyAction": "Bắt đầu nhắn tin",
+      "pinned": "Ghim"
+    },
+    "conversation": {
+      "title": "Cuộc trò chuyện",
+      "startHint": "Bắt đầu cuộc trò chuyện",
+      "placeholder": "Nhập tin nhắn...",
+      "send": "Gửi",
+      "noThreadTitle": "Không tìm thấy cuộc trò chuyện",
+      "noThreadDescription": "Cuộc trò chuyện này có thể đã bị xóa hoặc tạm thời không khả dụng.",
+      "backToMessages": "Quay lại tin nhắn"
+    },
     "composer": {
       "title": "Tạo bài viết",
       "placeholder": "Chia sẻ tình trạng vườn của bạn...",
@@ -173,7 +206,43 @@
     "aboutUs": "Về chúng tôi",
     "logout": "Đăng xuất",
     "logoutConfirmTitle": "Đăng xuất",
-    "logoutConfirmMessage": "Bạn có chắc chắn muốn đăng xuất?"
+    "logoutConfirmMessage": "Bạn có chắc chắn muốn đăng xuất?",
+    "expertApplication": {
+      "sectionTitle": "Xác minh chuyên gia",
+      "applyTitle": "Đăng ký trở thành chuyên gia",
+      "applyDescription": "Gửi chứng chỉ chuyên môn để quản trị viên xét duyệt.",
+      "alreadyExpertTitle": "Bạn đã là chuyên gia",
+      "alreadyExpertDescription": "Hồ sơ của bạn đã được xác minh là chuyên gia.",
+      "approvedCertificates": "Chứng chỉ đã duyệt",
+      "certificateTitle": "Tên chứng chỉ",
+      "certificateTitlePlaceholder": "Ví dụ: Chứng chỉ Bệnh học cây trồng",
+      "issuedBy": "Đơn vị cấp",
+      "issuedByPlaceholder": "Ví dụ: Hội Bảo vệ thực vật Việt Nam",
+      "issueDate": "Ngày cấp",
+      "proof": "Minh chứng chứng chỉ",
+      "uploadProof": "Tải ảnh minh chứng",
+      "uploadingProof": "Đang tải minh chứng...",
+      "proofUploaded": "Đã tải minh chứng chứng chỉ thành công.",
+      "proofPermissionDenied": "Bạn cần cấp quyền thư viện ảnh để tải minh chứng.",
+      "submit": "Gửi đơn đăng ký",
+      "submitting": "Đang gửi...",
+      "successTitle": "Đã gửi",
+      "successMessage": "Đơn chứng chỉ của bạn đã được gửi và đang chờ duyệt.",
+      "errorTitle": "Lỗi đăng ký",
+      "requiredFields": "Vui lòng nhập tên chứng chỉ, đơn vị cấp, ngày cấp và tải minh chứng.",
+      "invalidIssueDate": "Ngày cấp phải đúng định dạng YYYY-MM-DD.",
+      "pendingLabel": "Đơn đang chờ duyệt. Mã yêu cầu: {{requestId}}"
+    }
+  },
+  "profileDetail": {
+    "infoSection": "Thông tin",
+    "specialty": "Chuyên môn",
+    "email": "Email",
+    "phone": "Số điện thoại",
+    "joinedDate": "Thành viên từ",
+    "about": "Giới thiệu",
+    "posts": "Bài viết",
+    "noPosts": "Chưa có bài viết nào."
   },
   "mainNav": {
     "drawer": {
@@ -281,8 +350,8 @@
       "soilTypePlaceholder": "Ví dụ: Đất đỏ bazan",
       "cropType": "Loại cây trồng",
       "cropTypePlaceholder": "Ví dụ: Cà phê",
-      "plantingDate": "Ngày trồng (YYYY-MM-DD)",
-      "plantingDatePlaceholder": "Ví dụ: 2026-04-01",
+      "plantingDate": "Ngày trồng",
+      "plantingDatePlaceholder": "Chọn ngày trồng",
       "elevation": "Độ cao (m)",
       "elevationPlaceholder": "Ví dụ: 120"
     },
@@ -700,6 +769,53 @@
       "apply": "Áp dụng",
       "targetSection": "Đối tượng",
       "typeSection": "Loại sự kiện"
+    }
+  },
+  "ragChat": {
+    "title": "Trợ lý AI",
+    "inputPlaceholder": "Hỏi AI về cây trồng...",
+    "errorProcessing": "Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.",
+    "askAI": "Hỏi AI",
+    "startChatWithAI": "Bắt đầu cuộc trò chuyện với Trợ lý AI để nhận tư vấn...",
+    "reviewer": {
+      "title": "Duyệt kế hoạch điều trị",
+      "subtitle": "Xem lại, chỉnh sửa và gửi kế hoạch để tạo sự kiện cây trồng.",
+      "cardTitle": "Kế hoạch điều trị",
+      "cardSchedule": "Lịch thực hiện",
+      "openAction": "Xem lại, chỉnh sửa và gửi",
+      "missingDraftTitle": "Không có kế hoạch để duyệt",
+      "missingDraftDescription": "Hãy tạo kế hoạch điều trị từ AI chat trước.",
+      "backToChat": "Quay lại AI chat",
+      "selectedTarget": "Đối tượng đã chọn",
+      "targetTitle": "Đối tượng áp dụng sự kiện",
+      "scheduleTitle": "Danh sách sự kiện",
+      "requiredInputsTitle": "Vật tư cần chuẩn bị",
+      "safetyTitle": "Cảnh báo an toàn",
+      "successIndicatorsTitle": "Dấu hiệu hồi phục",
+      "step": "Bước",
+      "dayOffset": "Ngày",
+      "schedule": "Lịch",
+      "chemicalHint": "Sự kiện áp dụng điều trị nên có đầy đủ PHI và PPE để đảm bảo an toàn.",
+      "moreEvents": "+{{count}} sự kiện nữa trong màn hình duyệt",
+      "noEventsOnSelectedDate": "Không có sự kiện trong ngày này. Hãy chọn ngày khác để xem chi tiết.",
+      "undatedEvents": "Sự kiện chưa có ngày",
+      "cancel": "Hủy",
+      "submit": "Gửi kế hoạch",
+      "summary": {
+        "disease": "Bệnh",
+        "severity": "Mức độ",
+        "urgency": "Khẩn cấp",
+        "confidence": "Độ tin cậy",
+        "cost": "Chi phí ước tính",
+        "planId": "RAG Plan ID"
+      },
+      "errors": {
+        "missingDraft": "Không tìm thấy dữ liệu kế hoạch để gửi.",
+        "targetRequired": "Vui lòng chọn đối tượng áp dụng kế hoạch.",
+        "diseaseRequired": "Tên bệnh là bắt buộc trước khi gửi kế hoạch.",
+        "scheduleRequired": "Kế hoạch cần có ít nhất một sự kiện.",
+        "submitFailed": "Không thể gửi kế hoạch. Vui lòng thử lại."
+      }
     }
   }
 }
