@@ -118,6 +118,8 @@
       "specialtyPlaceholder": "Enter your specialty",
       "bioLabel": "Bio",
       "bioPlaceholder": "A short bio about you",
+      "addressLineLabel": "Address",
+      "addressLinePlaceholder": "Enter your address",
       "save": "Save Changes",
       "saving": "Saving...",
       "expertCertificate": "Apply for expert certificate",
@@ -156,6 +158,9 @@
     }
   },
   "community": {
+    "postDetail": {
+      "title": "Post Detail"
+    },
     "tabs": {
       "feed": "Feed",
       "messages": "Messages"
@@ -188,7 +193,15 @@
       "placeholder": "Share your garden status...",
       "photoVideo": "Photo/Video",
       "location": "Location",
-      "post": "Post"
+      "post": "Post",
+      "posting": "Posting...",
+      "visibility": "Visibility",
+      "visibilityAll": "Public",
+      "visibilityFriend": "Friends",
+      "visibilityOnlyMe": "Only me",
+      "postSuccess": "Post created successfully!",
+      "postError": "Failed to create post. Please try again.",
+      "uploadingMedia": "Uploading media..."
     }
   },
   "profile": {

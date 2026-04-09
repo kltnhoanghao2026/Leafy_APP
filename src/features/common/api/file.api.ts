@@ -59,4 +59,41 @@ export const fileApi = {
 
     return signedUrlResponse.data.data;
   },
+
+  uploadPostMedia: async (
+    asset: ImagePickerAsset,
+  ): Promise<{ url: string; type: string }> => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: asset.uri,
+      name: resolveFileName(asset),
+      type: resolveFileType(asset),
+    } as never);
+
+    const uploadResponse = await apiClient.post<ApiResponse<UploadedFile>>(
+      API_ENDPOINTS.FILES.UPLOAD,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
+
+    const fileId = uploadResponse.data.data.id;
+
+    const signedUrlResponse = await apiClient.get<ApiResponse<string>>(
+      API_ENDPOINTS.FILES.PRESIGNED_URL(fileId),
+      {
+        params: {
+          expirationMinutes: MAX_PRESIGNED_EXPIRATION_MINUTES,
+        },
+      },
+    );
+
+    const mimeType = resolveFileType(asset);
+    const mediaType = mimeType.startsWith("video") ? "video" : "image";
+
+    return { url: signedUrlResponse.data.data, type: mediaType };
+  },
 };

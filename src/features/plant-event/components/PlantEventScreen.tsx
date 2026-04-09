@@ -204,7 +204,7 @@ export function PlantEventScreen() {
 
     router.push({
       pathname: "/(main)/plant-events/edit/[id]",
-      params: nextParams,
+      params: nextParams as any,
     });
   };
 

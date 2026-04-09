@@ -11,15 +11,22 @@ import {
   ScrollView,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
+import { ChevronDown, MapPin } from "lucide-react-native";
 
 import Colors from "@/src/constants/Colors";
 import { useUploadAvatarMutation } from "@/src/features/common";
+import { FarmAdministrativePickerModal } from "@/src/features/farm/components/FarmAdministrativePickerModal";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 import { parseApiError } from "@/src/lib/error-handler";
 
 import { profileApi } from "../api/profile-api";
+import {
+  useProfileAddressFields,
+  type ActivePicker,
+} from "../hooks/useProfileAddressFields";
 import { getMyProfileQueryOptions, profileKeys } from "../queries/options";
 import type { ProfileUpdateRequest } from "../schema/user.schema";
 
@@ -45,6 +52,30 @@ export function UpdateProfileScreen() {
   const [fullName, setFullName] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [bio, setBio] = useState("");
+  const [activePicker, setActivePicker] = useState<ActivePicker>(null);
+
+  const {
+    provinceCode,
+    districtCode,
+    wardCode,
+    addressLine,
+    setAddressLine,
+    latitude,
+    longitude,
+    provinceOptions,
+    districtOptions,
+    wardOptions,
+    isProvinceOptionsLoading,
+    isDistrictOptionsLoading,
+    isWardOptionsLoading,
+    isLocating,
+    locationError,
+    setLocationError,
+    handleSelectProvinceCode,
+    handleSelectDistrictCode,
+    handleSelectWardCode,
+    handleUseMyLocation,
+  } = useProfileAddressFields(profile);
 
   useEffect(() => {
     if (!profile) return;
@@ -84,9 +115,34 @@ export function UpdateProfileScreen() {
       (profile.avatar ?? profile.profilePicture ?? "") !== avatar ||
       (profile.fullName ?? "") !== fullName ||
       (profile.specialty ?? "") !== specialty ||
-      (profile.bio ?? "") !== bio
+      (profile.bio ?? "") !== bio ||
+      (profile.addressLine ?? "") !== addressLine ||
+      (profile.provinceCode ?? "") !== provinceCode ||
+      (profile.districtCode ?? "") !== districtCode ||
+      (profile.wardCode ?? "") !== wardCode ||
+      (profile.latitude ?? undefined) !== latitude ||
+      (profile.longitude ?? undefined) !== longitude
     );
-  }, [avatar, bio, fullName, profile, specialty]);
+  }, [
+    addressLine,
+    avatar,
+    bio,
+    districtCode,
+    fullName,
+    latitude,
+    longitude,
+    profile,
+    provinceCode,
+    specialty,
+    wardCode,
+  ]);
+
+  const handlePickOption = async (code: string) => {
+    if (activePicker === "province") await handleSelectProvinceCode(code);
+    if (activePicker === "district") await handleSelectDistrictCode(code);
+    if (activePicker === "ward") handleSelectWardCode(code);
+    setActivePicker(null);
+  };
 
   const onSave = () => {
     if (!profile) return;
@@ -96,6 +152,12 @@ export function UpdateProfileScreen() {
       fullName: fullName.trim() || undefined,
       specialty: specialty.trim() || undefined,
       bio: bio.trim() || undefined,
+      addressLine: addressLine.trim() || undefined,
+      provinceCode: provinceCode || undefined,
+      districtCode: districtCode || undefined,
+      wardCode: wardCode || undefined,
+      latitude: latitude ?? undefined,
+      longitude: longitude ?? undefined,
     };
 
     mutation.mutate({ profileId: profile.id, body });
@@ -284,6 +346,157 @@ export function UpdateProfileScreen() {
           />
         </View>
 
+        {/* Location section */}
+        <View className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-background-dark">
+          <View className="flex-row items-center justify-between mb-1">
+            <Text className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t("farm.form.location")}
+            </Text>
+            <TouchableOpacity
+              className="flex-row items-center gap-1.5 rounded-full border border-green-800/10 bg-green-800/10 px-3 py-1.5 dark:border-green-400/10 dark:bg-green-400/10"
+              onPress={() => void handleUseMyLocation()}
+              disabled={isLocating}
+            >
+              {isLocating ? (
+                <ActivityIndicator size="small" color="#16a34a" />
+              ) : (
+                <MapPin size={14} color="#16a34a" />
+              )}
+              <Text className="text-xs font-bold text-green-700 dark:text-green-400">
+                {t("farm.form.useMyLocation")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {!!locationError && (
+            <Text className="mb-2 text-xs font-medium text-red-600">
+              {locationError}
+            </Text>
+          )}
+
+          <Text className="mt-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {t("screens.profileEdit.addressLineLabel")}
+          </Text>
+          <TextInput
+            value={addressLine}
+            onChangeText={setAddressLine}
+            placeholder={t("screens.profileEdit.addressLinePlaceholder")}
+            placeholderTextColor="#94A3B8"
+            className="mt-2 rounded-xl border border-gray-300 px-3 py-3 text-slate-900 dark:border-gray-700 dark:text-slate-100"
+          />
+
+          {/* Province picker */}
+          <Text className="mt-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {t("farm.form.province")}
+          </Text>
+          <TouchableOpacity
+            className="mt-2 h-12 flex-row items-center gap-2 rounded-xl border border-gray-300 px-3 dark:border-gray-700"
+            onPress={() => setActivePicker("province")}
+          >
+            <Text
+              numberOfLines={1}
+              className={`flex-1 ${provinceCode ? "text-slate-900 dark:text-slate-100" : "text-slate-400"}`}
+            >
+              {resolveLabelByCode(
+                provinceCode,
+                provinceOptions,
+                t("farm.form.selectProvince"),
+              )}
+            </Text>
+            {isProvinceOptionsLoading ? (
+              <ActivityIndicator size="small" color="#94A3B8" />
+            ) : (
+              <ChevronDown size={18} color="#94A3B8" />
+            )}
+          </TouchableOpacity>
+
+          {/* District picker */}
+          <Text className="mt-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {t("farm.form.district")}
+          </Text>
+          <TouchableOpacity
+            className={`mt-2 h-12 flex-row items-center gap-2 rounded-xl border px-3 ${
+              !provinceCode
+                ? "border-gray-200 opacity-50 dark:border-gray-800"
+                : "border-gray-300 dark:border-gray-700"
+            }`}
+            onPress={() => setActivePicker("district")}
+            disabled={!provinceCode}
+          >
+            <Text
+              numberOfLines={1}
+              className={`flex-1 ${districtCode ? "text-slate-900 dark:text-slate-100" : "text-slate-400"}`}
+            >
+              {resolveLabelByCode(
+                districtCode,
+                districtOptions,
+                provinceCode
+                  ? t("farm.form.selectDistrict")
+                  : t("farm.form.selectProvinceFirst"),
+              )}
+            </Text>
+            {isDistrictOptionsLoading ? (
+              <ActivityIndicator size="small" color="#94A3B8" />
+            ) : (
+              <ChevronDown size={18} color="#94A3B8" />
+            )}
+          </TouchableOpacity>
+
+          {/* Ward picker */}
+          <Text className="mt-4 text-sm font-semibold text-slate-900 dark:text-slate-100">
+            {t("farm.form.ward")}
+          </Text>
+          <TouchableOpacity
+            className={`mt-2 h-12 flex-row items-center gap-2 rounded-xl border px-3 ${
+              !districtCode
+                ? "border-gray-200 opacity-50 dark:border-gray-800"
+                : "border-gray-300 dark:border-gray-700"
+            }`}
+            onPress={() => setActivePicker("ward")}
+            disabled={!districtCode}
+          >
+            <Text
+              numberOfLines={1}
+              className={`flex-1 ${wardCode ? "text-slate-900 dark:text-slate-100" : "text-slate-400"}`}
+            >
+              {resolveLabelByCode(
+                wardCode,
+                wardOptions,
+                districtCode
+                  ? t("farm.form.selectWard")
+                  : t("farm.form.selectDistrictFirst"),
+              )}
+            </Text>
+            {isWardOptionsLoading ? (
+              <ActivityIndicator size="small" color="#94A3B8" />
+            ) : (
+              <ChevronDown size={18} color="#94A3B8" />
+            )}
+          </TouchableOpacity>
+
+          {/* Lat / Lng (read-only display when set) */}
+          {(latitude !== undefined || longitude !== undefined) && (
+            <View className="mt-4 flex-row gap-3">
+              <View className="flex-1">
+                <Text className="text-xs font-semibold text-slate-500">
+                  {t("farm.form.latitude")}
+                </Text>
+                <Text className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                  {latitude?.toFixed(6) ?? "--"}
+                </Text>
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs font-semibold text-slate-500">
+                  {t("farm.form.longitude")}
+                </Text>
+                <Text className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                  {longitude?.toFixed(6) ?? "--"}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+
         <Pressable
           className={`mt-5 items-center rounded-xl px-4 py-3 ${
             mutation.isPending || isUploadingAvatar || !isDirty
@@ -300,6 +513,32 @@ export function UpdateProfileScreen() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      <FarmAdministrativePickerModal
+        visible={activePicker !== null}
+        activePicker={activePicker}
+        provinceOptions={provinceOptions}
+        districtOptions={districtOptions}
+        wardOptions={wardOptions}
+        isProvinceOptionsLoading={isProvinceOptionsLoading}
+        isDistrictOptionsLoading={isDistrictOptionsLoading}
+        isWardOptionsLoading={isWardOptionsLoading}
+        onClose={() => setActivePicker(null)}
+        onSelect={(code) => void handlePickOption(code)}
+      />
     </View>
   );
+}
+
+/* ── Helpers ── */
+
+function resolveLabelByCode(
+  code: string,
+  options: { code: string; name: string }[],
+  fallback: string,
+) {
+  if (!code) return fallback;
+  const found = options.find((o) => o.code === code);
+  if (!found) return code;
+  return `${found.name} (${found.code})`;
 }

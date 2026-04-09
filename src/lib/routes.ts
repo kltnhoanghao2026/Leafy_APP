@@ -106,8 +106,11 @@ export const API_ENDPOINTS = {
   },
 
   COMMUNITY: {
+    CREATE_POST: "/posts",
     FEED_POSTS: "/posts/feed",
+    POST_BY_ID: (postId: string) => `/posts/${postId}`,
     POSTS_BY_USER: (userId: string) => `/posts/user/${userId}`,
+    CREATE_COMMENT: "/comments",
     COMMENTS_BY_POST: (postId: string) => `/comments/posts/${postId}`,
     REPLIES_BY_COMMENT: (commentId: string) => `/comments/${commentId}/replies`,
     VOTES_BY_POST: (postId: string) => `/votes/posts/${postId}`,
@@ -160,6 +163,11 @@ export const API_ENDPOINTS = {
       `/treatment-plans/farm-plot/${farmPlotId}`,
     BY_FARM_ZONE: (farmZoneId: string) =>
       `/treatment-plans/farm-zone/${farmZoneId}`,
+  },
+
+  SEARCH: {
+    POSTS: "/search/posts/search",
+    PROFILES: "/search/profiles/search",
   },
 
   RAG: {

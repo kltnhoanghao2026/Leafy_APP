@@ -82,26 +82,31 @@ export function CommunityMessagesPanel({
               {t("community.messages.subtitle")}
             </Text>
           </View>
-          <View
-            className="h-10 w-10 items-center justify-center rounded-full"
-            style={{ backgroundColor: "rgba(47,127,52,0.14)" }}
-          >
-            <MessageCircleMore size={18} color={palette.primary} />
+          <View className="flex-row items-center gap-2">
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-slate-100 active:bg-slate-200 dark:bg-slate-800 dark:active:bg-slate-700">
+              <UserPlus2 size={18} color={palette.text} />
+            </View>
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-slate-100 active:bg-slate-200 dark:bg-slate-800 dark:active:bg-slate-700">
+              <MessageCircleMore size={18} color={palette.text} />
+            </View>
           </View>
         </View>
 
         <View
-          className="mt-4 flex-row items-center gap-2 rounded-xl border px-3"
+          className="mt-4 flex-row items-center gap-2 rounded-2xl bg-white px-4 shadow-[0_1px_2px_rgba(0,0,0,0.05)] dark:bg-slate-900 border"
           style={{
             borderColor: lineColor,
-            backgroundColor: "rgba(148,163,184,0.08)",
+            height: 44,
           }}
         >
           <Search size={18} color={mutedText} />
           <TextInput
-            className="h-11 flex-1 text-[14px]"
+            className="flex-1 text-[15px] font-medium"
             style={{ color: palette.text }}
-            placeholder={t("community.messages.searchPlaceholder")}
+            placeholder={t(
+              "community.messages.searchPlaceholder",
+              "Search messages",
+            )}
             placeholderTextColor={mutedText}
             value={searchKeyword}
             onChangeText={setSearchKeyword}
@@ -111,54 +116,35 @@ export function CommunityMessagesPanel({
           />
         </View>
 
-        <View className="mt-3 flex-row gap-2">
+        <View className="mt-4 flex-row gap-3">
           <Pressable
-            className="flex-1 flex-row items-center justify-center gap-2 rounded-xl py-2.5"
+            className="flex-1 flex-row items-center justify-center gap-2 rounded-[20px] py-3 shadow-[0_2px_4px_rgba(47,127,52,0.15)] active:opacity-90"
             style={{ backgroundColor: palette.primary }}
           >
+            <Text className="text-[14.5px] font-semibold text-white">
+              {t("community.messages.newMessage", "New Message")}
+            </Text>
             <PenSquare size={16} color="#FFFFFF" />
-            <Text className="text-[13px] font-semibold text-white">
-              {t("community.messages.newMessage")}
-            </Text>
-          </Pressable>
-
-          <Pressable
-            className="flex-row items-center justify-center gap-2 rounded-xl border px-4 py-2.5"
-            style={{ borderColor: lineColor }}
-          >
-            <UserPlus2 size={16} color={palette.primary} />
-            <Text
-              className="text-[13px] font-semibold"
-              style={{ color: palette.text }}
-            >
-              {t("community.messages.requests")}
-            </Text>
           </Pressable>
         </View>
       </View>
 
       {isSyncing ? (
-        <View className="gap-3">
-          <Text
-            className="text-[13px] font-medium"
-            style={{ color: mutedText }}
-          >
-            {t("community.messages.loading")}
-          </Text>
+        <View className="gap-3 mt-2">
           {SKELETON_ROWS.map((rowId) => (
             <View
               key={rowId}
-              className="rounded-2xl border p-4"
+              className="rounded-2xl border p-4 shadow-sm"
               style={{
                 backgroundColor: cardBg,
                 borderColor: lineColor,
               }}
             >
-              <View className="flex-row items-center gap-3">
-                <View className="h-12 w-12 rounded-full bg-slate-200/70 dark:bg-slate-700/50" />
-                <View className="flex-1 gap-2">
-                  <View className="h-3.5 w-1/3 rounded bg-slate-200/70 dark:bg-slate-700/50" />
-                  <View className="h-3 w-2/3 rounded bg-slate-200/60 dark:bg-slate-700/40" />
+              <View className="flex-row items-center gap-4">
+                <View className="h-14 w-14 rounded-full bg-slate-200/70 dark:bg-slate-700/50" />
+                <View className="flex-1 gap-2.5">
+                  <View className="h-4 w-1/3 rounded bg-slate-200/70 dark:bg-slate-700/50" />
+                  <View className="h-3.5 w-2/3 rounded bg-slate-200/60 dark:bg-slate-700/40" />
                 </View>
               </View>
             </View>
@@ -200,7 +186,7 @@ export function CommunityMessagesPanel({
           </Pressable>
         </View>
       ) : (
-        <View className="gap-3">
+        <View className="gap-3 mt-2">
           {filteredThreads.map((thread) => {
             const previewText = thread.isTyping
               ? t("community.messages.typing")
@@ -212,86 +198,102 @@ export function CommunityMessagesPanel({
             return (
               <Pressable
                 key={thread.id}
-                className="rounded-2xl border px-4 py-3"
+                className="flex-row items-center gap-4 rounded-[20px] bg-white px-4 py-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] active:opacity-75 dark:bg-slate-900 border"
                 style={{
-                  backgroundColor: cardBg,
                   borderColor: lineColor,
                 }}
                 onPress={() => openConversation(thread.id)}
               >
-                <View className="flex-row items-center gap-3">
-                  <View className="relative">
-                    <Image
-                      source={{ uri: thread.avatar }}
-                      className="h-12 w-12 rounded-full bg-slate-200"
-                      resizeMode="cover"
-                    />
-                    {thread.isOnline ? (
-                      <View className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" />
-                    ) : null}
-                  </View>
+                <View className="relative">
+                  <Image
+                    source={{ uri: thread.avatar }}
+                    className="h-[56px] w-[56px] rounded-full bg-slate-200 dark:bg-slate-700"
+                    resizeMode="cover"
+                  />
+                  {thread.isOnline && (
+                    <View className="absolute bottom-0 right-0 h-4 w-4 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
+                  )}
+                </View>
 
-                  <View className="flex-1">
-                    <View className="flex-row items-center justify-between gap-3">
-                      <View className="flex-row items-center gap-2">
-                        <Text
-                          className="max-w-[180px] text-[15px] font-semibold"
-                          style={{ color: palette.text }}
-                          numberOfLines={1}
-                        >
-                          {thread.name}
-                        </Text>
-                        {thread.isPinned ? (
-                          <View className="rounded-full bg-primary/15 px-2 py-0.5">
-                            <Text
-                              className="text-[10px] font-semibold uppercase"
-                              style={{ color: palette.primary }}
-                            >
-                              {t("community.messages.pinned")}
-                            </Text>
-                          </View>
-                        ) : null}
-                      </View>
-
+                <View className="flex-1">
+                  <View className="flex-row items-center justify-between gap-3">
+                    <View className="flex-row items-center gap-2">
                       <Text
-                        className="text-[11px]"
-                        style={{ color: mutedText }}
-                      >
-                        {thread.lastMessageAt}
-                      </Text>
-                    </View>
-
-                    {thread.roleLabel ? (
-                      <Text
-                        className="mt-0.5 text-[11px]"
-                        style={{ color: mutedText }}
+                        className="max-w-[160px] text-[16px] font-bold tracking-tight"
+                        style={{ color: palette.text }}
                         numberOfLines={1}
                       >
-                        {thread.roleLabel}
+                        {thread.name}
                       </Text>
-                    ) : null}
-
-                    <View className="mt-1 flex-row items-center justify-between gap-3">
-                      <Text
-                        className="flex-1 text-[13px]"
-                        style={{
-                          color: thread.isTyping ? palette.primary : mutedText,
-                          fontWeight: thread.unreadCount > 0 ? "600" : "400",
-                        }}
-                        numberOfLines={1}
-                      >
-                        {fromSelfPrefix}
-                        {previewText}
-                      </Text>
-
-                      {thread.unreadCount > 0 ? (
-                        <View className="min-w-6 items-center rounded-full bg-primary px-1.5 py-0.5">
-                          <Text className="text-[11px] font-bold text-white">
-                            {thread.unreadCount > 9 ? "9+" : thread.unreadCount}
+                      {thread.isPinned ? (
+                        <View className="rounded-md bg-emerald-100 px-1.5 py-0.5 dark:bg-emerald-900/40">
+                          <Text className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                            {t("community.messages.pinned")}
                           </Text>
                         </View>
                       ) : null}
                     </View>
+
+                    <Text
+                      className="text-[12px] font-medium"
+                      style={{
+                        color:
+                          thread.unreadCount > 0 ? palette.primary : mutedText,
+                      }}
+                    >
+                      {thread.lastMessageAt}
+                    </Text>
+                  </View>
+
+                  {thread.roleLabel ? (
+                    <Text
+                      className="mt-0.5 text-[12px]"
+                      style={{ color: mutedText }}
+                      numberOfLines={1}
+                    >
+                      {thread.roleLabel}
+                    </Text>
+                  ) : null}
+
+                  <View className="mt-1.5 flex-row items-center justify-between gap-3">
+                    <Text
+                      className={`flex-1 text-[14px] leading-5 ${
+                        thread.unreadCount > 0
+                          ? "font-semibold text-slate-900 dark:text-white"
+                          : ""
+                      }`}
+                      style={{
+                        color: thread.isTyping
+                          ? palette.primary
+                          : thread.unreadCount > 0
+                            ? undefined
+                            : mutedText,
+                        fontWeight: thread.unreadCount > 0 ? "600" : "400",
+                      }}
+                      numberOfLines={1}
+                    >
+                      {fromSelfPrefix}
+                      <Text
+                        className={
+                          thread.isTyping
+                            ? "font-medium italic text-emerald-600 dark:text-emerald-400"
+                            : ""
+                        }
+                      >
+                        {previewText}
+                      </Text>
+                    </Text>
+
+                    {thread.unreadCount > 0 && (
+                      <View
+                        className="h-[22px] min-w-[22px] items-center justify-center rounded-full px-1.5 shadow-[0_1px_2px_rgba(0,0,0,0.1)]"
+                        style={{ backgroundColor: palette.primary }}
+                      >
+                        <Text className="text-[11px] font-bold text-white">
+                          {thread.unreadCount > 99 ? "99+" : thread.unreadCount}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </Pressable>

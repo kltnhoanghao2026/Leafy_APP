@@ -124,7 +124,7 @@ export function PlantScreen() {
     if (Object.keys(nextParams).length > 0) {
       router.push({
         pathname: "/(main)/plants/add",
-        params: nextParams,
+        params: nextParams as any,
       });
       return;
     }
@@ -140,7 +140,7 @@ export function PlantScreen() {
 
     router.push({
       pathname: "/(main)/plants/edit/[id]",
-      params: nextParams,
+      params: nextParams as any,
     });
   };
 

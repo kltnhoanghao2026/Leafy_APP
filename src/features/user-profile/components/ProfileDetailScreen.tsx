@@ -11,12 +11,12 @@ import {
   View,
 } from "react-native";
 import {
-  ArrowLeft,
   Award,
   BadgeCheck,
   Briefcase,
   Calendar,
   Mail,
+  MapPin,
   MessageCircle,
   MoreHorizontal,
   Phone,
@@ -251,6 +251,15 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
                 icon={<Calendar color="#64748B" size={20} />}
                 label="Joined"
                 value={`Joined on ${joinedDate}`}
+              />
+            )}
+
+            {/* Address */}
+            {!!profile.addressLine?.trim() && (
+              <InfoRow
+                icon={<MapPin color="#64748B" size={20} />}
+                label={t("profileDetail.address", { defaultValue: "Address" })}
+                value={profile.addressLine}
               />
             )}
           </View>

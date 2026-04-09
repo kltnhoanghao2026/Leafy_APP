@@ -118,6 +118,8 @@
       "specialtyPlaceholder": "Nhập chuyên môn của bạn",
       "bioLabel": "Giới thiệu",
       "bioPlaceholder": "Mô tả ngắn về bạn",
+      "addressLineLabel": "Địa chỉ",
+      "addressLinePlaceholder": "Nhập địa chỉ của bạn",
       "save": "Lưu thay đổi",
       "saving": "Đang lưu...",
       "expertCertificate": "Đăng ký chứng chỉ chuyên gia",
@@ -156,6 +158,9 @@
     }
   },
   "community": {
+    "postDetail": {
+      "title": "Chi tiết bài đăng"
+    },
     "tabs": {
       "feed": "Bảng tin",
       "messages": "Tin nhắn"
@@ -188,7 +193,15 @@
       "placeholder": "Chia sẻ tình trạng vườn của bạn...",
       "photoVideo": "Ảnh/Video",
       "location": "Vị trí",
-      "post": "Đăng bài"
+      "post": "Đăng bài",
+      "posting": "Đang đăng...",
+      "visibility": "Hiển thị",
+      "visibilityAll": "Công khai",
+      "visibilityFriend": "Bạn bè",
+      "visibilityOnlyMe": "Chỉ mình tôi",
+      "postSuccess": "Đăng bài thành công!",
+      "postError": "Đăng bài thất bại. Vui lòng thử lại.",
+      "uploadingMedia": "Đang tải ảnh..."
     }
   },
   "profile": {

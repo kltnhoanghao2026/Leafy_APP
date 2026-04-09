@@ -1,8 +1,11 @@
-import { queryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { communityApi, type VoteType } from "../api/community.api";
+import { searchApi } from "../api/search.api";
 
 export const communityKeys = {
   all: () => ["community"] as const,
+  postDetail: (postId: string) =>
+    [...communityKeys.all(), "postDetail", postId] as const,
   feed: (page: number, size: number) =>
     [...communityKeys.all(), "feed", page, size] as const,
   userPosts: (userId: string, page: number, size: number) =>
@@ -17,7 +20,18 @@ export const communityKeys = {
     page: number,
     size: number,
   ) => [...communityKeys.all(), "votes", postId, voteType, page, size] as const,
+  searchPosts: (term: string, page: number, size: number) =>
+    [...communityKeys.all(), "searchPosts", term, page, size] as const,
+  searchProfiles: (term: string, page: number, size: number) =>
+    [...communityKeys.all(), "searchProfiles", term, page, size] as const,
 };
+
+export const getPostByIdQueryOptions = (postId: string) =>
+  queryOptions({
+    queryKey: communityKeys.postDetail(postId),
+    queryFn: () => communityApi.getPostById(postId),
+    enabled: Boolean(postId),
+  });
 
 export const getFeedPostsQueryOptions = (page = 0, size = 20) =>
   queryOptions({
@@ -65,4 +79,58 @@ export const getVotesByPostTypeQueryOptions = (
     queryFn: () =>
       communityApi.getVotesByPostAndType(postId, voteType, page, size),
     enabled: Boolean(postId),
+  });
+
+export const getSearchPostsQueryOptions = (
+  searchTerm: string,
+  page = 0,
+  size = 20,
+) =>
+  queryOptions({
+    queryKey: communityKeys.searchPosts(searchTerm, page, size),
+    queryFn: () => searchApi.searchPosts(searchTerm, page, size),
+    enabled: Boolean(searchTerm.trim()),
+  });
+
+export const getSearchProfilesQueryOptions = (
+  searchTerm: string,
+  page = 0,
+  size = 20,
+) =>
+  queryOptions({
+    queryKey: communityKeys.searchProfiles(searchTerm, page, size),
+    queryFn: () => searchApi.searchProfiles(searchTerm, page, size),
+    enabled: Boolean(searchTerm.trim()),
+  });
+
+const PAGE_SIZE = 20;
+
+export const getInfiniteSearchPostsQueryOptions = (searchTerm: string) =>
+  infiniteQueryOptions({
+    queryKey: [
+      ...communityKeys.all(),
+      "searchPostsInfinite",
+      searchTerm,
+    ] as const,
+    queryFn: ({ pageParam }) =>
+      searchApi.searchPosts(searchTerm, pageParam as number, PAGE_SIZE),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.last ? undefined : lastPage.number + 1,
+    enabled: Boolean(searchTerm.trim()),
+  });
+
+export const getInfiniteSearchProfilesQueryOptions = (searchTerm: string) =>
+  infiniteQueryOptions({
+    queryKey: [
+      ...communityKeys.all(),
+      "searchProfilesInfinite",
+      searchTerm,
+    ] as const,
+    queryFn: ({ pageParam }) =>
+      searchApi.searchProfiles(searchTerm, pageParam as number, PAGE_SIZE),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.last ? undefined : lastPage.number + 1,
+    enabled: Boolean(searchTerm.trim()),
   });

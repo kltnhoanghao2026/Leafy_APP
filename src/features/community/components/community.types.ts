@@ -160,3 +160,25 @@ export type Expert = {
   specialty: string;
   avatarUrl: string;
 };
+
+export type PostVisibility = "FRIEND" | "ALL" | "ONLY_ME";
+
+export type LocationInfo = {
+  name?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+export type PostCreateRequest = {
+  groupId?: string;
+  content: BackendPostContent;
+  media?: BackendPostMedia[];
+  postType: "FEED" | "SHARE";
+  sharedPostId?: string;
+  originalAuthorId?: string;
+  sharedCaption?: BackendPostContent;
+  rootPostId?: string;
+  location?: LocationInfo;
+  visibility: PostVisibility;
+};

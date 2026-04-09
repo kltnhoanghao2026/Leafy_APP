@@ -1,6 +1,11 @@
-import { ArrowUp, Paperclip, Smile } from "lucide-react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useLayoutEffect,
+} from "react";
 import { useTranslation } from "react-i18next";
 import {
   Image,
@@ -14,9 +19,11 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ArrowUp, Paperclip, Smile } from "lucide-react-native";
 
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
+import BackButton from "@/src/components/ui/BackButton";
 
 import {
   type ConversationMessage,
@@ -34,6 +41,7 @@ const buildClockTime = () => {
 export function ConversationScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const { threadId: routeThreadId } = useLocalSearchParams<{
@@ -75,6 +83,54 @@ export function ConversationScreen() {
   const lineColor =
     colorScheme === "dark" ? "rgba(148,163,184,0.18)" : "rgba(47,127,52,0.12)";
   const mutedText = palette.textGray;
+
+  const onlineLabel = thread?.isOnline
+    ? t("common.status.online", "Online")
+    : t("common.status.offline", "Offline");
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => {
+        if (!thread) return null;
+        return (
+          <View className="flex-row items-center justify-center -ml-4 gap-2.5">
+            <View className="relative">
+              <Image
+                source={{ uri: thread.avatar }}
+                className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700"
+                resizeMode="cover"
+              />
+              {thread.isOnline && (
+                <View className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-green-500 dark:border-slate-900" />
+              )}
+            </View>
+            <View className="justify-center">
+              <Text
+                className="text-[16px] font-bold tracking-tight"
+                style={{ color: palette.text }}
+              >
+                {thread.name}
+              </Text>
+              <Text
+                className="text-[12px] font-medium"
+                style={{ color: palette.primary }}
+              >
+                {thread.roleLabel
+                  ? `${thread.roleLabel} • ${onlineLabel}`
+                  : onlineLabel}
+              </Text>
+            </View>
+          </View>
+        );
+      },
+      headerLeft: () => <BackButton />,
+      headerLeftContainerStyle: { paddingLeft: 12 },
+      headerStyle: {
+        backgroundColor: palette.background,
+      },
+      headerShadowVisible: true,
+    });
+  }, [navigation, thread, palette, router, onlineLabel, t]);
 
   useEffect(() => {
     setMessages(initialMessages);
@@ -167,10 +223,6 @@ export function ConversationScreen() {
     );
   }
 
-  const onlineLabel = thread.isOnline
-    ? t("common.status.online")
-    : t("common.status.offline");
-
   return (
     <KeyboardAvoidingView
       className="flex-1"
@@ -179,57 +231,32 @@ export function ConversationScreen() {
       keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 60 : 0}
     >
       <View className="flex-1">
-        <View
-          className="mx-4 mt-4 rounded-2xl border px-4 py-3"
-          style={{ backgroundColor: surfaceColor, borderColor: lineColor }}
-        >
-          <View className="flex-row items-center gap-3">
-            <View className="relative">
-              <Image
-                source={{ uri: thread.avatar }}
-                className="h-11 w-11 rounded-full bg-slate-200"
-                resizeMode="cover"
-              />
-              {thread.isOnline ? (
-                <View className="absolute -right-0.5 -bottom-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" />
-              ) : null}
-            </View>
-
-            <View className="flex-1">
-              <Text
-                className="text-[15px] font-semibold"
-                style={{ color: palette.text }}
-              >
-                {thread.name}
-              </Text>
-              <Text className="text-[12px]" style={{ color: mutedText }}>
-                {thread.roleLabel
-                  ? `${thread.roleLabel} · ${onlineLabel}`
-                  : onlineLabel}
-              </Text>
-            </View>
-          </View>
-        </View>
-
         <ScrollView
           ref={scrollRef}
-          className="mt-4 flex-1 px-4"
+          className="flex-1"
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode={
             Platform.OS === "ios" ? "interactive" : "on-drag"
           }
-          contentContainerStyle={{ paddingBottom: 18, gap: 10 }}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 16,
+            paddingBottom: 24,
+            gap: 16,
+          }}
         >
-          <Text
-            className="self-center rounded-full px-3 py-1 text-[11px]"
-            style={{
-              color: mutedText,
-              backgroundColor: "rgba(148,163,184,0.12)",
-            }}
-          >
-            {t("community.conversation.startHint")}
-          </Text>
+          <View className="mb-4 self-center rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1">
+            <Text
+              className="text-[11px] font-medium"
+              style={{ color: mutedText }}
+            >
+              {t(
+                "community.conversation.startHint",
+                "This is the start of your conversation",
+              )}
+            </Text>
+          </View>
 
           {messages.map((message) => {
             const isMine = message.sender === "me";
@@ -240,26 +267,24 @@ export function ConversationScreen() {
                 className={isMine ? "items-end" : "items-start"}
               >
                 <View
-                  className="max-w-[85%] rounded-2xl px-3.5 py-2.5"
+                  className="max-w-[75%] rounded-[20px] px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
                   style={{
-                    backgroundColor: isMine
-                      ? palette.primary
-                      : colorScheme === "dark"
-                        ? "rgba(148,163,184,0.14)"
-                        : "#FFFFFF",
+                    backgroundColor: isMine ? palette.primary : surfaceColor,
                     borderWidth: isMine ? 0 : 1,
-                    borderColor: isMine ? "transparent" : lineColor,
+                    borderColor: lineColor,
+                    borderBottomRightRadius: isMine ? 4 : 20,
+                    borderBottomLeftRadius: !isMine ? 4 : 20,
                   }}
                 >
                   <Text
-                    className="text-[14px] leading-[20px]"
+                    className="text-[15px] leading-6"
                     style={{ color: isMine ? "#FFFFFF" : palette.text }}
                   >
                     {message.text}
                   </Text>
                 </View>
                 <Text
-                  className="mt-1 px-1 text-[11px]"
+                  className="mt-1 text-[11px] font-medium"
                   style={{ color: mutedText }}
                 >
                   {message.sentAt}
@@ -270,30 +295,36 @@ export function ConversationScreen() {
         </ScrollView>
 
         <View
-          className="border-t px-4 pt-3 pb-5"
+          className="border-t px-2 pt-2 shadow-lg"
           style={{
-            borderTopColor: lineColor,
-            backgroundColor: palette.background,
+            borderColor: lineColor,
+            backgroundColor: surfaceColor,
             paddingBottom:
               Math.max(insets.bottom, 12) +
               (Platform.OS === "android" ? androidKeyboardOffset : 0),
           }}
         >
-          <View className="flex-row items-end gap-2">
-            <Pressable
-              className="h-11 w-11 items-center justify-center rounded-full"
-              style={{ backgroundColor: "rgba(148,163,184,0.12)" }}
-            >
-              <Paperclip size={18} color={mutedText} />
-            </Pressable>
+          <View className="flex-row items-end gap-1">
+            <View className="mb-1 flex-row">
+              <Pressable className="h-10 w-10 items-center justify-center rounded-full active:bg-slate-100 dark:active:bg-slate-800">
+                <Paperclip size={20} color={mutedText} strokeWidth={2.5} />
+              </Pressable>
+              {draftText.length === 0 && (
+                <Pressable className="h-10 w-10 items-center justify-center rounded-full active:bg-slate-100 dark:active:bg-slate-800">
+                  <Smile size={20} color={mutedText} strokeWidth={2.5} />
+                </Pressable>
+              )}
+            </View>
 
             <View
-              className="flex-1 flex-row items-end rounded-2xl border px-3"
-              style={{ borderColor: lineColor, backgroundColor: surfaceColor }}
+              className="max-h-[120px] min-h-[44px] flex-1 flex-row items-center rounded-3xl border border-transparent px-4 py-1 pb-1 mb-1 shadow-sm"
+              style={{
+                backgroundColor: colorScheme === "dark" ? "#1A2421" : "#F4F6F5",
+              }}
             >
               <TextInput
-                className="max-h-[110px] min-h-[44px] flex-1 py-2.5 text-[14px]"
-                style={{ color: palette.text, textAlignVertical: "top" }}
+                className="max-h-24 flex-1 py-1.5 text-[15px] leading-5"
+                style={{ color: palette.text, textAlignVertical: "center" }}
                 value={draftText}
                 onChangeText={setDraftText}
                 onFocus={() => {
@@ -301,31 +332,33 @@ export function ConversationScreen() {
                     scrollRef.current?.scrollToEnd({ animated: true });
                   }, 80);
                 }}
-                placeholder={t("community.conversation.placeholder")}
+                placeholder={t(
+                  "community.conversation.placeholder",
+                  "Message...",
+                )}
                 placeholderTextColor={mutedText}
                 multiline
                 autoCorrect
                 autoCapitalize="sentences"
               />
-              <Pressable className="h-10 w-10 items-center justify-center">
-                <Smile size={18} color={mutedText} />
-              </Pressable>
             </View>
 
             <Pressable
-              className="h-11 w-11 items-center justify-center rounded-full"
+              className="mb-1.5 ml-1 h-[38px] w-[38px] items-center justify-center rounded-full shadow-sm active:opacity-80"
               style={{
                 backgroundColor: draftText.trim()
                   ? palette.primary
-                  : "rgba(148,163,184,0.28)",
+                  : "transparent",
               }}
               onPress={handleSendMessage}
               accessibilityRole="button"
-              accessibilityLabel={t("community.conversation.send")}
+              accessibilityLabel={t("community.conversation.send", "Send")}
+              disabled={!draftText.trim()}
             >
               <ArrowUp
-                size={18}
-                color={draftText.trim() ? "#FFFFFF" : "#FFFFFF"}
+                size={22}
+                color={draftText.trim() ? "#FFFFFF" : mutedText}
+                strokeWidth={3}
               />
             </Pressable>
           </View>

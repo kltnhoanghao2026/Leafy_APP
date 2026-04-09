@@ -23,6 +23,7 @@ export function useComposerAvatar() {
   const shouldShowLetterAvatar = !avatarUri || isAvatarError;
 
   return {
+    displayName,
     avatarUri,
     avatarLetter,
     shouldShowLetterAvatar,

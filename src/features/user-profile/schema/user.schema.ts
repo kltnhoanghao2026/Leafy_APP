@@ -103,6 +103,12 @@ export interface ProfileResponse {
   certificates?: CertificateResponse[];
   isVerified?: boolean;
   bio?: string;
+  addressLine?: string;
+  provinceCode?: string;
+  districtCode?: string;
+  wardCode?: string;
+  latitude?: number;
+  longitude?: number;
   active: boolean;
   email?: string;
   phoneNumber?: string;
@@ -116,5 +122,11 @@ export interface ProfileUpdateRequest {
   specialty?: string;
   bio?: string;
   fullName?: string;
+  addressLine?: string;
+  provinceCode?: string;
+  districtCode?: string;
+  wardCode?: string;
+  latitude?: number;
+  longitude?: number;
   userPreference?: UserPreferenceRequest;
 }

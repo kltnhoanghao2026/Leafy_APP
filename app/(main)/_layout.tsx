@@ -10,8 +10,8 @@ import {
   Menu,
   Bell,
   MoreHorizontal,
-  ChevronLeft,
 } from "lucide-react-native";
+import BackButton from "@/src/components/ui/BackButton";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -212,24 +212,6 @@ export default function MainLayout() {
     ? routeParams.returnTo[0]
     : routeParams.returnTo;
 
-  type BackFallbackPath =
-    | "/"
-    | "/(main)/farm"
-    | "/(main)/plants"
-    | "/(main)/profile"
-    | "/(main)/plant-events"
-    | "/(main)/community"
-    | "/(main)/ai-chat";
-
-  const goBackInHistory = (fallbackPath: BackFallbackPath) => {
-    if (router.canGoBack()) {
-      router.back();
-      return;
-    }
-
-    router.replace(fallbackPath);
-  };
-
   const drawerBg = scheme === "dark" ? palette.background : "#FFFFFF";
   const drawerPaddingTop = insets.top + 16;
 
@@ -418,6 +400,8 @@ export default function MainLayout() {
           options={{
             title: t("mainNav.tabs.community"),
             headerTitle: t("mainNav.headers.community"),
+            headerLeft: () => null,
+            headerRight: () => null,
             tabBarIcon: ({ color }) => <Users color={color} size={24} />,
           }}
         />
@@ -426,14 +410,7 @@ export default function MainLayout() {
           options={{
             title: t("mainNav.tabs.profile"),
             headerTitle: t("mainNav.headers.myAccount"),
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/profile")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/profile" />,
             headerRight: () => null,
             tabBarIcon: ({ color }) => <User color={color} size={24} />,
           }}
@@ -445,14 +422,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("mainNav.headers.manageFarm"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/" />,
           }}
         />
 
@@ -462,14 +432,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("mainNav.headers.managePlants"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/farm")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/farm" />,
           }}
         />
 
@@ -479,14 +442,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("farm.form.titleCreate"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/farm")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/farm" />,
             headerRight: () => null,
           }}
         />
@@ -497,14 +453,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("farm.form.titleEdit"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/farm")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/farm" />,
             headerRight: () => null,
           }}
         />
@@ -515,14 +464,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("plant.form.titleCreate"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/plants")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/plants" />,
             headerRight: () => null,
           }}
         />
@@ -533,14 +475,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("plant.form.titleEdit"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/plants")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/plants" />,
             headerRight: () => null,
           }}
         />
@@ -551,14 +486,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("mainNav.headers.manageEvents"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/" />,
           }}
         />
 
@@ -568,14 +496,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("calendar.title"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/plant-events")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/plant-events" />,
             headerRight: () => null,
           }}
         />
@@ -586,14 +507,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("calendar.title"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/plant-events")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/plant-events" />,
             headerRight: () => null,
           }}
         />
@@ -604,14 +518,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("calendar.title"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/plant-events")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/plant-events" />,
             headerRight: () => null,
           }}
         />
@@ -622,14 +529,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("plantEvent.form.titleCreate"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/plant-events")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/plant-events" />,
             headerRight: () => null,
           }}
         />
@@ -640,14 +540,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("plantEvent.form.titleEdit"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/plant-events")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/plant-events" />,
             headerRight: () => null,
           }}
         />
@@ -659,18 +552,19 @@ export default function MainLayout() {
             headerTitle: t("plantEvent.detail.title"),
             tabBarStyle: { display: "none" },
             headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
+              <BackButton
                 onPress={() => {
                   if (returnToParam) {
                     router.replace(returnToParam as never);
                     return;
                   }
-                  goBackInHistory("/(main)/plant-events");
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace("/(main)/plant-events");
+                  }
                 }}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
+              />
             ),
             headerRight: () => null,
           }}
@@ -682,14 +576,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("community.conversation.title"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/community")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/community" />,
             headerRight: () => null,
           }}
         />
@@ -700,14 +587,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("screens.profileEdit.title"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/profile")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/profile" />,
             headerRight: () => null,
           }}
         />
@@ -718,14 +598,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("screens.profileCertificate.title"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/profile")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/profile" />,
             headerRight: () => null,
           }}
         />
@@ -736,14 +609,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("profileDetail.infoSection"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/profile")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/profile" />,
             headerRight: () => null,
           }}
         />
@@ -754,14 +620,7 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("ragChat.title", "Trợ lý AI"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/" />,
             headerRight: () => null,
           }}
         />
@@ -772,14 +631,36 @@ export default function MainLayout() {
             href: null,
             headerTitle: t("ragChat.reviewer.title", "Treatment Plan Reviewer"),
             tabBarStyle: { display: "none" },
-            headerLeft: () => (
-              <Pressable
-                style={styles.headerIconButton}
-                onPress={() => goBackInHistory("/(main)/ai-chat")}
-              >
-                <ChevronLeft size={20} color={palette.primary} />
-              </Pressable>
-            ),
+            headerLeft: () => <BackButton fallback="/(main)/ai-chat" />,
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="community-search"
+          options={{
+            href: null,
+            headerShown: false,
+            tabBarStyle: { display: "none" },
+          }}
+        />
+
+        <Tabs.Screen
+          name="community-messages"
+          options={{
+            href: null,
+            headerShown: false,
+            tabBarStyle: { display: "none" },
+          }}
+        />
+
+        <Tabs.Screen
+          name="community-post/[postId]"
+          options={{
+            href: null,
+            headerTitle: t("community.postDetail.title"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => <BackButton fallback="/(main)/community" />,
             headerRight: () => null,
           }}
         />

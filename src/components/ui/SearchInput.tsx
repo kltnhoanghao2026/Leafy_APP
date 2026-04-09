@@ -1,5 +1,7 @@
-import { TextInput, View } from "react-native";
+import { StyleSheet, TextInput, View } from "react-native";
 import { Search } from "lucide-react-native";
+import { useColorScheme } from "@/src/hooks/useColorScheme";
+import Colors from "@/src/constants/Colors";
 
 type SearchInputProps = {
   value: string;
@@ -12,16 +14,46 @@ export function SearchInput({
   onChangeText,
   placeholder,
 }: SearchInputProps) {
+  const colorScheme = useColorScheme();
+  const palette = Colors[colorScheme];
+  const isDark = colorScheme === "dark";
+
   return (
-    <View className="mr-1 flex-1 flex-row items-center rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <Search size={20} className="text-slate-400 dark:text-slate-500" />
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? "#0F172A" : "#FFFFFF",
+          borderColor: isDark ? "#1E293B" : "#E2E8F0",
+        },
+      ]}
+    >
+      <Search size={20} color="#94A3B8" />
       <TextInput
         placeholder={placeholder}
         placeholderTextColor="#94A3B8"
-        className="ml-2 flex-1 text-[15px] text-slate-800 dark:text-slate-100"
+        style={[styles.input, { color: palette.text }]}
         value={value}
         onChangeText={onChangeText}
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginRight: 4,
+  },
+  input: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 15,
+  },
+});

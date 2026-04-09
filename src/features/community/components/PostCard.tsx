@@ -8,6 +8,7 @@ import {
 } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
+import { useRouter } from "expo-router";
 
 import { Post, CommunityPalette } from "./community.types";
 import { formatStat } from "./community.utils";
@@ -30,6 +31,7 @@ export function PostCard({
   mutedText,
   onOpenComments,
 }: PostCardProps) {
+  const router = useRouter();
   const [userVote, setUserVote] = useState<Post["userVote"]>(post.userVote);
   const [upvoteCount, setUpvoteCount] = useState(post.stats.upvoteCount);
   const [downvoteCount, setDownvoteCount] = useState(post.stats.downvoteCount);
@@ -87,6 +89,13 @@ export function PostCard({
     return { nextUserVote, nextUpvoteCount, nextDownvoteCount };
   };
 
+  const navigateToDetail = () => {
+    router.push({
+      pathname: "/(main)/community-post/[postId]",
+      params: { postId: post.id },
+    });
+  };
+
   const onVote = async (nextVote: "up" | "down") => {
     if (isVoting) {
       return;
@@ -128,7 +137,10 @@ export function PostCard({
         />
 
         {/* Header */}
-        <View className="flex-row items-start justify-between px-4 pt-4 pb-2">
+        <Pressable
+          onPress={navigateToDetail}
+          className="flex-row items-start justify-between px-4 pt-4 pb-2"
+        >
           <View className="flex-row items-center gap-3">
             <Image
               source={{ uri: avatarUri }}
@@ -159,10 +171,10 @@ export function PostCard({
               <MoreHorizontal size={20} color={mutedText} />
             </Pressable>
           </View>
-        </View>
+        </Pressable>
 
         {/* Text Content */}
-        <View className="px-4 pb-3 pt-1">
+        <Pressable onPress={navigateToDetail} className="px-4 pb-3 pt-1">
           {titleText ? (
             <Text
               className="mb-1 text-[16px] font-semibold leading-[22px]"
@@ -187,7 +199,7 @@ export function PostCard({
               {post.content.hashtags.join(" ")}
             </Text>
           ) : null}
-        </View>
+        </Pressable>
 
         {/* Shared Post Embed */}
         {sharedPost && (
@@ -241,11 +253,13 @@ export function PostCard({
 
         {/* Media Content */}
         {post.media && post.media.length > 0 && (
-          <Image
-            source={{ uri: post.media[0].url }}
-            className="h-[280px] w-full bg-slate-100 dark:bg-zinc-900"
-            resizeMode="cover"
-          />
+          <Pressable onPress={navigateToDetail}>
+            <Image
+              source={{ uri: post.media[0].url }}
+              className="h-[280px] w-full bg-slate-100 dark:bg-zinc-900"
+              resizeMode="cover"
+            />
+          </Pressable>
         )}
 
         {/* Action Footer */}
@@ -334,7 +348,10 @@ export function PostCard({
             </View>
 
             {post.urgent && (
-              <Pressable className="active:opacity-70">
+              <Pressable
+                className="active:opacity-70"
+                onPress={navigateToDetail}
+              >
                 <Text
                   className="text-[13px] font-semibold"
                   style={{ color: palette.primary }}

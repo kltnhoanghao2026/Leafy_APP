@@ -11,6 +11,7 @@ import type {
   Comment,
   CommunityPage,
   Post,
+  PostCreateRequest,
   VoteUser,
 } from "../components/community.types";
 
@@ -256,6 +257,27 @@ export const communityApi = {
     };
   },
 
+  getPostById: async (postId: string): Promise<Post> => {
+    const response = await apiClient.get<ApiResponse<BackendPost>>(
+      API_ENDPOINTS.COMMUNITY.POST_BY_ID(postId),
+    );
+
+    return mapBackendPostToUiPost(response.data.data);
+  },
+
+  createComment: async (
+    postId: string,
+    content: string,
+    parentId?: string,
+  ): Promise<Comment> => {
+    const response = await apiClient.post<ApiResponse<BackendComment>>(
+      API_ENDPOINTS.COMMUNITY.CREATE_COMMENT,
+      { postId, content, ...(parentId ? { parentId } : {}) },
+    );
+
+    return mapBackendCommentToUiComment(response.data.data);
+  },
+
   handleVote: async (
     targetType: VoteTargetType,
     targetId: string,
@@ -268,5 +290,14 @@ export const communityApi = {
         params: { type: voteType },
       },
     );
+  },
+
+  createPost: async (request: PostCreateRequest): Promise<Post> => {
+    const response = await apiClient.post<ApiResponse<BackendPost>>(
+      API_ENDPOINTS.COMMUNITY.CREATE_POST,
+      request,
+    );
+
+    return mapBackendPostToUiPost(response.data.data);
   },
 };
