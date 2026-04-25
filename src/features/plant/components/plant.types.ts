@@ -41,7 +41,7 @@ export type PlantResponse = {
 };
 
 export type PlantCreateRequest = {
-  plantNumber: string;
+  plantNumber?: string;
   plantStatus: PlantStatus;
   speciesId: string;
   farmPlotId: string;

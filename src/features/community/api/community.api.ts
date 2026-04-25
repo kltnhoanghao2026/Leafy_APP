@@ -88,6 +88,12 @@ const mapBackendPostToUiPost = (post: BackendPost): Post => {
     sharedPost,
     uploadedAt: post.uploadedAt,
     updatedAt: post.updatedAt,
+    userVote:
+      post.currentUserVoteType === "UPVOTE"
+        ? "up"
+        : post.currentUserVoteType === "DOWNVOTE"
+          ? "down"
+          : undefined,
     stats: safeStats,
   };
 };

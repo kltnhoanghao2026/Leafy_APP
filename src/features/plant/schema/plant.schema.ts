@@ -28,10 +28,7 @@ const isPlantStatus = (value: string) =>
 
 export const createPlantSchema = (t: TFunction) =>
   z.object({
-    plantNumber: z
-      .string()
-      .trim()
-      .min(1, t("plant.validation.plantNumberRequired")),
+    plantNumber: z.string().optional(),
     plantStatus: z
       .string()
       .trim()

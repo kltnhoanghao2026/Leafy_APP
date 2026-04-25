@@ -1,6 +1,12 @@
 import { MessageCircle, Search } from "lucide-react-native";
-import React, { useLayoutEffect } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import React, { useCallback, useLayoutEffect } from "react";
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigation, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -71,9 +77,15 @@ export function CommunityScreen() {
     isLoading,
     isError,
     error,
+    isRefetching,
+    refetch,
   } = useQuery({
     ...getFeedPostsQueryOptions(0, 20),
   });
+
+  const onRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
   const cardBg = colorScheme === "dark" ? "#1F2A20" : "#FFFFFF";
   const lineColor =
@@ -97,11 +109,19 @@ export function CommunityScreen() {
       style={{ backgroundColor: palette.background }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ padding: 16, paddingBottom: 28, gap: 24 }}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefetching}
+          onRefresh={onRefresh}
+          colors={[palette.primary]}
+          tintColor={palette.primary}
+        />
+      }
     >
       <ComposerCard palette={palette} cardBg={cardBg} lineColor={lineColor} />
 
       <View className="gap-6">
-        {isLoading && (
+        {(isLoading || isRefetching) && (
           <View className="gap-6">
             <PostCardSkeleton />
             <PostCardSkeleton />
@@ -115,21 +135,22 @@ export function CommunityScreen() {
           </Text>
         )}
 
-        {!isLoading && !isError && posts.length === 0 && (
+        {!isLoading && !isRefetching && !isError && posts.length === 0 && (
           <Text className="text-center text-sm" style={{ color: mutedText }}>
             Chua co bai viet feed/share nao.
           </Text>
         )}
 
-        {posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            palette={palette}
-            mutedText={mutedText}
-            onOpenComments={openCommentsModal}
-          />
-        ))}
+        {!isRefetching &&
+          posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              palette={palette}
+              mutedText={mutedText}
+              onOpenComments={openCommentsModal}
+            />
+          ))}
       </View>
       <ExpertsCard
         experts={experts}

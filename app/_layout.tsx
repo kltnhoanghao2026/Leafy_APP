@@ -21,6 +21,9 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { TamaguiProvider } from "tamagui";
 import tamaguiConfig from "@/tamagui.config";
 import { initializeI18n } from "@/src/i18n";
+import NetInfo from "@react-native-community/netinfo";
+import { useNetworkStore } from "@/src/store/useNetworkStore";
+import { OfflineNotice } from "@/src/components/ui/OfflineNotice";
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -63,6 +66,20 @@ export default function RootLayout() {
     return () => {
       mounted = false;
     };
+  }, []);
+
+  // Set up network listener
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      useNetworkStore.getState().setNetworkState(state);
+    });
+
+    // Fetch initial state
+    NetInfo.fetch().then((state) => {
+      useNetworkStore.getState().setNetworkState(state);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -138,6 +155,7 @@ function RootLayoutNav() {
             }}
           />
         </Stack>
+        <OfflineNotice />
       </SafeAreaProvider>
     </ThemeProvider>
   );

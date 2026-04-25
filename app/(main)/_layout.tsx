@@ -10,6 +10,7 @@ import {
   Menu,
   Bell,
   MoreHorizontal,
+  ScanLine,
 } from "lucide-react-native";
 import BackButton from "@/src/components/ui/BackButton";
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -208,6 +209,11 @@ export default function MainLayout() {
     router.push("/(main)/plant-events-calendar");
   };
 
+  const openPredictPage = () => {
+    closeMoreDrawer();
+    router.push("/(main)/predict");
+  };
+
   const returnToParam = Array.isArray(routeParams.returnTo)
     ? routeParams.returnTo[0]
     : routeParams.returnTo;
@@ -254,6 +260,13 @@ export default function MainLayout() {
           <CalendarDays size={20} color={palette.primary} />
           <Text style={[styles.drawerItemText, { color: palette.text }]}>
             {t("mainNav.drawer.eventCalendar")}
+          </Text>
+        </Pressable>
+
+        <Pressable style={styles.drawerItem} onPress={openPredictPage}>
+          <ScanLine size={20} color={palette.primary} />
+          <Text style={[styles.drawerItemText, { color: palette.text }]}>
+            {t("mainNav.drawer.predict", "Disease Detection")}
           </Text>
         </Pressable>
 
@@ -662,6 +675,38 @@ export default function MainLayout() {
             tabBarStyle: { display: "none" },
             headerLeft: () => <BackButton fallback="/(main)/community" />,
             headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="predict"
+          options={{
+            href: null,
+            headerTitle: t("diseaseDetection.title", "Disease Detection"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => <BackButton fallback="/" />,
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="scan-capture"
+          options={{
+            href: null,
+            headerTitle: t("diseaseDetection.localCapture", "Local Scan"),
+            tabBarStyle: { display: "none" },
+            headerLeft: () => <BackButton fallback="/(main)/predict" />,
+            headerRight: () => null,
+          }}
+        />
+
+        <Tabs.Screen
+          name="scan-realtime"
+          options={{
+            href: null,
+            headerTitle: t("diseaseDetection.realtimeScan", "Real-time Scan"),
+            headerShown: false,
+            tabBarStyle: { display: "none" },
           }}
         />
       </Tabs>

@@ -58,6 +58,7 @@ export type BackendPost = {
   uploadedAt?: string | null;
   updatedAt?: string | null;
   stats: BackendPostStats;
+  currentUserVoteType?: "UPVOTE" | "DOWNVOTE" | null;
 };
 
 export type BackendComment = {

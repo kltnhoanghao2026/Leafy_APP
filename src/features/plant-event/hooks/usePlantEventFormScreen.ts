@@ -206,6 +206,27 @@ export function usePlantEventFormScreen() {
   }, [editingEvent, isEditMode, reset]);
 
   const selectedEventType = watch("eventType");
+  const calculatedStartDateValue = watch("calculatedStartDate");
+
+  // Auto-compute daysFromNow from calculatedStartDate
+  const daysFromNowValue = useMemo(() => {
+    const trimmed = calculatedStartDateValue?.trim();
+    if (!trimmed) return null;
+    const start = new Date(trimmed);
+    if (isNaN(start.getTime())) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
+    return Math.round((start.getTime() - today.getTime()) / 86_400_000);
+  }, [calculatedStartDateValue]);
+
+  useEffect(() => {
+    setValue(
+      "daysFromNow",
+      daysFromNowValue !== null ? String(daysFromNowValue) : "",
+      { shouldDirty: false },
+    );
+  }, [daysFromNowValue, setValue]);
 
   const handleSelectEventType = useCallback(
     (eventType: string) => {
@@ -368,5 +389,6 @@ export function usePlantEventFormScreen() {
     handleSelectEventType,
     routeTargetType,
     targetLabel,
+    daysFromNowValue,
   };
 }

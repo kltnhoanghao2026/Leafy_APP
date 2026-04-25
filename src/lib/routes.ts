@@ -174,6 +174,15 @@ export const API_ENDPOINTS = {
     CHAT: "/rag/v1/chat",
     CHAT_STREAM: "/rag/v1/chat/stream",
   },
+
+  DISEASES: {
+    DETECT_LEAF: "/diseases/detect-leaf",
+    PREDICT: "/diseases/predict",
+    DIAGNOSE_REQUESTS: "/diseases/diagnose/requests",
+    DIAGNOSE_RESULTS: "/diseases/diagnose/results",
+    DIAGNOSE_RESULT_BY_REQUEST: (requestId: string) =>
+      `/diseases/diagnose/results/by-request/${requestId}`,
+  },
 } as const;
 
 // ============================================================================

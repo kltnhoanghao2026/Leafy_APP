@@ -42,7 +42,6 @@ const toOptionalNumber = (value?: string) => {
 };
 
 const formFieldNames: Array<keyof PlantFormValues> = [
-  "plantNumber",
   "plantStatus",
   "speciesId",
   "farmPlotId",
@@ -74,7 +73,6 @@ const defaultValues: PlantFormValues = {
 };
 
 const buildCreatePayload = (values: PlantFormValues): PlantCreateRequest => ({
-  plantNumber: values.plantNumber.trim(),
   plantStatus: normalizePlantStatus(values.plantStatus),
   speciesId: values.speciesId.trim(),
   farmPlotId: values.farmPlotId.trim(),
@@ -204,6 +202,7 @@ export function usePlantFormScreen() {
 
   const selectedSpeciesId = watch("speciesId");
   const selectedFarmPlotId = watch("farmPlotId");
+  const plantNumberValue = watch("plantNumber");
 
   const selectedSpeciesLabel = useMemo(
     () =>
@@ -405,6 +404,7 @@ export function usePlantFormScreen() {
     selectedFarmPlotLabel,
     handleSelectFarmPlot,
     routeFarmName,
+    plantNumberValue,
   };
 }
 

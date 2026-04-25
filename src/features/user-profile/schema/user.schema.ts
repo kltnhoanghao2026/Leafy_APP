@@ -15,11 +15,14 @@ export interface AddCertificateRequest {
   title: string;
   issuedBy: string;
   proofUrl: string;
+  proofFileId?: string;
+  fileType?: string;
   issueDate: string;
 }
 
 export interface CreateApprovalRequest {
   certificates: AddCertificateRequest[];
+  proposedSpecialty?: string;
 }
 
 export interface ApprovalRequestResponse {
@@ -28,6 +31,7 @@ export interface ApprovalRequestResponse {
   certificates: CertificateResponse[];
   status: ApprovalRequestStatus | string;
   rejectionReason?: string | null;
+  proposedSpecialty?: string | null;
 }
 
 export interface UserPreferenceGeneralSettings {

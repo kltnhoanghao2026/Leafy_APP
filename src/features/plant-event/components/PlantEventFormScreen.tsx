@@ -16,6 +16,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Clock,
   X,
 } from "lucide-react-native";
 import { Controller } from "react-hook-form";
@@ -57,6 +58,7 @@ export function PlantEventFormScreen() {
     handleSelectEventType,
     routeTargetType,
     targetLabel,
+    daysFromNowValue,
   } = usePlantEventFormScreen();
 
   const isTreatment = selectedEventType === "TREATMENT_APPLICATION";
@@ -310,25 +312,41 @@ export function PlantEventFormScreen() {
           </FormField>
 
           {/* Days from now */}
-          <FormField
-            label={t("plantEvent.form.daysFromNow")}
-            error={errors.daysFromNow?.message}
-          >
-            <Controller
-              control={control}
-              name="daysFromNow"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <TextInput
-                  className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 text-sm font-medium text-slate-900 dark:text-white"
-                  placeholder={t("plantEvent.form.daysFromNowPlaceholder")}
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="numeric"
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  value={value}
-                />
-              )}
-            />
+          <FormField label={t("plantEvent.form.daysFromNow")}>
+            <View className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 flex-row items-center gap-2 bg-slate-100 dark:bg-slate-800/50">
+              <Clock size={15} className="text-slate-400 dark:text-slate-500" />
+              <Text
+                className={`flex-1 text-sm font-semibold ${
+                  daysFromNowValue === null
+                    ? "text-slate-400 dark:text-slate-500 italic"
+                    : daysFromNowValue < 0
+                      ? "text-red-500 dark:text-red-400"
+                      : daysFromNowValue === 0
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-slate-700 dark:text-slate-300"
+                }`}
+              >
+                {daysFromNowValue === null
+                  ? t("plantEvent.form.daysFromNowNotSet")
+                  : daysFromNowValue < 0
+                    ? t("plantEvent.form.daysFromNowPast", {
+                        days: Math.abs(daysFromNowValue),
+                      })
+                    : daysFromNowValue === 0
+                      ? t("plantEvent.form.daysFromNowToday")
+                      : t("plantEvent.form.daysFromNowFuture", {
+                          days: daysFromNowValue,
+                        })}
+              </Text>
+              <View className="rounded-full bg-slate-200 dark:bg-slate-700 px-2 py-0.5">
+                <Text className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                  AUTO
+                </Text>
+              </View>
+            </View>
+            <Text className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+              {t("plantEvent.form.daysFromNowHint")}
+            </Text>
           </FormField>
 
           {/* Duration days */}

@@ -15,6 +15,7 @@ module.exports = function (api) {
           disableExtraction: process.env.NODE_ENV === "development",
         },
       ],
+      "react-native-worklets-core/plugin",
       "react-native-reanimated/plugin",
     ],
   };
