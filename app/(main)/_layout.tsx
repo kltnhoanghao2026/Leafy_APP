@@ -1,5 +1,13 @@
 import { Link, Tabs } from "expo-router";
-import { Home, Search, Leaf, User, Settings, Info } from "lucide-react-native";
+import {
+  Home,
+  Search,
+  Leaf,
+  User,
+  Settings,
+  Info,
+  RadioTower,
+} from "lucide-react-native";
 import React from "react";
 import { Pressable } from "react-native";
 
@@ -9,12 +17,13 @@ import { useTranslation } from "react-i18next";
 
 export default function MainLayout() {
   const colorScheme = useColorScheme();
+  const theme = colorScheme ?? "light";
   const { t } = useTranslation();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
+        tabBarActiveTintColor: Colors[theme].tint,
         headerShown: true,
       }}
     >
@@ -29,7 +38,7 @@ export default function MainLayout() {
                 {({ pressed }) => (
                   <Info
                     size={22}
-                    color={Colors[colorScheme].text}
+                    color={Colors[theme].text}
                     style={{ opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
@@ -50,6 +59,13 @@ export default function MainLayout() {
         options={{
           title: t("tabs.farms"),
           tabBarIcon: ({ color }) => <Leaf color={color} size={24} />,
+        }}
+      />
+      <Tabs.Screen
+        name="iot"
+        options={{
+          title: "IoT",
+          tabBarIcon: ({ color }) => <RadioTower color={color} size={24} />,
         }}
       />
       <Tabs.Screen

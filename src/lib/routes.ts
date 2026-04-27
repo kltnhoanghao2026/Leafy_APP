@@ -23,6 +23,8 @@ export const ROUTES = {
   MAIN: {
     HOME: "/",
     PROFILE: "/profile",
+    IOT: "/iot",
+    IOT_DEVICE_DETAIL: (deviceId: string) => `/iot/devices/${deviceId}`,
   },
 
   // Modal routes
@@ -94,6 +96,25 @@ export const API_ENDPOINTS = {
     ACTIVATE: (userId: string) => `/users/${userId}/activate`,
     DEACTIVATE: (userId: string) => `/users/${userId}/deactivate`,
   },
+
+  IOT: {
+    DEVICES: {
+      ME: "/iot/devices/me",
+      DETAIL: (deviceId: string) => `/iot/devices/${deviceId}/detail`,
+      LATEST_READINGS: (deviceId: string) =>
+        `/iot/devices/${deviceId}/latest-readings`,
+      PROVISION: "/iot/devices/provision",
+      CLAIM_CODE: (deviceId: string) => `/iot/devices/${deviceId}/claim-code`,
+      CLAIM: "/iot/devices/claim",
+    },
+  },
+
+  FARMS: {
+    PLOTS: "/farms/plots",
+    PLOT_ZONES: (plotId: string) => `/farms/plots/${plotId}/zones`,
+    PLOT: (plotId: string) => `/farms/plots/${plotId}`,
+    ZONE: (zoneId: string) => `/farms/zones/${zoneId}`,
+  },
 } as const;
 
 // ============================================================================
@@ -118,7 +139,7 @@ export const isProtectedRoute = (pathname?: string): boolean => {
     return true;
   }
 
-  return [ROUTES.MAIN.PROFILE].some(
+  return [ROUTES.MAIN.PROFILE, ROUTES.MAIN.IOT].some(
     (route) =>
       normalizedPath === route || normalizedPath.startsWith(`${route}/`),
   );
