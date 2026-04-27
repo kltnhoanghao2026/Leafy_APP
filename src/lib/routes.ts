@@ -106,7 +106,19 @@ export const API_ENDPOINTS = {
       PROVISION: "/iot/devices/provision",
       CLAIM_CODE: (deviceId: string) => `/iot/devices/${deviceId}/claim-code`,
       CLAIM: "/iot/devices/claim",
+      CHARTS: (deviceId: string) => `/iot/devices/${deviceId}/charts`,
+      CONFIG: (deviceId: string) => `/iot/devices/${deviceId}/config`,
+      PUSH_CONFIG: (deviceId: string) => `/iot/devices/${deviceId}/config/push`,
     },
+    DASHBOARD_OVERVIEW: "/iot/dashboard/overview",
+    FARM_ZONE_OVERVIEW: (zoneId: string) => `/iot/farm-zones/${zoneId}/overview`,
+    FARM_ZONE_CHARTS: (zoneId: string) => `/iot/farm-zones/${zoneId}/charts`,
+    ALERT_EVENTS: "/iot/alert-events",
+    ALERT_EVENT: (alertId: string) => `/iot/alert-events/${alertId}`,
+    ALERT_EVENT_ACKNOWLEDGE: (alertId: string) =>
+      `/iot/alert-events/${alertId}/acknowledge`,
+    ALERT_EVENT_RESOLVE: (alertId: string) =>
+      `/iot/alert-events/${alertId}/resolve`,
   },
 
   FARMS: {

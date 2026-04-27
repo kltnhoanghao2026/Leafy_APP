@@ -1,5 +1,10 @@
 export { DeviceListScreen } from "./screens/DeviceListScreen";
 export { DeviceDetailScreen } from "./screens/DeviceDetailScreen";
+export { DeviceConfigScreen } from "./screens/DeviceConfigScreen";
 export { DeviceOnboardingScreen } from "./screens/DeviceOnboardingScreen";
 export { DeviceQrScanScreen } from "./screens/DeviceQrScanScreen";
+export { IoTDashboardScreen } from "./screens/IoTDashboardScreen";
+export { ZoneMetricsScreen } from "./screens/ZoneMetricsScreen";
+export { AlertEventsScreen } from "./screens/AlertEventsScreen";
+export { AlertEventDetailScreen } from "./screens/AlertEventDetailScreen";
 export * from "./types";

@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, BarChart3, SlidersHorizontal } from "lucide-react-native";
+import { ArrowLeft, BarChart3, Bell, SlidersHorizontal } from "lucide-react-native";
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -13,6 +14,9 @@ import {
 
 import { DeviceReadingList } from "../components/DeviceReadingList";
 import { DeviceStatusBadge } from "../components/DeviceStatusBadge";
+import { RangeSelector } from "../components/RangeSelector";
+import { SensorChartCard } from "../components/SensorChartCard";
+import { SensorSelector } from "../components/SensorSelector";
 import { WifiSetupGuide } from "../components/WifiSetupGuide";
 import {
   useDeviceDetail,
@@ -23,6 +27,8 @@ import {
   formatDeviceCode,
   getProvisioningStatusLabel,
 } from "../utils/deviceLabels";
+import { useDeviceChart } from "../hooks/useTelemetry";
+import type { ChartRange, SensorCode } from "../types";
 
 const getParamValue = (value?: string | string[]): string | undefined => {
   if (Array.isArray(value)) {
@@ -64,14 +70,25 @@ export function DeviceDetailScreen() {
   const deviceId = getParamValue(params.deviceId);
   const detailQuery = useDeviceDetail(deviceId);
   const readingsQuery = useDeviceLatestReadings(deviceId);
+  const [selectedSensor, setSelectedSensor] = useState<SensorCode>("AIR_TEMP");
+  const [selectedRange, setSelectedRange] = useState<ChartRange>("H24");
 
   const device = detailQuery.data;
   const readings = readingsQuery.data ?? device?.latestReadings ?? [];
+  const chartQuery = useDeviceChart(deviceId, selectedSensor, selectedRange);
   const isRefreshing = detailQuery.isRefetching || readingsQuery.isRefetching;
+
+  useEffect(() => {
+    const firstSensor = readings[0]?.sensorCode;
+    if (firstSensor) {
+      setSelectedSensor((current) => (current === "AIR_TEMP" ? firstSensor : current));
+    }
+  }, [readings]);
 
   const refresh = () => {
     detailQuery.refetch();
     readingsQuery.refetch();
+    chartQuery.refetch();
   };
 
   if (!deviceId) {
@@ -181,16 +198,55 @@ export function DeviceDetailScreen() {
         )}
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Biểu đồ cảm biến</Text>
+        <View style={styles.selectorBlock}>
+          <Text style={styles.selectorLabel}>Chỉ số</Text>
+          <SensorSelector
+            onChange={setSelectedSensor}
+            readings={readings}
+            value={selectedSensor}
+          />
+        </View>
+        <View style={styles.selectorBlock}>
+          <Text style={styles.selectorLabel}>Khoảng thời gian</Text>
+          <RangeSelector onChange={setSelectedRange} value={selectedRange} />
+        </View>
+        <SensorChartCard
+          chart={chartQuery.data}
+          error={chartQuery.isError}
+          loading={chartQuery.isFetching}
+          range={selectedRange}
+        />
+      </View>
+
       <View style={styles.actions}>
         <PlaceholderAction
           icon={<SlidersHorizontal color="#64748b" size={18} />}
           title="Cấu hình thiết bị"
-          subtitle="Sẽ bổ sung ở Phase 4"
+          subtitle="Xem, lưu và push cấu hình MQTT"
+          onPress={() =>
+            router.push({
+              pathname: "/iot/devices/[deviceId]/config",
+              params: { deviceId },
+            })
+          }
         />
         <PlaceholderAction
           icon={<BarChart3 color="#64748b" size={18} />}
           title="Biểu đồ"
           subtitle="Sẽ bổ sung ở Phase 3"
+        />
+        <PlaceholderAction
+          icon={<Bell color="#64748b" size={18} />}
+          title="Cảnh báo thiết bị"
+          subtitle="Xem cảnh báo theo deviceId"
+          onPress={() =>
+            router.push({
+              pathname: "/iot/alerts",
+              params: { deviceId, status: "OPEN" },
+            })
+          }
         />
       </View>
     </ScrollView>
@@ -210,19 +266,28 @@ function PlaceholderAction({
   icon,
   title,
   subtitle,
+  onPress,
 }: {
   icon: ReactNode;
   title: string;
   subtitle: string;
+  onPress?: () => void;
 }) {
   return (
-    <View style={styles.placeholderAction}>
+    <Pressable
+      disabled={!onPress}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.placeholderAction,
+        pressed && styles.placeholderActionPressed,
+      ]}
+    >
       {icon}
       <View style={styles.placeholderTextWrap}>
         <Text style={styles.placeholderTitle}>{title}</Text>
         <Text style={styles.placeholderSubtitle}>{subtitle}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -345,6 +410,9 @@ const styles = StyleSheet.create({
     opacity: 0.82,
     padding: 14,
   },
+  placeholderActionPressed: {
+    opacity: 0.75,
+  },
   placeholderSubtitle: {
     color: "#64748b",
     fontSize: 12,
@@ -388,6 +456,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "900",
     marginBottom: 12,
+  },
+  selectorBlock: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  selectorLabel: {
+    color: "#334155",
+    fontSize: 13,
+    fontWeight: "900",
   },
   title: {
     color: "#0f172a",

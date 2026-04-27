@@ -10,6 +10,19 @@ export const iotKeys = {
     [...iotKeys.all, "devices", deviceId, "detail"] as const,
   latestReadings: (deviceId?: string) =>
     [...iotKeys.all, "devices", deviceId, "latest-readings"] as const,
+  deviceChart: (deviceId?: string, sensorCode?: string, range?: string) =>
+    [...iotKeys.all, "devices", deviceId, "charts", sensorCode, range] as const,
+  dashboardOverview: (farmPlotId?: string) =>
+    [...iotKeys.all, "dashboard-overview", farmPlotId] as const,
+  zoneOverview: (zoneId?: string) =>
+    [...iotKeys.all, "zones", zoneId, "overview"] as const,
+  zoneChart: (zoneId?: string, sensorCode?: string, range?: string) =>
+    [...iotKeys.all, "zones", zoneId, "charts", sensorCode, range] as const,
+  deviceConfig: (deviceId?: string) =>
+    [...iotKeys.all, "devices", deviceId, "config"] as const,
+  alerts: (params?: unknown) => [...iotKeys.all, "alerts", params] as const,
+  alertDetail: (alertId?: string) =>
+    [...iotKeys.all, "alerts", alertId, "detail"] as const,
 };
 
 export const myDevicesQueryOptions = (params?: MyDevicesParams) =>

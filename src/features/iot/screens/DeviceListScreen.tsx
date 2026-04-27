@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { Plus } from "lucide-react-native";
+import { BarChart3, Plus } from "lucide-react-native";
 import {
   ActivityIndicator,
   FlatList,
@@ -112,6 +112,13 @@ export function DeviceListScreen() {
               <Text style={styles.addButtonText}>Thêm</Text>
             </Pressable>
           </View>
+          <Pressable
+            style={styles.dashboardButton}
+            onPress={() => router.push("/iot/dashboard")}
+          >
+            <BarChart3 color="#166534" size={18} />
+            <Text style={styles.dashboardButtonText}>Xem tổng quan IoT</Text>
+          </Pressable>
         </View>
       }
       refreshControl={
@@ -145,6 +152,24 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  dashboardButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#dcfce7",
+    borderColor: "#bbf7d0",
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  dashboardButtonText: {
+    color: "#166534",
     fontSize: 13,
     fontWeight: "900",
   },

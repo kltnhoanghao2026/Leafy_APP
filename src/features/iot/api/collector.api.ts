@@ -3,13 +3,23 @@ import { API_ENDPOINTS } from "@/src/lib/routes";
 
 import type {
   DeviceDetailResponse,
+  DeviceConfigResponse,
   DeviceResponse,
   GenerateClaimCodeResponse,
   LatestReadingItemResponse,
   ClaimDeviceRequest,
+  ChartRange,
+  AlertEventDetailResponse,
+  AlertEventItemResponse,
+  AlertEventsParams,
+  DashboardOverviewResponse,
   MyDevicesParams,
   PagedResponse,
   ProvisionDeviceRequest,
+  SensorChartResponse,
+  SensorCode,
+  UpdateDeviceConfigRequest,
+  ZoneOverviewResponse,
 } from "../types";
 
 type BackendPagedResponse<T> = PagedResponse<T> & {
@@ -17,7 +27,7 @@ type BackendPagedResponse<T> = PagedResponse<T> & {
   totalElements?: number;
 };
 
-const cleanParams = (params?: MyDevicesParams): MyDevicesParams | undefined => {
+const cleanParams = <T extends Record<string, unknown>>(params?: T): T | undefined => {
   if (!params) {
     return undefined;
   }
@@ -26,7 +36,7 @@ const cleanParams = (params?: MyDevicesParams): MyDevicesParams | undefined => {
     Object.entries(params).filter(
       ([, value]) => value !== undefined && value !== null && value !== "",
     ),
-  ) as MyDevicesParams;
+  ) as T;
 };
 
 const normalizePagedResponse = <T>(
@@ -56,6 +66,41 @@ export const collectorApi = {
     );
 
     return normalizePagedResponse(response.data);
+  },
+
+  async getAlertEvents(
+    params?: AlertEventsParams,
+  ): Promise<PagedResponse<AlertEventItemResponse>> {
+    const response = await apiClient.get<BackendPagedResponse<AlertEventItemResponse>>(
+      API_ENDPOINTS.IOT.ALERT_EVENTS,
+      { params: cleanParams(params) },
+    );
+
+    return normalizePagedResponse(response.data);
+  },
+
+  async getAlertEventById(alertId: string): Promise<AlertEventDetailResponse> {
+    const response = await apiClient.get<AlertEventDetailResponse>(
+      API_ENDPOINTS.IOT.ALERT_EVENT(alertId),
+    );
+
+    return response.data;
+  },
+
+  async acknowledgeAlert(alertId: string): Promise<AlertEventDetailResponse> {
+    const response = await apiClient.post<AlertEventDetailResponse>(
+      API_ENDPOINTS.IOT.ALERT_EVENT_ACKNOWLEDGE(alertId),
+    );
+
+    return response.data;
+  },
+
+  async resolveAlert(alertId: string): Promise<AlertEventDetailResponse> {
+    const response = await apiClient.post<AlertEventDetailResponse>(
+      API_ENDPOINTS.IOT.ALERT_EVENT_RESOLVE(alertId),
+    );
+
+    return response.data;
   },
 
   async getDeviceDetail(deviceId: string): Promise<DeviceDetailResponse> {
@@ -101,6 +146,77 @@ export const collectorApi = {
     const response = await apiClient.post<DeviceResponse>(
       API_ENDPOINTS.IOT.DEVICES.CLAIM,
       payload,
+    );
+
+    return response.data;
+  },
+
+  async getDeviceChart(
+    deviceId: string,
+    params: { sensorCode: SensorCode; range: ChartRange },
+  ): Promise<SensorChartResponse> {
+    const response = await apiClient.get<SensorChartResponse>(
+      API_ENDPOINTS.IOT.DEVICES.CHARTS(deviceId),
+      { params },
+    );
+
+    return response.data;
+  },
+
+  async getZoneChart(
+    zoneId: string,
+    params: { sensorCode: SensorCode; range: ChartRange },
+  ): Promise<SensorChartResponse> {
+    const response = await apiClient.get<SensorChartResponse>(
+      API_ENDPOINTS.IOT.FARM_ZONE_CHARTS(zoneId),
+      { params },
+    );
+
+    return response.data;
+  },
+
+  async getDashboardOverview(
+    farmPlotId: string,
+  ): Promise<DashboardOverviewResponse> {
+    const response = await apiClient.get<DashboardOverviewResponse>(
+      API_ENDPOINTS.IOT.DASHBOARD_OVERVIEW,
+      { params: { farmPlotId } },
+    );
+
+    return response.data;
+  },
+
+  async getZoneOverview(zoneId: string): Promise<ZoneOverviewResponse> {
+    const response = await apiClient.get<ZoneOverviewResponse>(
+      API_ENDPOINTS.IOT.FARM_ZONE_OVERVIEW(zoneId),
+    );
+
+    return response.data;
+  },
+
+  async getDeviceConfig(deviceId: string): Promise<DeviceConfigResponse> {
+    const response = await apiClient.get<DeviceConfigResponse>(
+      API_ENDPOINTS.IOT.DEVICES.CONFIG(deviceId),
+    );
+
+    return response.data;
+  },
+
+  async updateDeviceConfig(
+    deviceId: string,
+    payload: UpdateDeviceConfigRequest,
+  ): Promise<DeviceConfigResponse> {
+    const response = await apiClient.put<DeviceConfigResponse>(
+      API_ENDPOINTS.IOT.DEVICES.CONFIG(deviceId),
+      payload,
+    );
+
+    return response.data;
+  },
+
+  async pushDeviceConfig(deviceId: string): Promise<DeviceConfigResponse> {
+    const response = await apiClient.post<DeviceConfigResponse>(
+      API_ENDPOINTS.IOT.DEVICES.PUSH_CONFIG(deviceId),
     );
 
     return response.data;

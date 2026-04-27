@@ -11,10 +11,17 @@ export default function IotLayout() {
         }}
       />
       <Stack.Screen
-        name="devices/[deviceId]"
+        name="devices/[deviceId]/index"
         options={{
           headerShown: false,
           title: "Chi tiết thiết bị",
+        }}
+      />
+      <Stack.Screen
+        name="devices/[deviceId]/config"
+        options={{
+          headerShown: false,
+          title: "Cấu hình thiết bị",
         }}
       />
       <Stack.Screen
@@ -29,6 +36,34 @@ export default function IotLayout() {
         options={{
           headerShown: false,
           title: "Quét QR",
+        }}
+      />
+      <Stack.Screen
+        name="dashboard"
+        options={{
+          headerShown: false,
+          title: "Tổng quan IoT",
+        }}
+      />
+      <Stack.Screen
+        name="zones/[zoneId]"
+        options={{
+          headerShown: false,
+          title: "Số liệu khu vực",
+        }}
+      />
+      <Stack.Screen
+        name="alerts"
+        options={{
+          headerShown: false,
+          title: "Cảnh báo IoT",
+        }}
+      />
+      <Stack.Screen
+        name="alerts/[alertId]"
+        options={{
+          headerShown: false,
+          title: "Chi tiết cảnh báo",
         }}
       />
     </Stack>
