@@ -57,9 +57,9 @@ export const validateConfigForm = (
   if (
     publishIntervalSec !== null &&
     offlineTimeoutSec !== null &&
-    offlineTimeoutSec < publishIntervalSec
+    offlineTimeoutSec <= publishIntervalSec
   ) {
-    errors.push("Thoi gian offline nen lon hon hoac bang chu ky gui du lieu.");
+    errors.push("Thoi gian offline phai lon hon chu ky gui du lieu.");
   }
 
   if (errors.length) {

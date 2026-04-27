@@ -20,7 +20,8 @@ export const iotKeys = {
     [...iotKeys.all, "zones", zoneId, "charts", sensorCode, range] as const,
   deviceConfig: (deviceId?: string) =>
     [...iotKeys.all, "devices", deviceId, "config"] as const,
-  alerts: (params?: unknown) => [...iotKeys.all, "alerts", params] as const,
+  alerts: (params?: unknown) =>
+    params ? ([...iotKeys.all, "alerts", params] as const) : ([...iotKeys.all, "alerts"] as const),
   alertDetail: (alertId?: string) =>
     [...iotKeys.all, "alerts", alertId, "detail"] as const,
 };
