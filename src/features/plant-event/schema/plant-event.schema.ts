@@ -60,6 +60,12 @@ export const createPlantEventSchema = (t: TFunction) =>
     estimatedCost: optionalString,
 
     sourcePlanId: optionalString,
+
+    trackingGranularity: z
+      .enum(["NONE", "ZONE", "PLANT"])
+      .optional(),
+    excludedPlantIds: z.array(z.string()).optional(),
+    excludedFarmZoneIds: z.array(z.string()).optional(),
   });
 
 export type PlantEventFormValues = z.infer<

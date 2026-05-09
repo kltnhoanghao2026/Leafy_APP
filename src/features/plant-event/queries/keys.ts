@@ -67,6 +67,9 @@ export const plantEventKeys = {
   detail: (eventId: string) =>
     [...plantEventKeys.all(), "detail", eventId] as const,
 
+  progress: (eventId: string) =>
+    [...plantEventKeys.detail(eventId), "progress"] as const,
+
   calendar: (params: CalendarParams) =>
     [...plantEventKeys.all(), "calendar", params] as const,
 };

@@ -4,6 +4,7 @@ import { plantEventKeys } from "./keys";
 import type {
   PlantEventCreateRequest,
   PlantEventUpdateRequest,
+  EventProgressUpdateRequest,
 } from "../components/plant-event.types";
 
 export const useCreatePlantEventMutation = () => {
@@ -47,6 +48,30 @@ export const useDeletePlantEventMutation = () => {
       queryClient.invalidateQueries({ queryKey: plantEventKeys.all() });
       queryClient.removeQueries({
         queryKey: plantEventKeys.detail(eventId),
+      });
+    },
+  });
+};
+
+export const useUpdateEventProgressMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      eventId,
+      progressId,
+      body,
+    }: {
+      eventId: string;
+      progressId: string;
+      body: EventProgressUpdateRequest;
+    }) => plantEventApi.updateEventProgress(eventId, progressId, body),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: plantEventKeys.progress(variables.eventId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: plantEventKeys.detail(variables.eventId),
       });
     },
   });

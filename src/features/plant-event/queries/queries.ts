@@ -5,7 +5,6 @@ import type {
   CalendarParams,
   PageParams,
 } from "../components/plant-event.types";
-
 export const usePlantEventsByPlant = (plantId: string, params?: PageParams) => {
   const resolvedParams = withPlantEventPageDefaults(params);
 
@@ -86,4 +85,16 @@ export const usePlantEventsCalendar = (params: CalendarParams) =>
       !!params.endDate,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
+  });
+
+export const useEventProgress = (
+  eventId: string,
+  params?: PageParams,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: plantEventKeys.progress(eventId),
+    queryFn: () => plantEventApi.getEventProgress(eventId, params),
+    select: (response) => response.data.data,
+    enabled: enabled && !!eventId,
   });

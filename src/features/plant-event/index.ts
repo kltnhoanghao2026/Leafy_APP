@@ -7,9 +7,12 @@ export { plantEventApi } from "./api/plant-event.api";
 export type {
   EventType,
   EventTargetType,
+  TrackingGranularity,
   PlantEventResponse,
   PlantEventCreateRequest,
   PlantEventUpdateRequest,
+  EventProgressResponse,
+  EventProgressUpdateRequest,
   CalendarParams,
 } from "./components/plant-event.types";
 export {
@@ -21,7 +24,9 @@ export {
   usePlantEventsByFarmPlot,
   usePlantEventsByFarmZone,
   usePlantEventsCalendar,
+  useEventProgress,
   useCreatePlantEventMutation,
   useUpdatePlantEventMutation,
   useDeletePlantEventMutation,
+  useUpdateEventProgressMutation,
 } from "./queries";

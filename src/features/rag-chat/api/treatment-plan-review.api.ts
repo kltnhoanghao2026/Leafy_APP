@@ -51,6 +51,7 @@ export type TreatmentPlanResponse = {
   estimatedCost?: string;
   plantEventIds?: string[];
   status?: string;
+  isPublic?: boolean;
 };
 
 export const treatmentPlanReviewApi = {
@@ -58,5 +59,11 @@ export const treatmentPlanReviewApi = {
     apiClient.post<ApiResponse<TreatmentPlanResponse>>(
       API_ENDPOINTS.TREATMENT_PLANS.CREATE,
       body,
+    ),
+  updateVisibility: (planId: string, isPublic: boolean) =>
+    apiClient.patch<ApiResponse<TreatmentPlanResponse>>(
+      API_ENDPOINTS.TREATMENT_PLANS.VISIBILITY(planId),
+      null,
+      { params: { isPublic } },
     ),
 };

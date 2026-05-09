@@ -114,6 +114,29 @@ export const getEventTypeIcon = (eventType: EventType): LucideIcon =>
 
 export type EventTargetType = "PLANT" | "FARM_PLOT" | "FARM_ZONE";
 
+// ── Tracking granularity ──────────────────────────────────────────────────
+
+export type TrackingGranularity = "NONE" | "ZONE" | "PLANT";
+
+export type EventProgressResponse = {
+  id: string;
+  eventId: string;
+  targetType: "ZONE" | "PLANT";
+  targetId: string;
+  farmPlotId?: string | null;
+  farmZoneId?: string | null;
+  plantId?: string | null;
+  completed: boolean;
+  completedAt?: string | null;
+  note?: string | null;
+  createdAt?: string | null;
+};
+
+export type EventProgressUpdateRequest = {
+  completed: boolean;
+  note?: string;
+};
+
 // ── DTOs ──────────────────────────────────────────────────────────────────
 
 export type PlantEventResponse = {
@@ -139,6 +162,11 @@ export type PlantEventResponse = {
   createdBy?: string | null;
   lastModifiedBy?: string | null;
   active: boolean;
+  trackingGranularity?: TrackingGranularity | null;
+  excludedPlantIds?: string[] | null;
+  excludedFarmZoneIds?: string[] | null;
+  progressTotal?: number | null;
+  progressCompleted?: number | null;
 };
 
 export type PlantEventCreateRequest = {
@@ -158,6 +186,9 @@ export type PlantEventCreateRequest = {
   mrlNote?: string;
   estimatedCost?: string;
   sourcePlanId?: string;
+  trackingGranularity?: TrackingGranularity;
+  excludedPlantIds?: string[];
+  excludedFarmZoneIds?: string[];
 };
 
 export type PlantEventUpdateRequest = Partial<

@@ -152,11 +152,15 @@ export const API_ENDPOINTS = {
     BY_FARM_ZONE: (farmZoneId: string) =>
       `/plant-events/farm-zone/${farmZoneId}`,
     CALENDAR: "/plant-events/calendar",
+    PROGRESS: (eventId: string) => `/plant-events/${eventId}/progress`,
+    PROGRESS_ITEM: (eventId: string, progressId: string) =>
+      `/plant-events/${eventId}/progress/${progressId}`,
   },
 
   TREATMENT_PLANS: {
     CREATE: "/treatment-plans",
     ITEM: (planId: string) => `/treatment-plans/${planId}`,
+    VISIBILITY: (planId: string) => `/treatment-plans/${planId}/visibility`,
     MY: "/treatment-plans/me",
     BY_PLANT: (plantId: string) => `/treatment-plans/plant/${plantId}`,
     BY_FARM_PLOT: (farmPlotId: string) =>

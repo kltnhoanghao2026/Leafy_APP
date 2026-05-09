@@ -2,6 +2,7 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   ChevronDown,
+  ClipboardList,
   MessageCircle,
   MoreHorizontal,
   Share2,
@@ -60,6 +61,7 @@ export function PostCard({
   const bodyText = post.content?.caption || post.content?.description || "";
   const titleText = post.content?.title?.trim();
   const sharedPost = post.postType === "SHARE" ? post.sharedPost : null;
+  const planId = post.postType === "PLAN_SHARE" ? (post.planId ?? null) : null;
 
   const applyVoteTransition = (nextVote: "up" | "down") => {
     const prevVote = userVote;
@@ -203,8 +205,7 @@ export function PostCard({
 
         {/* Shared Post Embed */}
         {sharedPost && (
-          <View className="mx-4 mb-3 rounded-xl border border-slate-200/60 dark:border-white/10 overflow-hidden">
-            <View className="px-3 pt-3 pb-2">
+          <View className="mx-4 mb-3 rounded-xl border border-slate-200/60 dark:border-white/10 overflow-hidden">            <View className="px-3 pt-3 pb-2">
               <View className="flex-row items-center gap-2 mb-2">
                 <Image
                   source={{ uri: sharedPost.authorAvatar || FALLBACK_AVATAR }}
@@ -248,6 +249,21 @@ export function PostCard({
                 resizeMode="cover"
               />
             )}
+          </View>
+        )}
+
+        {/* Plan Reference Embed */}
+        {planId && (
+          <View className="mx-4 mb-3 flex-row items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-950">
+            <ClipboardList size={18} color="#245A34" />
+            <View className="flex-1">
+              <Text className="text-[11px] font-black uppercase tracking-widest text-[#245A34]">
+                Kế hoạch điều trị
+              </Text>
+              <Text className="mt-0.5 text-[13px] text-slate-500">
+                ID: {planId.slice(0, 12)}...
+              </Text>
+            </View>
           </View>
         )}
 

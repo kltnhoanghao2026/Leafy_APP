@@ -6,9 +6,11 @@ export {
   usePlantEventsByFarmPlot,
   usePlantEventsByFarmZone,
   usePlantEventsCalendar,
+  useEventProgress,
 } from "./queries";
 export {
   useCreatePlantEventMutation,
   useUpdatePlantEventMutation,
   useDeletePlantEventMutation,
+  useUpdateEventProgressMutation,
 } from "./mutations";

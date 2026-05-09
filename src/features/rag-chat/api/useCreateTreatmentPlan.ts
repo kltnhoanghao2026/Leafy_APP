@@ -17,3 +17,9 @@ export const useCreateTreatmentPlan = () => {
     },
   });
 };
+
+export const useUpdatePlanVisibilityMutation = () =>
+  useMutation({
+    mutationFn: ({ planId, isPublic }: { planId: string; isPublic: boolean }) =>
+      treatmentPlanReviewApi.updateVisibility(planId, isPublic),
+  });

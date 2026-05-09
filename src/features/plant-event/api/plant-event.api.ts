@@ -8,6 +8,8 @@ import type {
   PlantEventResponse,
   PlantEventUpdateRequest,
   CalendarParams,
+  EventProgressResponse,
+  EventProgressUpdateRequest,
 } from "../components/plant-event.types";
 
 export const plantEventApi = {
@@ -75,5 +77,21 @@ export const plantEventApi = {
     apiClient.get<ApiResponse<PlantEventResponse[]>>(
       API_ENDPOINTS.PLANT_EVENTS.CALENDAR,
       { params },
+    ),
+
+  getEventProgress: (eventId: string, params?: PageParams) =>
+    apiClient.get<ApiResponse<PageResponse<EventProgressResponse>>>(
+      API_ENDPOINTS.PLANT_EVENTS.PROGRESS(eventId),
+      { params },
+    ),
+
+  updateEventProgress: (
+    eventId: string,
+    progressId: string,
+    body: EventProgressUpdateRequest,
+  ) =>
+    apiClient.patch<ApiResponse<EventProgressResponse>>(
+      API_ENDPOINTS.PLANT_EVENTS.PROGRESS_ITEM(eventId, progressId),
+      body,
     ),
 };

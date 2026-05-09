@@ -1,4 +1,4 @@
-import "@tamagui/native/setup-zeego";
+
 import "@/global.css";
 import { queryClient } from "@/src/lib";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
@@ -18,8 +18,7 @@ import { LogBox } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { TamaguiProvider } from "tamagui";
-import tamaguiConfig from "@/tamagui.config";
+
 import { initializeI18n } from "@/src/i18n";
 import NetInfo from "@react-native-community/netinfo";
 import { useNetworkStore } from "@/src/store/useNetworkStore";
@@ -93,18 +92,13 @@ export default function RootLayout() {
   }
 
   return (
-    <TamaguiProvider
-      config={tamaguiConfig}
-      defaultTheme={colorScheme ?? "light"}
-    >
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <RootLayoutNav />
-          </AuthProvider>
-        </QueryClientProvider>
-      </GestureHandlerRootView>
-    </TamaguiProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 
