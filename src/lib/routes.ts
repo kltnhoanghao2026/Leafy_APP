@@ -187,6 +187,20 @@ export const API_ENDPOINTS = {
     DIAGNOSE_RESULT_BY_REQUEST: (requestId: string) =>
       `/diseases/diagnose/results/by-request/${requestId}`,
   },
+
+  NOTIFICATIONS: {
+    HISTORY: "/notifications/history",
+    HISTORY_UNREAD: "/notifications/history/unread",
+    STATE: "/notifications/state",
+    CHECKED: "/notifications/checked",
+    READ: (id: string) => `/notifications/${id}/read`,
+    READ_ALL: "/notifications/read-all",
+  },
+
+  PUSH_TOKENS: {
+    REGISTER: "/push-tokens/register",
+    DEACTIVATE: "/push-tokens/deactivate",
+  },
 } as const;
 
 // ============================================================================

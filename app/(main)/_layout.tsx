@@ -23,12 +23,39 @@ import {
   StyleSheet,
   Text,
   View,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
+import { useQueryClient } from "@tanstack/react-query";
 
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
+import {
+  useNotificationState,
+  useNotificationHistory,
+  NotificationItem,
+  useMarkNotificationReadMutation,
+  notificationKeys,
+} from "@/src/features/notifications";
+import type { UserNotificationResponse } from "@/src/features/notifications";
+
+const NOTIFICATION_ROUTES: Record<
+  string,
+  (referenceId: string) => string | null
+> = {
+  POST_COMMENT: (id) => `/community-post/${id}`,
+  POST_UPVOTE: (id) => `/community-post/${id}`,
+  COMMENT_REPLY: (id) => `/community-post/${id}`,
+  COMMENT_UPVOTE: (id) => `/community-post/${id}`,
+  USER_FOLLOW: (id) => `/(main)/profile/${id}`,
+  CONSULT_REQUEST: (id) => `/(main)/profile/${id}`,
+  PLAN_CONSULTING_CREATED: () => null,
+  PLAN_APPLIED: () => null,
+  SYSTEM: () => null,
+};
+
 
 const DRAWER_WIDTH = 280;
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -170,6 +197,38 @@ export default function MainLayout() {
   const [moreDrawerVisible, setMoreDrawerVisible] = useState(false);
   const [notiDrawerVisible, setNotiDrawerVisible] = useState(false);
   const colorScheme = useColorScheme();
+  const queryClient = useQueryClient();
+  const markReadMutation = useMarkNotificationReadMutation();
+  
+  const { data: historyData, isLoading: historyLoading } = useNotificationHistory(false, true);
+  const recentNotifications = historyData?.pages?.[0]?.data?.slice(0, 5) ?? [];
+
+  const handleNotificationPress = (notification: UserNotificationResponse) => {
+    closeNotiDrawer();
+
+    if (!notification.isRead) {
+      markReadMutation.mutate(notification.id, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: notificationKeys.state(),
+          });
+          queryClient.invalidateQueries({
+            queryKey: [...notificationKeys.all(), "history"],
+          });
+        },
+      });
+    }
+
+    if (notification.referenceId && notification.type) {
+      const routeFn = NOTIFICATION_ROUTES[notification.type];
+      if (routeFn) {
+        const path = routeFn(notification.referenceId);
+        if (path) {
+          router.push(path as never);
+        }
+      }
+    }
+  };
   const scheme = colorScheme ?? "light";
   const palette = Colors[scheme];
   const tabIconDefault = palette.tabIconDefault;
@@ -180,8 +239,7 @@ export default function MainLayout() {
   const closeNotiDrawer = () => setNotiDrawerVisible(false);
 
   const openNotificationsPage = () => {
-    closeNotiDrawer();
-    router.push("/modal");
+    router.push("/(main)/notifications" as never);
   };
 
   const openMorePage = () => {
@@ -286,10 +344,29 @@ export default function MainLayout() {
         backgroundColor={drawerBg}
         paddingTop={drawerPaddingTop}
       >
-        <Text style={[styles.drawerTitle, { color: palette.text }]}>
+        <Text style={[styles.drawerTitle, { color: palette.text, marginBottom: 12 }]}>
           {t("mainNav.drawer.notifications")}
         </Text>
-        <Pressable style={styles.drawerItem} onPress={openNotificationsPage}>
+
+        {historyLoading ? (
+          <ActivityIndicator color={palette.primary} style={{ marginVertical: 20 }} />
+        ) : recentNotifications.length === 0 ? (
+          <Text style={{ color: "#64748B", textAlign: "center", marginVertical: 20 }}>
+            {t("notifications.emptyAllTitle", "No notifications yet")}
+          </Text>
+        ) : (
+          <View style={{ marginHorizontal: -16 }}>
+            {recentNotifications.map((notif) => (
+              <NotificationItem
+                key={notif.id}
+                notification={notif}
+                onPress={handleNotificationPress}
+              />
+            ))}
+          </View>
+        )}
+
+        <Pressable style={[styles.drawerItem, { marginTop: 12 }]} onPress={openNotificationsPage}>
           <Bell size={20} color={palette.primary} />
           <Text style={[styles.drawerItemText, { color: palette.text }]}>
             {t("mainNav.drawer.viewAllNotifications")}
@@ -361,17 +438,28 @@ export default function MainLayout() {
           headerLeftContainerStyle: {
             paddingLeft: 16,
           },
-          headerRight: () => (
-            <Pressable
-              style={styles.headerRightWrapper}
-              onPress={openNotiDrawer}
-            >
-              <View style={styles.headerIconButton}>
-                <Bell size={20} color={palette.primary} />
-              </View>
-              <View style={styles.notificationDot} />
-            </Pressable>
-          ),
+          headerRight: () => {
+            // eslint-disable-next-line react-hooks/rules-of-hooks
+            const { data: stateData } = useNotificationState();
+            const unreadCount = stateData?.data?.unreadCount ?? 0;
+            return (
+              <Pressable
+                style={styles.headerRightWrapper}
+                onPress={openNotiDrawer}
+              >
+                <View style={styles.headerIconButton}>
+                  <Bell size={20} color={palette.primary} />
+                </View>
+                {unreadCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationBadgeText}>
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            );
+          },
           headerRightContainerStyle: {
             paddingRight: 16,
           },
@@ -709,6 +797,15 @@ export default function MainLayout() {
             tabBarStyle: { display: "none" },
           }}
         />
+
+        <Tabs.Screen
+          name="notifications"
+          options={{
+            href: null,
+            headerShown: false,
+            tabBarStyle: { display: "none" },
+          }}
+        />
       </Tabs>
     </>
   );
@@ -728,14 +825,25 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
   },
-  notificationDot: {
+  notificationBadge: {
     position: "absolute",
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: -4,
+    right: -6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
     backgroundColor: "#EF4444",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: "#FFFFFF",
+  },
+  notificationBadgeText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    lineHeight: 12,
   },
   drawerRoot: {
     flex: 1,

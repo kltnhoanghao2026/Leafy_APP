@@ -23,6 +23,12 @@ import { initializeI18n } from "@/src/i18n";
 import NetInfo from "@react-native-community/netinfo";
 import { useNetworkStore } from "@/src/store/useNetworkStore";
 import { OfflineNotice } from "@/src/components/ui/OfflineNotice";
+import { WebSocketProvider } from "@/src/providers/WebSocketProvider";
+import { ExpoPushBootstrap, configurePushNotifications } from "@/src/features/notifications";
+
+// Configure how notifications appear while the app is in the foreground.
+configurePushNotifications();
+
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -95,7 +101,9 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <RootLayoutNav />
+          <WebSocketProvider>
+            <RootLayoutNav />
+          </WebSocketProvider>
         </AuthProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
@@ -130,6 +138,8 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <SafeAreaProvider>
+        {/* Mount push bootstrap inside auth so it has access to the user */}
+        {isAuthenticated && <ExpoPushBootstrap />}
         <Stack>
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(main)" options={{ headerShown: false }} />
