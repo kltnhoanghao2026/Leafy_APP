@@ -23,3 +23,6 @@ export {
   useUpdateZoneMutation,
   useDeleteZoneMutation,
 } from "./queries";
+
+export * from "./hooks/useFarmPlots";
+export * from "./hooks/useFarmZones";

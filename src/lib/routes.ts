@@ -26,6 +26,8 @@ export const ROUTES = {
     FARM: "/farm",
     PLANTS: "/plants",
     AI_CHAT: "/ai-chat",
+    IOT: "/iot",
+    IOT_DEVICE_DETAIL: (deviceId: string) => `/iot/devices/${deviceId}`,
   },
 
   // Modal routes
@@ -117,6 +119,30 @@ export const API_ENDPOINTS = {
     VOTES_BY_POST: (postId: string) => `/votes/posts/${postId}`,
     VOTE: (targetType: "POST" | "COMMENT", targetId: string) =>
       `/votes/${targetType}/${targetId}`,
+  },
+
+  IOT: {
+    DEVICES: {
+      ME: "/iot/devices/me",
+      DETAIL: (deviceId: string) => `/iot/devices/${deviceId}/detail`,
+      LATEST_READINGS: (deviceId: string) =>
+        `/iot/devices/${deviceId}/latest-readings`,
+      PROVISION: "/iot/devices/provision",
+      CLAIM_CODE: (deviceId: string) => `/iot/devices/${deviceId}/claim-code`,
+      CLAIM: "/iot/devices/claim",
+      CHARTS: (deviceId: string) => `/iot/devices/${deviceId}/charts`,
+      CONFIG: (deviceId: string) => `/iot/devices/${deviceId}/config`,
+      PUSH_CONFIG: (deviceId: string) => `/iot/devices/${deviceId}/config/push`,
+    },
+    DASHBOARD_OVERVIEW: "/iot/dashboard/overview",
+    FARM_ZONE_OVERVIEW: (zoneId: string) => `/iot/farm-zones/${zoneId}/overview`,
+    FARM_ZONE_CHARTS: (zoneId: string) => `/iot/farm-zones/${zoneId}/charts`,
+    ALERT_EVENTS: "/iot/alert-events",
+    ALERT_EVENT: (alertId: string) => `/iot/alert-events/${alertId}`,
+    ALERT_EVENT_ACKNOWLEDGE: (alertId: string) =>
+      `/iot/alert-events/${alertId}/acknowledge`,
+    ALERT_EVENT_RESOLVE: (alertId: string) =>
+      `/iot/alert-events/${alertId}/resolve`,
   },
 
   FARMS: {
@@ -244,7 +270,7 @@ export const isProtectedRoute = (pathname?: string): boolean => {
     return true;
   }
 
-  return [ROUTES.MAIN.PROFILE, ROUTES.MAIN.FARM, ROUTES.MAIN.PLANTS].some(
+  return [ROUTES.MAIN.PROFILE, ROUTES.MAIN.FARM, ROUTES.MAIN.PLANTS, ROUTES.MAIN.IOT].some(
     (route) =>
       normalizedPath === route || normalizedPath.startsWith(`${route}/`),
   );

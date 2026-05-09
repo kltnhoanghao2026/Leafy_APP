@@ -1,4 +1,4 @@
-import { Tabs, useGlobalSearchParams, useRouter } from "expo-router";
+import { Tabs, useGlobalSearchParams, useRouter, Link } from "expo-router";
 import {
   Home,
   Cpu,
@@ -11,6 +11,11 @@ import {
   Bell,
   MoreHorizontal,
   ScanLine,
+  Search,
+  Leaf,
+  Settings,
+  Info,
+  RadioTower,
 } from "lucide-react-native";
 import BackButton from "@/src/components/ui/BackButton";
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -378,11 +383,11 @@ export default function MainLayout() {
           }}
         />
         <Tabs.Screen
-          name="sensors"
+          name="iot"
           options={{
-            title: t("mainNav.tabs.sensors"),
-            headerTitle: t("mainNav.headers.sensors"),
-            tabBarIcon: ({ color }) => <Cpu color={color} size={24} />,
+            title: "IoT",
+            headerTitle: "IoT Dashboard",
+            tabBarIcon: ({ color }) => <RadioTower color={color} size={24} />,
           }}
         />
         <Tabs.Screen
