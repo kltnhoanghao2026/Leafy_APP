@@ -130,7 +130,7 @@ export function LoginScreenView({
               )}
             />
 
-            {errors.root && <AuthErrorBanner message={errors.root.message} />}
+            {errors.root?.message && <AuthErrorBanner message={errors.root.message} />}
 
             <AuthSubmitButton
               title={t("auth.login.submit")}

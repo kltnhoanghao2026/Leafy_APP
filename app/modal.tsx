@@ -12,11 +12,11 @@ import {
 import { SendHorizonal } from "lucide-react-native";
 
 import { BottomSheet } from "@/src/components/ui/BottomSheet";
-import { CommentCard } from "@/src/features/community/components/CommentCard";
+import { CommentCard } from "@/src/features/community/community-feed/components/CommentCard";
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 import { parseApiError } from "@/src/lib/error-handler";
-import { getCommentsByPostQueryOptions } from "@/src/features/community/queries/options";
+import { getCommentsByPostQueryOptions } from "@/src/features/community/community-feed/queries/options";
 import { useState } from "react";
 
 export default function ModalScreen() {

@@ -198,7 +198,7 @@ export function SignupScreenView({
               )}
             />
 
-            {errors.root && <AuthErrorBanner message={errors.root.message} />}
+            {errors.root?.message && <AuthErrorBanner message={errors.root.message} />}
 
             {/* Terms checkbox */}
             <TouchableOpacity

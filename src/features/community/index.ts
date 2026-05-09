@@ -1,18 +1,23 @@
 // Public API for the community feature
+// Re-exports from sub-modules: community-feed and chat
+
 export {
   CommunityScreen,
-  CommunityMessagesPanel,
-  ConversationScreen,
   ComposerScreen,
   PostCard,
   ComposerCard,
-} from "./components";
-export type { Post } from "./components/community.types";
-export { communityApi } from "./api/community.api";
+  CommentCard,
+  PostDetailScreen,
+} from "./community-feed";
+export type { Post } from "./community-feed/components/community.types";
+export { communityApi } from "./community-feed/api/community.api";
 export {
   communityKeys,
   getFeedPostsQueryOptions,
   getUserPostsQueryOptions,
   getCommentsByPostQueryOptions,
-} from "./queries/options";
-export { useHandleVoteMutation } from "./queries/mutations";
+  getInfiniteSearchPostsQueryOptions,
+  getInfiniteSearchProfilesQueryOptions,
+} from "./community-feed/queries/options";
+export { useHandleVoteMutation } from "./community-feed/queries/mutations";
+

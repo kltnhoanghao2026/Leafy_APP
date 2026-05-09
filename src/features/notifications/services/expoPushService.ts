@@ -11,7 +11,6 @@ import type { NotificationPlatform } from "../types";
 export function configurePushNotifications() {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: true,
       shouldShowBanner: true,

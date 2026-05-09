@@ -16,14 +16,10 @@ export {
 // Public hooks
 export {
   useLogin,
-  useAuthRestoration,
   useLoginScreen,
   useSignupScreen,
   useSignupVerifyOtpScreen,
 } from "./hooks";
-
-// Public store
-export { useAuthStore } from "./store";
 
 // Public query hooks & keys
 export {

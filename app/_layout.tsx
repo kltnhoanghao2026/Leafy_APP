@@ -20,10 +20,11 @@ import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { initializeI18n } from "@/src/i18n";
-import NetInfo from "@react-native-community/netinfo";
-import { useNetworkStore } from "@/src/store/useNetworkStore";
 import { OfflineNotice } from "@/src/components/ui/OfflineNotice";
+import { NetworkProvider } from "@/src/providers/NetworkProvider";
 import { WebSocketProvider } from "@/src/providers/WebSocketProvider";
+import { TreatmentPlanReviewProvider } from "@/src/features/rag-chat/context/TreatmentPlanReviewContext";
+import { ExpoPushProvider } from "@/src/features/notifications/context/ExpoPushContext";
 import { ExpoPushBootstrap, configurePushNotifications } from "@/src/features/notifications";
 
 // Configure how notifications appear while the app is in the foreground.
@@ -44,7 +45,6 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 LogBox.ignoreLogs([
-  "SafeAreaView has been deprecated and will be removed in a future release.",
 ]);
 
 export default function RootLayout() {
@@ -73,19 +73,7 @@ export default function RootLayout() {
     };
   }, []);
 
-  // Set up network listener
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      useNetworkStore.getState().setNetworkState(state);
-    });
 
-    // Fetch initial state
-    NetInfo.fetch().then((state) => {
-      useNetworkStore.getState().setNetworkState(state);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   useEffect(() => {
     if (loaded && isI18nReady) {
@@ -99,13 +87,19 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <WebSocketProvider>
-            <RootLayoutNav />
-          </WebSocketProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <NetworkProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <WebSocketProvider>
+              <TreatmentPlanReviewProvider>
+                <ExpoPushProvider>
+                  <RootLayoutNav />
+                </ExpoPushProvider>
+              </TreatmentPlanReviewProvider>
+            </WebSocketProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </NetworkProvider>
     </GestureHandlerRootView>
   );
 }

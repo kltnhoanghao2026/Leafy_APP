@@ -5,10 +5,10 @@ import {
   Pressable,
   ScrollView,
   Alert,
-  SafeAreaView,
   Modal,
   TouchableWithoutFeedback,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import {

@@ -6,13 +6,14 @@ import React, {
   useState,
 } from "react";
 import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import { getAccessToken } from "@/src/lib/axios";
 import { useAuthContext } from "@/src/features/auth";
 
-// React Native ships with a native WebSocket — no SockJS needed.
-// STOMP over plain WebSocket works out of the box.
-const WS_URL =
-  process.env.EXPO_PUBLIC_WS_URL || "ws://192.168.100.55:8060/ws";
+// Fallback to deriving from API URL if WS_URL is not explicitly set to a HTTP URL
+const SOCKJS_URL =
+  process.env.EXPO_PUBLIC_API_URL?.replace("/api", "/ws") ||
+  "http://192.168.100.55:8060/ws";
 
 interface WebSocketContextValue {
   client: Client | null;
@@ -55,13 +56,13 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({
       const token = await getAccessToken();
       if (!token || cancelled) return;
 
-      console.log(`[WebSocket] Connecting to ${WS_URL}...`);
+      console.log(`[WebSocket] Connecting via SockJS to ${SOCKJS_URL}...`);
 
       const client = new Client({
-        brokerURL: WS_URL,
+        webSocketFactory: () => new SockJS(SOCKJS_URL),
         reconnectDelay: 5000,
-        forceBinaryWSFrames: true,
-        appendMissingNULLonIncoming: true,
+        // forceBinaryWSFrames/appendMissingNULLonIncoming are usually not needed/supported with SockJS
+
         connectHeaders: {
           Authorization: `Bearer ${token}`,
         },

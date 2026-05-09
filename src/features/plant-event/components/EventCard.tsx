@@ -13,12 +13,7 @@ import { useTranslation } from "react-i18next";
 import type { PlantEventResponse } from "./plant-event.types";
 import { getEventCategoryColors, getEventTypeIcon } from "./plant-event.types";
 
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+
 
 type EventCardProps = {
   event: PlantEventResponse;

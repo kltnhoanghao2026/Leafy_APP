@@ -5,10 +5,10 @@ import {
   Pressable,
   ScrollView,
   Alert,
-  SafeAreaView,
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Camera,
   useCameraDevice,
@@ -127,9 +127,7 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
       setIsProcessing(true);
       
       // takePhoto first to avoid Camera2 API starvation crash when frame processor is busy
-      const photo = await cameraRef.current.takePhoto({
-        qualityPrioritization: "speed",
-      });
+      const photo = await cameraRef.current.takePhoto({});
 
       // Then trigger YOLO inference and wait for the result
       const detectionsPromise = new Promise<LeafDetection[]>((resolve) => {

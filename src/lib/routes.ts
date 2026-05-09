@@ -80,6 +80,7 @@ export const API_ENDPOINTS = {
     ME: "/profiles/me",
     GET: (profileId: string) => `/profiles/${profileId}`,
     GET_BY_USER: (userId: string) => `/profiles/user/${userId}`,
+    SEARCH: "/profiles/search",
     APPROVAL_REQUESTS: (profileId: string) =>
       `/profiles/${profileId}/approval-requests`,
   },
@@ -198,8 +199,26 @@ export const API_ENDPOINTS = {
   },
 
   PUSH_TOKENS: {
-    REGISTER: "/push-tokens/register",
+    REGISTER: "/push-tokens",
     DEACTIVATE: "/push-tokens/deactivate",
+  },
+
+  MESSAGES: {
+    ROOT: "/conversations",
+    CONVERSATIONS: "/conversations",
+    CONVERSATION: (id: string) => `/conversations/${id}`,
+    MESSAGES: (conversationId: string) =>
+      `/conversations/${conversationId}/messages`,
+    MESSAGES_V2: (conversationId: string) =>
+      `/v2/conversations/${conversationId}/messages`,
+    MEDIA: (conversationId: string) =>
+      `/conversations/${conversationId}/media`,
+    FILES: (conversationId: string) =>
+      `/conversations/${conversationId}/files`,
+    SEND: (conversationId: string) => `/conversations/${conversationId}/messages`,
+    MESSAGE_EDIT: (messageId: string) => `/messages/${messageId}`,
+    MESSAGE_REVOKE: (messageId: string) => `/messages/${messageId}/revoke`,
+    MESSAGE_DELETE_ME: (messageId: string) => `/messages/${messageId}/me`,
   },
 } as const;
 

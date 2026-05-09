@@ -27,8 +27,11 @@
       },
       "softwareKeyboardLayoutMode": "resize",
       "predictiveBackGestureEnabled": false,
-      "permissions": ["android.permission.CAMERA", "android.permission.CAMERA"],
-      "package": "com.hoang120904.Leafy_APP",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.CAMERA"
+      ],
+      "package": "com.leafy",
       "googleServicesFile": "./google-services.json"
     },
     "web": {
@@ -50,7 +53,8 @@
         }
       ],
       "react-native-fast-tflite",
-      "expo-dev-client"
+      "expo-dev-client",
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true

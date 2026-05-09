@@ -16,9 +16,7 @@ import BackButton from "@/src/components/ui/BackButton";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Animated,
   Dimensions,
-  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -27,6 +25,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Drawer } from 'react-native-drawer-layout';
 import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -45,125 +44,21 @@ const NOTIFICATION_ROUTES: Record<
   string,
   (referenceId: string) => string | null
 > = {
-  POST_COMMENT: (id) => `/community-post/${id}`,
-  POST_UPVOTE: (id) => `/community-post/${id}`,
-  COMMENT_REPLY: (id) => `/community-post/${id}`,
-  COMMENT_UPVOTE: (id) => `/community-post/${id}`,
+  POST_COMMENT: (id) => `/community/post/${id}`,
+  POST_UPVOTE: (id) => `/community/post/${id}`,
+  COMMENT_REPLY: (id) => `/community/post/${id}`,
+  COMMENT_UPVOTE: (id) => `/community/post/${id}`,
   USER_FOLLOW: (id) => `/(main)/profile/${id}`,
   CONSULT_REQUEST: (id) => `/(main)/profile/${id}`,
   PLAN_CONSULTING_CREATED: () => null,
   PLAN_APPLIED: () => null,
   SYSTEM: () => null,
+  DIRECT_MESSAGE: (id) => `/(main)/chat/${id}`,
 };
 
 
 const DRAWER_WIDTH = 280;
 const SCREEN_WIDTH = Dimensions.get("window").width;
-const ANIMATION_DURATION = 400;
-
-type SlideDrawerProps = {
-  visible: boolean;
-  onClose: () => void;
-  side: "left" | "right";
-  backgroundColor: string;
-  paddingTop: number;
-  children: React.ReactNode;
-};
-
-function SlideDrawer({
-  visible,
-  onClose,
-  side,
-  backgroundColor,
-  paddingTop,
-  children,
-}: SlideDrawerProps) {
-  const [mounted, setMounted] = useState(false);
-  const translateX = useRef(
-    new Animated.Value(side === "left" ? -DRAWER_WIDTH : DRAWER_WIDTH),
-  ).current;
-  const overlayOpacity = useRef(new Animated.Value(0)).current;
-
-  const animateIn = useCallback(() => {
-    setMounted(true);
-    Animated.parallel([
-      Animated.timing(translateX, {
-        toValue: 0,
-        duration: ANIMATION_DURATION,
-        useNativeDriver: true,
-      }),
-      Animated.timing(overlayOpacity, {
-        toValue: 1,
-        duration: ANIMATION_DURATION,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [translateX, overlayOpacity]);
-
-  const animateOut = useCallback(
-    (callback?: () => void) => {
-      Animated.parallel([
-        Animated.timing(translateX, {
-          toValue: side === "left" ? -DRAWER_WIDTH : DRAWER_WIDTH,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.timing(overlayOpacity, {
-          toValue: 0,
-          duration: ANIMATION_DURATION,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setMounted(false);
-        callback?.();
-      });
-    },
-    [translateX, overlayOpacity, side],
-  );
-
-  useEffect(() => {
-    if (visible) {
-      animateIn();
-    } else if (mounted) {
-      animateOut();
-    }
-  }, [visible]);
-
-  const handleClose = () => {
-    animateOut(onClose);
-  };
-
-  if (!mounted && !visible) return null;
-
-  return (
-    <Modal
-      visible={mounted}
-      transparent
-      animationType="none"
-      onRequestClose={handleClose}
-      statusBarTranslucent
-    >
-      <View style={styles.drawerRoot}>
-        {/* Dim overlay */}
-        <Animated.View
-          style={[styles.drawerOverlay, { opacity: overlayOpacity }]}
-        />
-        {/* Tap outside to close */}
-        <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
-        {/* Drawer panel */}
-        <Animated.View
-          style={[
-            styles.drawerPanel,
-            side === "left" ? styles.drawerPanelLeft : styles.drawerPanelRight,
-            { backgroundColor, paddingTop, transform: [{ translateX }] },
-          ]}
-        >
-          <Pressable onPress={(e) => e.stopPropagation()}>{children}</Pressable>
-        </Animated.View>
-      </View>
-    </Modal>
-  );
-}
 
 type CenterActionButtonProps = BottomTabBarButtonProps & {
   borderColor: string;
@@ -239,6 +134,7 @@ export default function MainLayout() {
   const closeNotiDrawer = () => setNotiDrawerVisible(false);
 
   const openNotificationsPage = () => {
+    closeNotiDrawer();
     router.push("/(main)/notifications" as never);
   };
 
@@ -277,104 +173,112 @@ export default function MainLayout() {
     : routeParams.returnTo;
 
   const drawerBg = scheme === "dark" ? palette.background : "#FFFFFF";
-  const drawerPaddingTop = insets.top + 16;
+
+  const renderLeftDrawerContent = () => (
+    <View style={{ flex: 1, backgroundColor: drawerBg, paddingTop: insets.top + 16, paddingBottom: Math.max(insets.bottom, 24), paddingHorizontal: 16 }}>
+      <Text style={[styles.drawerTitle, { color: palette.text }]}>
+        {t("mainNav.drawer.options")}
+      </Text>
+
+      <Pressable style={styles.drawerItem} onPress={openFarmPage}>
+        <Home size={20} color={palette.primary} />
+        <Text style={[styles.drawerItemText, { color: palette.text }]}>
+          {t("mainNav.drawer.manageFarm")}
+        </Text>
+      </Pressable>
+
+      <Pressable style={styles.drawerItem} onPress={openPlantsPage}>
+        <Sprout size={20} color={palette.primary} />
+        <Text style={[styles.drawerItemText, { color: palette.text }]}>
+          {t("mainNav.drawer.managePlants")}
+        </Text>
+      </Pressable>
+
+      <Pressable style={styles.drawerItem} onPress={openPlantEventsPage}>
+        <CalendarDays size={20} color={palette.primary} />
+        <Text style={[styles.drawerItemText, { color: palette.text }]}>
+          {t("mainNav.drawer.manageEvents")}
+        </Text>
+      </Pressable>
+
+      <Pressable style={styles.drawerItem} onPress={openCalendarPage}>
+        <CalendarDays size={20} color={palette.primary} />
+        <Text style={[styles.drawerItemText, { color: palette.text }]}>
+          {t("mainNav.drawer.eventCalendar")}
+        </Text>
+      </Pressable>
+
+      <Pressable style={styles.drawerItem} onPress={openPredictPage}>
+        <ScanLine size={20} color={palette.primary} />
+        <Text style={[styles.drawerItemText, { color: palette.text }]}>
+          {t("mainNav.drawer.predict", "Disease Detection")}
+        </Text>
+      </Pressable>
+
+      <Pressable style={styles.drawerItem} onPress={openMorePage}>
+        <MoreHorizontal size={20} color={palette.primary} />
+        <Text style={[styles.drawerItemText, { color: palette.text }]}>
+          {t("mainNav.drawer.more")}
+        </Text>
+      </Pressable>
+    </View>
+  );
+
+  const renderRightDrawerContent = () => (
+    <View style={{ flex: 1, backgroundColor: drawerBg, paddingTop: insets.top + 16, paddingBottom: Math.max(insets.bottom, 24), paddingHorizontal: 16 }}>
+      <Text style={[styles.drawerTitle, { color: palette.text, marginBottom: 12 }]}>
+        {t("mainNav.drawer.notifications")}
+      </Text>
+
+      {historyLoading ? (
+        <ActivityIndicator color={palette.primary} style={{ marginVertical: 20 }} />
+      ) : recentNotifications.length === 0 ? (
+        <Text style={{ color: "#64748B", textAlign: "center", marginVertical: 20 }}>
+          {t("notifications.emptyAllTitle", "No notifications yet")}
+        </Text>
+      ) : (
+        <View style={{ marginHorizontal: -16 }}>
+          {recentNotifications.map((notif) => (
+            <NotificationItem
+              key={notif.id}
+              notification={notif}
+              onPress={handleNotificationPress}
+            />
+          ))}
+        </View>
+      )}
+
+      <Pressable style={[styles.drawerItem, { marginTop: 12 }]} onPress={openNotificationsPage}>
+        <Bell size={20} color={palette.primary} />
+        <Text style={[styles.drawerItemText, { color: palette.text }]}>
+          {t("mainNav.drawer.viewAllNotifications")}
+        </Text>
+      </Pressable>
+    </View>
+  );
 
   return (
-    <>
-      {/* Left (More) Drawer */}
-      <SlideDrawer
-        visible={moreDrawerVisible}
-        onClose={closeMoreDrawer}
-        side="left"
-        backgroundColor={drawerBg}
-        paddingTop={drawerPaddingTop}
+    <Drawer
+      open={moreDrawerVisible}
+      onOpen={() => setMoreDrawerVisible(true)}
+      onClose={() => setMoreDrawerVisible(false)}
+      drawerPosition="left"
+      drawerType="front"
+      drawerStyle={{ backgroundColor: drawerBg, width: DRAWER_WIDTH }}
+      renderDrawerContent={renderLeftDrawerContent}
+      swipeEdgeWidth={40}
+    >
+      <Drawer
+        open={notiDrawerVisible}
+        onOpen={() => setNotiDrawerVisible(true)}
+        onClose={() => setNotiDrawerVisible(false)}
+        drawerPosition="right"
+        drawerType="front"
+        drawerStyle={{ backgroundColor: drawerBg, width: DRAWER_WIDTH }}
+        renderDrawerContent={renderRightDrawerContent}
+        swipeEdgeWidth={40}
       >
-        <Text style={[styles.drawerTitle, { color: palette.text }]}>
-          {t("mainNav.drawer.options")}
-        </Text>
-
-        <Pressable style={styles.drawerItem} onPress={openFarmPage}>
-          <Home size={20} color={palette.primary} />
-          <Text style={[styles.drawerItemText, { color: palette.text }]}>
-            {t("mainNav.drawer.manageFarm")}
-          </Text>
-        </Pressable>
-
-        <Pressable style={styles.drawerItem} onPress={openPlantsPage}>
-          <Sprout size={20} color={palette.primary} />
-          <Text style={[styles.drawerItemText, { color: palette.text }]}>
-            {t("mainNav.drawer.managePlants")}
-          </Text>
-        </Pressable>
-
-        <Pressable style={styles.drawerItem} onPress={openPlantEventsPage}>
-          <CalendarDays size={20} color={palette.primary} />
-          <Text style={[styles.drawerItemText, { color: palette.text }]}>
-            {t("mainNav.drawer.manageEvents")}
-          </Text>
-        </Pressable>
-
-        <Pressable style={styles.drawerItem} onPress={openCalendarPage}>
-          <CalendarDays size={20} color={palette.primary} />
-          <Text style={[styles.drawerItemText, { color: palette.text }]}>
-            {t("mainNav.drawer.eventCalendar")}
-          </Text>
-        </Pressable>
-
-        <Pressable style={styles.drawerItem} onPress={openPredictPage}>
-          <ScanLine size={20} color={palette.primary} />
-          <Text style={[styles.drawerItemText, { color: palette.text }]}>
-            {t("mainNav.drawer.predict", "Disease Detection")}
-          </Text>
-        </Pressable>
-
-        <Pressable style={styles.drawerItem} onPress={openMorePage}>
-          <MoreHorizontal size={20} color={palette.primary} />
-          <Text style={[styles.drawerItemText, { color: palette.text }]}>
-            {t("mainNav.drawer.more")}
-          </Text>
-        </Pressable>
-      </SlideDrawer>
-
-      {/* Right (Notifications) Drawer */}
-      <SlideDrawer
-        visible={notiDrawerVisible}
-        onClose={closeNotiDrawer}
-        side="right"
-        backgroundColor={drawerBg}
-        paddingTop={drawerPaddingTop}
-      >
-        <Text style={[styles.drawerTitle, { color: palette.text, marginBottom: 12 }]}>
-          {t("mainNav.drawer.notifications")}
-        </Text>
-
-        {historyLoading ? (
-          <ActivityIndicator color={palette.primary} style={{ marginVertical: 20 }} />
-        ) : recentNotifications.length === 0 ? (
-          <Text style={{ color: "#64748B", textAlign: "center", marginVertical: 20 }}>
-            {t("notifications.emptyAllTitle", "No notifications yet")}
-          </Text>
-        ) : (
-          <View style={{ marginHorizontal: -16 }}>
-            {recentNotifications.map((notif) => (
-              <NotificationItem
-                key={notif.id}
-                notification={notif}
-                onPress={handleNotificationPress}
-              />
-            ))}
-          </View>
-        )}
-
-        <Pressable style={[styles.drawerItem, { marginTop: 12 }]} onPress={openNotificationsPage}>
-          <Bell size={20} color={palette.primary} />
-          <Text style={[styles.drawerItemText, { color: palette.text }]}>
-            {t("mainNav.drawer.viewAllNotifications")}
-          </Text>
-        </Pressable>
-      </SlideDrawer>
-
-      <Tabs
+        <Tabs
         screenOptions={{
           animation: "shift",
           transitionSpec: {
@@ -671,16 +575,7 @@ export default function MainLayout() {
           }}
         />
 
-        <Tabs.Screen
-          name="conversation/[threadId]"
-          options={{
-            href: null,
-            headerTitle: t("community.conversation.title"),
-            tabBarStyle: { display: "none" },
-            headerLeft: () => <BackButton fallback="/(main)/community" />,
-            headerRight: () => null,
-          }}
-        />
+
 
         <Tabs.Screen
           name="profile/edit"
@@ -738,7 +633,7 @@ export default function MainLayout() {
         />
 
         <Tabs.Screen
-          name="community-search"
+          name="community/search"
           options={{
             href: null,
             headerShown: false,
@@ -747,7 +642,7 @@ export default function MainLayout() {
         />
 
         <Tabs.Screen
-          name="community-messages"
+          name="chat"
           options={{
             href: null,
             headerShown: false,
@@ -755,8 +650,10 @@ export default function MainLayout() {
           }}
         />
 
+
+
         <Tabs.Screen
-          name="community-post/[postId]"
+          name="community/post/[postId]"
           options={{
             href: null,
             headerTitle: t("community.postDetail.title"),
@@ -806,8 +703,11 @@ export default function MainLayout() {
             tabBarStyle: { display: "none" },
           }}
         />
-      </Tabs>
-    </>
+
+
+        </Tabs>
+      </Drawer>
+    </Drawer>
   );
 }
 
@@ -844,32 +744,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#FFFFFF",
     lineHeight: 12,
-  },
-  drawerRoot: {
-    flex: 1,
-  },
-  drawerOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
-  drawerPanel: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    width: DRAWER_WIDTH,
-    paddingHorizontal: 16,
-    paddingBottom: 32,
-    shadowColor: "#000",
-    shadowOffset: { width: 4, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 20,
-  },
-  drawerPanelLeft: {
-    left: 0,
-  },
-  drawerPanelRight: {
-    right: 0,
   },
   drawerTitle: {
     fontSize: 18,

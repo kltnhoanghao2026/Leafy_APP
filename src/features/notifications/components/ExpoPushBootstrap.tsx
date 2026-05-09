@@ -1,9 +1,9 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { useAuthContext } from "@/src/features/auth";
 import { pushApi } from "../api/push.api";
-import { useExpoPushStore } from "../store/useExpoPushStore";
+import { useExpoPushContext } from "../context/ExpoPushContext";
 import {
   requestPushPermission,
   getDevicePushToken,
@@ -23,14 +23,13 @@ import {
  */
 export function ExpoPushBootstrap() {
   const { isAuthenticated, isRestoringAuth, user } = useAuthContext();
-  const { startSync, markSynced, markSyncError, lastSyncedToken, lastSyncedUserId } =
-    useExpoPushStore();
+  const { startSync, markSynced, markSyncError, lastSyncedToken, lastSyncedUserId, syncStatus } =
+    useExpoPushContext();
 
   const userId = user?.userId ?? null;
 
   const syncToken = useCallback(
     async (uid: string) => {
-      const { syncStatus } = useExpoPushStore.getState();
       if (syncStatus === "syncing") return;
 
       startSync();
@@ -69,12 +68,19 @@ export function ExpoPushBootstrap() {
         console.error("[ExpoPush] Sync error:", err);
       }
     },
-    [startSync, markSynced, markSyncError, lastSyncedToken, lastSyncedUserId],
+    [startSync, markSynced, markSyncError, lastSyncedToken, lastSyncedUserId, syncStatus],
   );
+
+  const attemptedUserIdRef = useRef<string | null>(null);
 
   // Trigger token sync once authenticated
   useEffect(() => {
     if (isRestoringAuth || !isAuthenticated || !userId) return;
+    
+    // Prevent infinite loop if syncStatus changes cause syncToken to recreate
+    if (attemptedUserIdRef.current === userId) return;
+    attemptedUserIdRef.current = userId;
+    
     void syncToken(userId);
   }, [isAuthenticated, isRestoringAuth, userId, syncToken]);
 

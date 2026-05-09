@@ -1,1 +1,1 @@
-export { ComposerScreen as default } from "@/src/features/community/components/ComposerScreen";
+export { ComposerScreen as default } from "@/src/features/community/community-feed/components/ComposerScreen";

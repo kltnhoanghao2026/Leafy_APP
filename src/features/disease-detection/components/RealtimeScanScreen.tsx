@@ -4,11 +4,11 @@ import {
   Text,
   Pressable,
   Alert,
-  SafeAreaView,
   ActivityIndicator,
   StyleSheet,
   Dimensions,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Camera,
   useCameraDevice,
@@ -116,9 +116,7 @@ export default function RealtimeScanScreen() {
     setIsScanning(false);
 
     try {
-      const photo = await cameraRef.current.takePhoto({
-        qualityPrioritization: "speed",
-      });
+      const photo = await cameraRef.current.takePhoto({});
       setFrozenPhotoUri(`file://${photo.path}`);
       setFrameSize({ width: photo.width, height: photo.height });
       return photo;

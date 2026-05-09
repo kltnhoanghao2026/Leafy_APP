@@ -10,7 +10,7 @@ import {
   ChevronRight,
 } from "lucide-react-native";
 
-import { useTreatmentPlanReviewStore } from "../store/treatmentPlanReview.store";
+import { useTreatmentPlanReviewContext } from "../context/TreatmentPlanReviewContext";
 import {
   formatConfidence,
   normalizeTreatmentPlan,
@@ -52,7 +52,7 @@ export function RagTreatmentPlanCard({
 }: RagTreatmentPlanCardProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const setDraft = useTreatmentPlanReviewStore((state) => state.setDraft);
+  const { draft, setDraft } = useTreatmentPlanReviewContext();
   const normalizedPlan = normalizeTreatmentPlan(treatmentPlan, plantId);
 
   if (!normalizedPlan) {

@@ -84,21 +84,48 @@ export function ProfileScreen() {
   if (isError || !profile) {
     return (
       <View className="flex-1 items-center justify-center bg-background-light px-6 dark:bg-background-dark">
+        <View className="mb-5 h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+          <LogOut color="#EF4444" size={28} />
+        </View>
         <Text className="text-center text-base font-semibold text-slate-900 dark:text-slate-100">
           {t("profile.loadErrorTitle")}
         </Text>
         <Text className="mt-2 text-center text-sm text-slate-500">
           {parsedError?.message || t("profile.loadErrorMessage")}
         </Text>
-        <Pressable
-          className="mt-4 rounded-xl bg-primary px-4 py-2"
-          onPress={() => void refetch()}
-        >
-          <Text className="font-semibold text-white">{t("common.retry")}</Text>
-        </Pressable>
+        <View className="mt-6 w-full gap-3">
+          <Pressable
+            className="items-center rounded-xl bg-primary px-4 py-3"
+            onPress={() => void refetch()}
+          >
+            <Text className="font-semibold text-white">{t("common.retry")}</Text>
+          </Pressable>
+          <Pressable
+            className="items-center rounded-xl border border-red-200 bg-red-50 px-4 py-3 dark:border-red-800 dark:bg-red-900/20"
+            onPress={() => {
+              Alert.alert(
+                t("profile.logoutConfirmTitle"),
+                t("profile.logoutConfirmMessage"),
+                [
+                  { text: t("common.cancel"), style: "cancel" },
+                  {
+                    text: t("profile.logout"),
+                    style: "destructive",
+                    onPress: () => void logoutLocal(),
+                  },
+                ],
+              );
+            }}
+          >
+            <Text className="font-semibold text-red-600 dark:text-red-400">
+              {t("profile.logout")}
+            </Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
+
 
   return (
     <View className="flex-1 bg-background-light dark:bg-background-dark">

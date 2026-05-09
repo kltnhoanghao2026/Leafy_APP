@@ -11,7 +11,7 @@ export type {
 export {
   configurePushNotifications,
   requestPushPermission,
-  getExpoPushToken,
+  getDevicePushToken,
   getPlatform,
   isPhysicalDevice,
 } from "./services/expoPushService";
@@ -38,7 +38,7 @@ export {
 export { useNotificationWebSocket } from "./hooks/useNotificationWebSocket";
 
 // Store
-export { useExpoPushStore } from "./store/useExpoPushStore";
+export { useExpoPushContext, ExpoPushProvider } from "./context/ExpoPushContext";
 
 // Components
 export { NotificationItem } from "./components/NotificationItem";

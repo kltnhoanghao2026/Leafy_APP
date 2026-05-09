@@ -2,7 +2,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WifiOff } from 'lucide-react-native';
-import { useIsOffline } from '@/src/store/useNetworkStore';
+import { useIsOffline } from '@/src/providers/NetworkProvider';
 import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
 

@@ -17,7 +17,7 @@ import { parseApiError } from "@/src/lib/error-handler";
 
 import { useCreateTreatmentPlan } from "../api/useCreateTreatmentPlan";
 import type { TreatmentPlanCreateRequest } from "../api/treatment-plan-review.api";
-import { useTreatmentPlanReviewStore } from "../store/treatmentPlanReview.store";
+import { useTreatmentPlanReviewContext } from "../context/TreatmentPlanReviewContext";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -113,8 +113,7 @@ export function useTreatmentPlanReviewerScreen() {
   const router = useRouter();
   const { profileId } = useAuthContext();
 
-  const draft = useTreatmentPlanReviewStore((state) => state.draft);
-  const clearDraft = useTreatmentPlanReviewStore((state) => state.clearDraft);
+  const { draft, clearDraft } = useTreatmentPlanReviewContext();
   const createTreatmentPlan = useCreateTreatmentPlan();
 
   const plan = draft?.plan ?? null;

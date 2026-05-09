@@ -127,6 +127,19 @@ const logAxiosRequest = (
   });
 };
 
+const logAxiosResponse = (
+  source: RequestLogSource,
+  response: AxiosResponse,
+): void => {
+  console.info("[Axios Response]", {
+    source,
+    status: response.status,
+    url: response.config ? buildRequestUrl(response.config) : 'unknown',
+    data: sanitizeForLog(response.data),
+    timestamp: new Date().toISOString(),
+  });
+};
+
 const isAuthEndpoint = (url?: string): boolean => {
   if (!url) {
     return false;
@@ -235,7 +248,10 @@ http.interceptors.request.use(async (config) => {
 }, Promise.reject);
 
 http.interceptors.response.use(
-  (response: AxiosResponse) => response,
+  (response: AxiosResponse) => {
+    logAxiosResponse("apiClient", response);
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
 

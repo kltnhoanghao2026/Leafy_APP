@@ -123,7 +123,7 @@ export function SignupVerifyOtpScreenView({
             )}
 
             {/* Root error banner */}
-            {errors.root && <AuthErrorBanner message={errors.root.message} />}
+            {errors.root?.message && <AuthErrorBanner message={errors.root.message} />}
 
             {/* Resend success banner */}
             {resendMessage && !errors.root && (
