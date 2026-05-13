@@ -20,6 +20,8 @@ import {
   LogOut,
   User,
   Moon,
+  WifiOff,
+  RefreshCw,
 } from "lucide-react-native";
 import { useColorScheme as useNativeWindColorScheme } from "nativewind";
 import { changeAppLanguage, getCurrentLanguage } from "@/src/i18n";
@@ -28,6 +30,7 @@ import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 import { parseApiError } from "@/src/lib/error-handler";
 import { useAuthContext } from "@/src/features/auth";
+import { useNetworkContext } from "@/src/providers/NetworkProvider";
 
 import { getMyProfileQueryOptions } from "../queries/options";
 
@@ -40,6 +43,7 @@ export function ProfileScreen() {
   const { colorScheme: nativeWindColorScheme, setColorScheme } =
     useNativeWindColorScheme();
   const { logoutLocal } = useAuthContext();
+  const { isForceOffline, toggleForceOffline } = useNetworkContext();
   const scheme = colorScheme ?? "light";
   const palette = Colors[scheme];
   const [isAvatarError, setIsAvatarError] = useState(false);
@@ -216,6 +220,7 @@ export function ProfileScreen() {
               iconBgClass="bg-emerald-500/10"
               title={t("profile.darkMode")}
               colorClass="text-slate-900 dark:text-slate-100"
+              divider
               rightElement={
                 <Switch
                   value={nativeWindColorScheme === "dark"}
@@ -226,6 +231,21 @@ export function ProfileScreen() {
                   thumbColor="#FFFFFF"
                 />
               }
+            />
+            <ProfileRow
+              icon={<RefreshCw color="#0EA5E9" size={20} />}
+              iconBgClass="bg-sky-500/10"
+              title={t("offline.sync.title", "Sync Data")}
+              divider
+              colorClass="text-slate-900 dark:text-slate-100"
+              onPress={() => router.push("/(main)/sync" as any)}
+            />
+            <ProfileRow
+              icon={<WifiOff color="#EF4444" size={20} />}
+              iconBgClass="bg-red-500/10"
+              title={t("profile.offlineMode")}
+              colorClass="text-slate-900 dark:text-slate-100"
+              onPress={() => toggleForceOffline()}
             />
           </View>
         </View>

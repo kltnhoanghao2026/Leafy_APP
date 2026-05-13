@@ -5,6 +5,7 @@ import {
   View,
   ActivityIndicator,
 } from "react-native";
+import { useState } from "react";
 import {
   Pencil,
   Calendar,
@@ -14,6 +15,7 @@ import {
   Info,
   CheckCircle2,
   XCircle,
+  BarChart2,
 } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -25,6 +27,7 @@ import {
   getEventCategory,
   getEventTypeIcon,
 } from "./plant-event.types";
+import { PlantEventProgressModal } from "./PlantEventProgressModal";
 
 // ── Helper: section card ──────────────────────────────────────────────────
 
@@ -95,6 +98,7 @@ export function PlantEventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t } = useTranslation();
+  const [progressVisible, setProgressVisible] = useState(false);
 
   const { data: event, isLoading, isError } = usePlantEventById(id ?? "");
 
@@ -218,6 +222,32 @@ export function PlantEventDetailScreen() {
           </View>
         </View>
 
+        {/* ── Progress Button ───────────────────────────────────── */}
+        {(event.tasks?.length || (event.children && event.children.length > 0)) ? (
+          <TouchableOpacity
+            className="mx-4 mb-3 flex-row items-center justify-between rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-900 border border-emerald-100 dark:border-emerald-900/30"
+            onPress={() => setProgressVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View className="flex-row items-center gap-3">
+              <View className="rounded-full bg-emerald-50 p-2 dark:bg-emerald-900/30">
+                <BarChart2 size={20} className="text-emerald-600 dark:text-emerald-400" />
+              </View>
+              <View>
+                <Text className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                  {t("plantEvent.card.trackProgress")}
+                </Text>
+                <Text className="text-[11px] text-slate-500 dark:text-slate-400">
+                  {event.tasks?.length ? t("plantEvent.card.tasksCount", { count: event.tasks.length }) : ""}
+                  {event.tasks?.length && event.children?.length ? " • " : ""}
+                  {event.children?.length ? t("plantEvent.card.childEventsCount", { count: event.children.length }) : ""}
+                </Text>
+              </View>
+            </View>
+            <CheckCircle2 size={18} className="text-emerald-500" />
+          </TouchableOpacity>
+        ) : null}
+
         {/* ── Dates & Duration ──────────────────────────────────── */}
         <SectionCard
           title={t("plantEvent.detail.datesSection")}
@@ -323,6 +353,12 @@ export function PlantEventDetailScreen() {
           {t("plantEvent.detail.editEvent")}
         </Text>
       </TouchableOpacity>
+
+      <PlantEventProgressModal
+        event={event}
+        visible={progressVisible}
+        onClose={() => setProgressVisible(false)}
+      />
     </View>
   );
 }

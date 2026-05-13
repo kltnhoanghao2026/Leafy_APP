@@ -18,7 +18,17 @@ interface Profile {
   role: string;
 }
 
-export default function NewGroupScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeNewGroupScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <NewGroupScreen />
+    </SafeAreaView>
+  );
+}
+
+function NewGroupScreen() {
   const [name, setName] = useState('');
   const [query, setQuery] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<Profile[]>([]);

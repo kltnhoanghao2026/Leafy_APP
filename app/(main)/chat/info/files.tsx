@@ -15,7 +15,17 @@ const formatBytes = (bytes: number, decimals = 2) => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 };
 
-export default function FilesScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeFilesScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <FilesScreen />
+    </SafeAreaView>
+  );
+}
+
+function FilesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const { data, isLoading } = useQuery({

@@ -87,6 +87,7 @@ const mapBackendPostToUiPost = (post: BackendPost): Post => {
     originalAuthorId: post.originalAuthorId,
     sharedPost,
     planId: post.planId ?? null,
+    planInfo: post.planInfo ?? null,
     uploadedAt: post.uploadedAt,
     updatedAt: post.updatedAt,
     userVote:

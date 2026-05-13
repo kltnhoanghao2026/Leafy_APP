@@ -5,19 +5,20 @@ import type {
   PageParams,
   PageResponse,
   PlantCreateRequest,
+  PlantFilterParams,
   PlantResponse,
   PlantUpdateRequest,
   SpeciesResponse,
 } from "../components/plant.types";
 
 export const plantApi = {
-  getPlants: (params: PageParams) =>
+  getPlants: (params: PageParams & PlantFilterParams) =>
     apiClient.get<ApiResponse<PageResponse<PlantResponse>>>(
-      API_ENDPOINTS.PLANTS.LIST,
+      API_ENDPOINTS.PLANTS.ME,
       { params },
     ),
 
-  getPlantsByFarmPlot: (farmPlotId: string, params: PageParams) =>
+  getPlantsByFarmPlot: (farmPlotId: string, params: PageParams & PlantFilterParams) =>
     apiClient.get<ApiResponse<PageResponse<PlantResponse>>>(
       API_ENDPOINTS.PLANTS.BY_FARM_PLOT(farmPlotId),
       { params },
@@ -42,5 +43,17 @@ export const plantApi = {
     apiClient.get<ApiResponse<PageResponse<SpeciesResponse>>>(
       API_ENDPOINTS.SPECIES.LIST,
       { params },
+    ),
+
+  bulkUpdateStatus: (payload: { plantIds: string[]; newStatus: string }) =>
+    apiClient.patch<ApiResponse<{ count: number }>>(
+      API_ENDPOINTS.PLANTS.BULK_STATUS,
+      payload,
+    ),
+
+  bulkDeletePlants: (payload: { plantIds: string[] }) =>
+    apiClient.delete<ApiResponse<{ count: number }>>(
+      API_ENDPOINTS.PLANTS.BULK_DELETE,
+      { data: payload },
     ),
 };

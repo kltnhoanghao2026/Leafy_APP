@@ -19,4 +19,6 @@ export {
   useCreatePlantMutation,
   useUpdatePlantMutation,
   useDeletePlantMutation,
+  useBulkUpdatePlantStatusMutation,
+  useBulkDeletePlantsMutation,
 } from "./queries";

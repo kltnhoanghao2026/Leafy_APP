@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Languages } from "lucide-react-native";
 import { changeAppLanguage, getCurrentLanguage } from "@/src/i18n";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface AuthLanguageToggleProps {
   palette: any;
@@ -9,13 +10,14 @@ interface AuthLanguageToggleProps {
 
 export function AuthLanguageToggle({ palette }: AuthLanguageToggleProps) {
   const currentLanguage = getCurrentLanguage();
+  const insets = useSafeAreaInsets();
 
   const handleToggleLanguage = async () => {
     await changeAppLanguage(currentLanguage === "vi" ? "en" : "vi");
   };
 
   return (
-    <View style={styles.langToggleWrapper}>
+    <View style={[styles.langToggleWrapper, { top: Math.max(insets.top, 8) + 8 }]}>
       <TouchableOpacity onPress={handleToggleLanguage} activeOpacity={0.8}>
         <View
           style={[

@@ -27,7 +27,8 @@ import { FormField } from "@/src/components/ui/FormField";
 import { FormSection } from "@/src/components/ui/FormSection";
 import { toDateInputValue, formatDateOnly } from "@/src/utils/date";
 import { EventTypePickerModal } from "./EventTypePickerModal";
-import type { EventType } from "./plant-event.types";
+import { EventExclusionModal } from "./EventExclusionModal";
+import type { EventType, TrackingGranularity } from "./plant-event.types";
 import { getEventCategoryColors, getEventTypeIcon } from "./plant-event.types";
 import { usePlantEventFormScreen } from "../hooks/usePlantEventFormScreen";
 
@@ -39,6 +40,7 @@ export function PlantEventFormScreen() {
   const [isStartDatePickerVisible, setIsStartDatePickerVisible] =
     useState(false);
   const [isEndDatePickerVisible, setIsEndDatePickerVisible] = useState(false);
+  const [isExclusionModalVisible, setIsExclusionModalVisible] = useState(false);
 
   const {
     control,
@@ -59,7 +61,18 @@ export function PlantEventFormScreen() {
     routeTargetType,
     targetLabel,
     daysFromNowValue,
+    watch,
+    setValue,
   } = usePlantEventFormScreen();
+
+  const trackingGranularity = (watch("trackingGranularity") || "NONE") as TrackingGranularity;
+  const excludedPlantIds = watch("excludedPlantIds") || [];
+  const excludedFarmZoneIds = watch("excludedFarmZoneIds") || [];
+  const farmPlotId = watch("farmPlotId") || "";
+  const farmZoneId = watch("farmZoneId") || "";
+
+  const parentIdForExclusion = routeTargetType === "FARM_PLOT" ? farmPlotId : farmZoneId;
+  const exclusionsCount = trackingGranularity === "ZONE" ? excludedFarmZoneIds.length : excludedPlantIds.length;
 
   const isTreatment = selectedEventType === "TREATMENT_APPLICATION";
 
@@ -226,6 +239,56 @@ export function PlantEventFormScreen() {
             />
           </FormField>
         </FormSection>
+
+        {/* ── Scope & Tracking Section ──────────────────────────────────── */}
+        {routeTargetType !== "PLANT" && (
+          <FormSection title={t("plantEvent.form.trackingSection", "Scope & Tracking")}>
+            <FormField label={t("plantEvent.form.trackingGranularity", "Tracking Granularity")}>
+              <View className="flex-row flex-wrap gap-2">
+                {["NONE", ...(routeTargetType === "FARM_PLOT" ? ["ZONE", "PLANT"] : ["PLANT"])].map((granularity) => {
+                  const isActive = trackingGranularity === granularity;
+                  return (
+                    <TouchableOpacity
+                      key={granularity}
+                      className={`rounded-full border px-4 py-2 ${
+                        isActive
+                          ? "border-green-600 bg-green-50 dark:border-green-500 dark:bg-green-900/20"
+                          : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800"
+                      }`}
+                      onPress={() => setValue("trackingGranularity", granularity as TrackingGranularity, { shouldDirty: true })}
+                    >
+                      <Text
+                        className={`text-sm font-semibold ${
+                          isActive
+                            ? "text-green-700 dark:text-green-400"
+                            : "text-slate-600 dark:text-slate-300"
+                        }`}
+                      >
+                        {t(`plantEvent.form.granularity.${granularity}`, granularity)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </FormField>
+
+            {trackingGranularity !== "NONE" && (
+              <FormField label={t("plantEvent.form.exclusions", "Exclusions")}>
+                <TouchableOpacity
+                  className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 flex-row items-center justify-between bg-white dark:bg-slate-900"
+                  onPress={() => setIsExclusionModalVisible(true)}
+                >
+                  <Text className="text-sm font-medium text-slate-900 dark:text-white">
+                    {exclusionsCount > 0
+                      ? t("plantEvent.form.excludedCount", { count: exclusionsCount })
+                      : t("plantEvent.form.noExclusions", "None")}
+                  </Text>
+                  <ChevronRight size={18} className="text-slate-400 dark:text-slate-500" />
+                </TouchableOpacity>
+              </FormField>
+            )}
+          </FormSection>
+        )}
 
         {/* ── Date & Duration Section ──────────────────────────────────── */}
         <FormSection title={t("plantEvent.form.dateSection")}>
@@ -530,6 +593,22 @@ export function PlantEventFormScreen() {
             // Auto-expand chemical section for treatment
             if (eventType === "TREATMENT_APPLICATION") {
               setIsChemicalOpen(true);
+            }
+          }}
+        />
+
+        <EventExclusionModal
+          visible={isExclusionModalVisible}
+          onClose={() => setIsExclusionModalVisible(false)}
+          parentId={parentIdForExclusion}
+          parentTargetType={routeTargetType as any}
+          granularity={trackingGranularity}
+          excludedIds={trackingGranularity === "ZONE" ? excludedFarmZoneIds : excludedPlantIds}
+          onSaveExclusions={(ids) => {
+            if (trackingGranularity === "ZONE") {
+              setValue("excludedFarmZoneIds", ids, { shouldDirty: true });
+            } else {
+              setValue("excludedPlantIds", ids, { shouldDirty: true });
             }
           }}
         />

@@ -2,12 +2,10 @@
 // Re-exports from sub-modules: community-feed and chat
 
 export {
-  CommunityScreen,
   ComposerScreen,
   PostCard,
   ComposerCard,
   CommentCard,
-  PostDetailScreen,
 } from "./community-feed";
 export type { Post } from "./community-feed/components/community.types";
 export { communityApi } from "./community-feed/api/community.api";

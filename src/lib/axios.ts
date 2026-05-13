@@ -8,6 +8,7 @@ import { getDeviceId } from "../utils/device";
 import { API_ENDPOINTS, ROUTES } from "./routes";
 import { type ApiResponse } from "../shared/api";
 import { ERROR_CODES } from "./routes";
+import { authEvents } from "./auth-event";
 
 export type { ApiResponse };
 
@@ -175,6 +176,17 @@ const notifyRefreshSubscribers = (token: string | null): void => {
   refreshSubscribers = [];
 };
 
+const AUTH_BUSINESS_CODES = new Set([
+  ERROR_CODES.AUTH_UNAUTHENTICATED, // 1001
+  ERROR_CODES.JWT_INVALID_TOKEN,    // 1003
+  ERROR_CODES.JWT_EXPIRED_TOKEN,    // 1004
+  ERROR_CODES.TOKEN_REVOKED,        // 1010
+]);
+
+/**
+ * Returns true when a network-level error (4xx/5xx) is an auth error that
+ * should trigger a token-refresh attempt.
+ */
 const isRefreshableAuthError = (error: AxiosError): boolean => {
   const status = error.response?.status;
   const apiError = error.response?.data as ApiResponse<unknown> | undefined;
@@ -184,12 +196,17 @@ const isRefreshableAuthError = (error: AxiosError): boolean => {
     return true;
   }
 
-  return (
-    code === ERROR_CODES.AUTH_UNAUTHENTICATED ||
-    code === ERROR_CODES.JWT_INVALID_TOKEN ||
-    code === ERROR_CODES.JWT_EXPIRED_TOKEN ||
-    code === ERROR_CODES.TOKEN_REVOKED
-  );
+  return code !== undefined && AUTH_BUSINESS_CODES.has(code as number);
+};
+
+/**
+ * Returns true when a HTTP-200 response actually carries an auth business
+ * error code.  The API Gateway can return 200 OK even for JWT failures, so
+ * we must also inspect the body in the success interceptor.
+ */
+const isAuthBusinessError = (response: AxiosResponse): boolean => {
+  const code = (response.data as ApiResponse<unknown> | undefined)?.code;
+  return code !== undefined && AUTH_BUSINESS_CODES.has(code as number);
 };
 
 const refreshAccessToken = async (): Promise<string | null> => {
@@ -250,6 +267,21 @@ http.interceptors.request.use(async (config) => {
 http.interceptors.response.use(
   (response: AxiosResponse) => {
     logAxiosResponse("apiClient", response);
+
+    // API Gateway may return HTTP 200 with an auth-error business code.
+    // Convert those into a rejected promise so the error interceptor below
+    // can attempt a token refresh exactly as it would for a real 401.
+    if (isAuthBusinessError(response)) {
+      const syntheticError = new AxiosError(
+        `Auth business error: code ${(response.data as ApiResponse<unknown>).code}`,
+        AxiosError.ERR_BAD_RESPONSE,
+        response.config,
+        response.request,
+        response,
+      );
+      return Promise.reject(syntheticError);
+    }
+
     return response;
   },
   async (error: AxiosError) => {
@@ -265,6 +297,7 @@ http.interceptors.response.use(
 
     if (originalRequest._retry) {
       await clearAuthTokens();
+      authEvents.emit("SESSION_EXPIRED");
       return Promise.reject(error);
     }
 
@@ -292,6 +325,7 @@ http.interceptors.response.use(
 
       if (!newToken) {
         await clearAuthTokens();
+        authEvents.emit("SESSION_EXPIRED");
         return Promise.reject(error);
       }
 
@@ -300,6 +334,7 @@ http.interceptors.response.use(
     } catch (refreshError) {
       notifyRefreshSubscribers(null);
       await clearAuthTokens();
+      authEvents.emit("SESSION_EXPIRED");
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;

@@ -13,7 +13,17 @@ import { NavRow } from '@/src/features/chat/components/info/NavRow';
 import Colors from '@/src/constants/Colors';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 
-export default function ChatInfoScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeChatInfoScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <ChatInfoScreen />
+    </SafeAreaView>
+  );
+}
+
+function ChatInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const qc = useQueryClient();

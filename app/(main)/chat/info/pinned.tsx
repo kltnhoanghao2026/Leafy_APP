@@ -8,7 +8,17 @@ import { chatApi } from '@/src/features/chat/api/chatApi';
 import { useAuthContext } from '@/src/features/auth';
 import { useConversations } from '@/src/features/chat/hooks/useChatQueries';
 
-export default function PinnedMessagesScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafePinnedMessagesScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <PinnedMessagesScreen />
+    </SafeAreaView>
+  );
+}
+
+function PinnedMessagesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const qc = useQueryClient();
   const { profileId } = useAuthContext();

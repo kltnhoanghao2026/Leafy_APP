@@ -11,7 +11,17 @@ const COLUMN_COUNT = 4;
 const SPACING = 2;
 const ITEM_SIZE = (width - (COLUMN_COUNT + 1) * SPACING) / COLUMN_COUNT;
 
-export default function MediaScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeMediaScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <MediaScreen />
+    </SafeAreaView>
+  );
+}
+
+function MediaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const { data, isLoading } = useQuery({

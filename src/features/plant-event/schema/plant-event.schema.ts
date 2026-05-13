@@ -22,6 +22,8 @@ export const createPlantEventSchema = (t: TFunction) =>
 
     farmZoneId: z.string().trim().optional(),
 
+    targetType: z.enum(["FARM", "FARM_ZONE", "PLANT"]).optional(),
+
     eventType: z
       .string()
       .trim()

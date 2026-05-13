@@ -6,7 +6,17 @@ import { Search, Check, Users } from 'lucide-react-native';
 
 import { chatApi } from '@/src/features/chat/api/chatApi';
 
-export default function AddMemberScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeAddMemberScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <AddMemberScreen />
+    </SafeAreaView>
+  );
+}
+
+function AddMemberScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const qc = useQueryClient();

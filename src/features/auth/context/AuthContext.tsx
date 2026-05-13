@@ -23,6 +23,7 @@ import {
   getProfileInfo,
   clearAllUserStorage,
 } from "@/src/lib/secure-user-storage";
+import { authEvents } from "@/src/lib/auth-event";
 
 interface AuthContextType {
   user: ProfileResponse | null;
@@ -34,6 +35,7 @@ interface AuthContextType {
   updateUser: (user: ProfileResponse) => void;
   refetchUser: () => Promise<void>;
   loginSuccess: (authResponse: AuthResponse) => Promise<ProfileResponse>;
+  loginOffline: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -105,6 +107,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     restore();
   }, [queryClient]);
 
+  // Listen for session expiry from the Axios interceptor (e.g. refresh failed).
+  // When it fires, we wipe local state so RootLayoutNav's useEffect redirects
+  // the user back to /login automatically.
+  useEffect(() => {
+    const unsubscribe = authEvents.on("SESSION_EXPIRED", () => {
+      clearAuthTokens();
+      clearAllUserStorage();
+      setUser(null);
+      queryClient.clear();
+    });
+    return unsubscribe;
+  }, [queryClient]);
+
   const setAuthUser = useCallback((userData: ProfileResponse | null) => {
     setUser(userData);
     if (userData) {
@@ -156,6 +171,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [queryClient],
   );
 
+  const loginOffline = useCallback(async () => {
+    try {
+      const cachedProfile = await getProfileInfo();
+      if (cachedProfile) {
+        setUser(cachedProfile);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -168,6 +196,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updateUser,
         refetchUser,
         loginSuccess,
+        loginOffline,
       }}
     >
       {children}

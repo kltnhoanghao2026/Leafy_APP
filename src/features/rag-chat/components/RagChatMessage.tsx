@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, ActivityIndicator } from "react-native";
 import { Bot, User, Cpu } from "lucide-react-native";
 import { MotiView } from "moti";
-import { RagTreatmentPlanCard } from "./RagTreatmentPlanCard";
+import { RagPlanCard } from "./RagPlanCard";
 
 export type MessageRole = "user" | "bot";
 
@@ -10,7 +10,7 @@ export interface MessagePops {
   id: string;
   role: MessageRole;
   content: string;
-  treatmentPlan?: unknown;
+  plan?: unknown;
   plantId?: string;
   savedPlanId?: string;
   sourceQuestion?: string;
@@ -23,7 +23,7 @@ export interface MessagePops {
 export function RagChatMessage({
   role,
   content,
-  treatmentPlan,
+  plan,
   plantId,
   savedPlanId,
   sourceQuestion,
@@ -125,9 +125,9 @@ export function RagChatMessage({
           </MotiView>
         )}
 
-        {!isUser && Boolean(treatmentPlan) && (
-          <RagTreatmentPlanCard
-            treatmentPlan={treatmentPlan}
+        {!isUser && Boolean(plan) && (
+          <RagPlanCard
+            plan={plan}
             plantId={plantId}
             savedPlanId={savedPlanId}
             sourceQuestion={sourceQuestion}

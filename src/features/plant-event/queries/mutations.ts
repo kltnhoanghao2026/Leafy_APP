@@ -35,6 +35,9 @@ export const useUpdatePlantEventMutation = () => {
       queryClient.invalidateQueries({
         queryKey: plantEventKeys.detail(variables.eventId),
       });
+      queryClient.invalidateQueries({
+        queryKey: [...plantEventKeys.detail(variables.eventId), "progress"],
+      });
     },
   });
 };
@@ -48,6 +51,28 @@ export const useDeletePlantEventMutation = () => {
       queryClient.invalidateQueries({ queryKey: plantEventKeys.all() });
       queryClient.removeQueries({
         queryKey: plantEventKeys.detail(eventId),
+      });
+    },
+  });
+};
+
+export const useToggleTaskMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      eventId,
+      taskIndex,
+    }: {
+      eventId: string;
+      taskIndex: number;
+    }) => plantEventApi.toggleTask(eventId, taskIndex),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: plantEventKeys.detail(variables.eventId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: plantEventKeys.all(),
       });
     },
   });
@@ -72,6 +97,30 @@ export const useUpdateEventProgressMutation = () => {
       });
       queryClient.invalidateQueries({
         queryKey: plantEventKeys.detail(variables.eventId),
+      });
+      // Also invalidate calendar queries so completed progress reflects on calendar
+      queryClient.invalidateQueries({
+        queryKey: [...plantEventKeys.all(), "calendar"],
+      });
+    },
+  });
+};
+
+export const useGenerateEventProgressMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (eventId: string) =>
+      plantEventApi.generateEventProgress(eventId),
+    onSuccess: (_, eventId) => {
+      queryClient.invalidateQueries({
+        queryKey: plantEventKeys.progress(eventId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: plantEventKeys.detail(eventId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...plantEventKeys.all(), "calendar"],
       });
     },
   });

@@ -156,7 +156,7 @@ export function RagChatBox() {
           finalData.answer?.trim()?.length > 0
             ? finalData.answer
             : message.content,
-        treatmentPlan: finalData.treatmentPlan,
+        plan: finalData.plan,
         plantId: finalData.plantId,
         savedPlanId: finalData.savedPlanId,
         ragState: "completed",
@@ -206,7 +206,7 @@ export function RagChatBox() {
             id={item.id}
             role={item.role}
             content={item.content}
-            treatmentPlan={item.treatmentPlan}
+            plan={item.plan}
             plantId={item.plantId}
             savedPlanId={item.savedPlanId}
             sourceQuestion={item.sourceQuestion}
@@ -224,9 +224,7 @@ export function RagChatBox() {
       <View
         className="w-full flex-row px-4 py-3 bg-white border-t border-gray-100 items-end"
         style={{
-          paddingBottom:
-            Math.max(insets.bottom, 12) +
-            (Platform.OS === "ios" && insets.bottom > 0 ? 0 : 0),
+          paddingBottom: 12,
         }}
       >
         <View className="flex-1 bg-gray-50 rounded-3xl flex-row items-center px-4 py-1 mr-3 border border-gray-200">

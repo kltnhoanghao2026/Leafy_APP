@@ -6,7 +6,17 @@ import { Ban, ShieldCheck } from 'lucide-react-native';
 
 import { chatApi } from '@/src/features/chat/api/chatApi';
 
-export default function BlockedMembersScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeBlockedMembersScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <BlockedMembersScreen />
+    </SafeAreaView>
+  );
+}
+
+function BlockedMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const qc = useQueryClient();
 

@@ -4,10 +4,12 @@ import {
   FlatList,
   Modal,
   Pressable,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  useColorScheme,
 } from "react-native";
 import { Search } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -47,6 +49,8 @@ export function PickerModal<T>({
 }: PickerModalProps<T>) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -68,21 +72,21 @@ export function PickerModal<T>({
       onRequestClose={onClose}
     >
       <Pressable
-        className="flex-1 bg-slate-950/45 justify-center px-4"
+        style={pickerStyles.backdrop}
         onPress={onClose}
       >
         <Pressable
           onPress={(event) => event.stopPropagation()}
-          className="border rounded-2xl max-h-[72%] px-3 py-3 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+          style={[pickerStyles.container, isDark && pickerStyles.containerDark]}
         >
-          <Text className="text-base font-bold mb-2.5 text-slate-900 dark:text-white">
+          <Text style={[pickerStyles.title, isDark && pickerStyles.titleDark]}>
             {title}
           </Text>
 
-          <View className="mb-2.5 flex-row items-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 dark:border-slate-800 dark:bg-slate-900">
-            <Search size={16} className="text-slate-400 dark:text-slate-500" />
+          <View style={[pickerStyles.searchRow, isDark && pickerStyles.searchRowDark]}>
+            <Search size={16} color={isDark ? "#64748b" : "#94a3b8"} />
             <TextInput
-              className="ml-2 flex-1 text-sm text-slate-900 dark:text-white"
+              style={[pickerStyles.searchInput, isDark && pickerStyles.searchInputDark]}
               placeholder={searchPlaceholder ?? t("common.search")}
               placeholderTextColor="#94A3B8"
               value={searchQuery}
@@ -91,12 +95,9 @@ export function PickerModal<T>({
           </View>
 
           {isLoading ? (
-            <View className="flex-row items-center gap-2 py-4 justify-center">
-              <ActivityIndicator
-                size="small"
-                className="text-green-600 dark:text-green-400"
-              />
-              <Text className="text-slate-500 dark:text-slate-400 text-[13px]">
+            <View style={pickerStyles.loadingRow}>
+              <ActivityIndicator size="small" color="#059669" />
+              <Text style={pickerStyles.loadingText}>
                 {t("common.loading")}
               </Text>
             </View>
@@ -104,7 +105,7 @@ export function PickerModal<T>({
             <FlatList
               data={filteredItems}
               keyExtractor={keyExtractor}
-              className="max-h-[380px]"
+              style={pickerStyles.list}
               keyboardShouldPersistTaps="handled"
               renderItem={({ item }) => {
                 const isSelected = keyExtractor(item) === selectedId;
@@ -115,16 +116,23 @@ export function PickerModal<T>({
 
                 return (
                   <TouchableOpacity
-                    className={`py-2.5 border-b border-slate-400/20 ${isSelected ? "bg-emerald-50 dark:bg-emerald-900/25" : ""}`}
+                    style={[
+                      pickerStyles.itemRow,
+                      isSelected && (isDark ? pickerStyles.itemSelectedDark : pickerStyles.itemSelected),
+                    ]}
                     onPress={() => onSelect(keyExtractor(item))}
                   >
                     <Text
-                      className={`text-sm ${isSelected ? "text-emerald-700 dark:text-emerald-300 font-semibold" : "text-slate-900 dark:text-white"}`}
+                      style={[
+                        pickerStyles.itemLabel,
+                        isDark && pickerStyles.itemLabelDark,
+                        isSelected && pickerStyles.itemLabelSelected,
+                      ]}
                     >
                       {labelExtractor(item)}
                     </Text>
                     {subtitleExtractor?.(item) ? (
-                      <Text className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      <Text style={pickerStyles.itemSubtitle}>
                         {subtitleExtractor(item)}
                       </Text>
                     ) : null}
@@ -132,7 +140,7 @@ export function PickerModal<T>({
                 );
               }}
               ListEmptyComponent={
-                <Text className="text-slate-500 dark:text-slate-400 text-[13px] text-center mt-4 mb-3">
+                <Text style={pickerStyles.emptyText}>
                   {emptyText ?? t("common.noData")}
                 </Text>
               }
@@ -143,3 +151,107 @@ export function PickerModal<T>({
     </Modal>
   );
 }
+
+const pickerStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: "rgba(2,6,23,0.45)",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  container: {
+    borderWidth: 1,
+    borderRadius: 16,
+    maxHeight: "72%",
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: "#ffffff",
+    borderColor: "#e2e8f0",
+  },
+  containerDark: {
+    backgroundColor: "#0f172a",
+    borderColor: "#1e293b",
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 10,
+    color: "#0f172a",
+  },
+  titleDark: {
+    color: "#ffffff",
+  },
+  searchRow: {
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  searchRowDark: {
+    borderColor: "#1e293b",
+    backgroundColor: "#0f172a",
+  },
+  searchInput: {
+    marginLeft: 8,
+    flex: 1,
+    fontSize: 14,
+    color: "#0f172a",
+  },
+  searchInputDark: {
+    color: "#ffffff",
+  },
+  loadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 16,
+    justifyContent: "center",
+  },
+  loadingText: {
+    color: "#64748b",
+    fontSize: 13,
+  },
+  list: {
+    maxHeight: 380,
+  },
+  itemRow: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(148,163,184,0.2)",
+  },
+  itemSelected: {
+    backgroundColor: "#ecfdf5",
+  },
+  itemSelectedDark: {
+    backgroundColor: "rgba(6,78,59,0.25)",
+  },
+  itemLabel: {
+    fontSize: 14,
+    color: "#0f172a",
+  },
+  itemLabelDark: {
+    color: "#ffffff",
+  },
+  itemLabelSelected: {
+    color: "#047857",
+    fontWeight: "600",
+  },
+  itemSubtitle: {
+    fontSize: 12,
+    color: "#64748b",
+    marginTop: 2,
+  },
+  emptyText: {
+    color: "#64748b",
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 16,
+    marginBottom: 12,
+  },
+});
+

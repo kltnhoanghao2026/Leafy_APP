@@ -12,6 +12,7 @@
     "update": "Cập nhật",
     "edit": "Chỉnh sửa",
     "loading": "Đang tải dữ liệu...",
+    "all": "Tất cả",
     "status": {
       "active": "Hoạt động",
       "inactive": "Tạm dừng",
@@ -218,6 +219,7 @@
     "languageVi": "Tiếng Việt",
     "languageEn": "English",
     "darkMode": "Chế độ tối",
+    "offlineMode": "Chế độ ngoại tuyến",
     "other": "Khác",
     "aboutUs": "Về chúng tôi",
     "logout": "Đăng xuất",
@@ -270,6 +272,7 @@
       "options": "Tùy chọn",
       "manageFarm": "Quản lý nông trại",
       "managePlants": "Quản lý cây trồng",
+      "managePlans": "Quản lý kế hoạch",
       "manageEvents": "Quản lý sự kiện",
       "eventCalendar": "Lịch sự kiện",
       "predict": "Phát hiện bệnh",
@@ -292,6 +295,7 @@
       "myAccount": "Tài khoản của tôi",
       "manageFarm": "Quản lý nông trại",
       "managePlants": "Quản lý cây trồng",
+      "managePlans": "Quản lý kế hoạch",
       "manageEvents": "Quản lý sự kiện"
     }
   },
@@ -513,6 +517,11 @@
       "deleteFailedMessage": "Vui lòng thử lại sau."
     }
   },
+  "plantManagement": {
+    "overview": {
+      "totalPlans": "{{count}} kế hoạch"
+    }
+  },
   "sensors": {
     "screen": {
       "title": "Quản lý Vườn & Thiết bị",
@@ -595,6 +604,11 @@
       "durationDaysInvalid": "Phải là số nguyên không âm",
       "phiDaysInvalid": "Phải là số nguyên không âm",
       "endDateBeforeStart": "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu"
+    },
+    "targetType": {
+      "FARM": "Lô canh tác",
+      "FARM_ZONE": "Vùng canh tác",
+      "PLANT": "Cây trồng"
     },
     "eventType": {
       "IRRIGATION": "Tưới nước",
@@ -739,7 +753,18 @@
       "phi": "PHI",
       "ppe": "BHLĐ",
       "mrl": "Ghi chú MRL",
-      "viewDetails": "Xem chi tiết"
+      "viewDetails": "Xem chi tiết",
+      "tasksTitle": "Nhiệm vụ",
+      "completed": "hoàn thành",
+      "tasksCount": "{{count}} nhiệm vụ",
+      "childEventsCount": "{{count}} sự kiện con",
+      "trackProgress": "Theo dõi tiến độ"
+    },
+    "progress": {
+      "targetProgress": "Tiến độ mục tiêu",
+      "progressDetails": "Chi tiết tiến độ ({{count}})",
+      "markIncomplete": "Đánh dấu chưa hoàn thành",
+      "markComplete": "Đánh dấu hoàn thành"
     },
     "detail": {
       "title": "Chi tiết sự kiện",
@@ -798,7 +823,8 @@
       "apply": "Áp dụng",
       "targetSection": "Đối tượng",
       "typeSection": "Loại sự kiện"
-    }
+    },
+    "planApply": "Áp dụng kế hoạch"
   },
   "diseaseDetection": {
     "title": "Phát hiện bệnh",
@@ -872,6 +898,65 @@
         "scheduleRequired": "Kế hoạch cần có ít nhất một sự kiện.",
         "submitFailed": "Không thể gửi kế hoạch. Vui lòng thử lại."
       }
+    }
+  },
+  "plan": {
+    "tabs": {
+      "my": "Cá nhân",
+      "applied": "Áp dụng",
+      "public": "Cộng đồng"
+    },
+    "list": {
+      "searchAppliedPlaceholder": "Tìm kiếm theo ID...",
+      "searchPlaceholder": "Tìm kiếm kế hoạch...",
+      "loadFailed": "Không tải được danh sách",
+      "emptySearchTitle": "Không tìm thấy kết quả",
+      "emptyTitle": "Chưa có dữ liệu",
+      "emptySearchMessage": "Thử thay đổi từ khoá tìm kiếm",
+      "emptyMessage": "Dữ liệu của bạn sẽ hiển thị ở đây",
+      "itemAppliedLabel": "lượt áp dụng",
+      "itemLabel": "kế hoạch"
+    }
+  },
+  "offline": {
+    "title": "Chế độ ngoại tuyến",
+    "dashboard": "Tổng quan",
+    "plants": "Cây trồng (Ngoại tuyến)",
+    "farm": "Nông trại (Ngoại tuyến)",
+    "events": "Sự kiện (Ngoại tuyến)",
+    "lastSynced": "Đồng bộ lần cuối: {{time}}",
+    "neverSynced": "Chưa từng đồng bộ",
+    "noData": "Không có dữ liệu ngoại tuyến. Vui lòng kết nối internet để đồng bộ.",
+    "goOnline": "Trực tuyến",
+    "continueOffline": "Tiếp tục ngoại tuyến",
+    "syncStatus": "Trạng thái dữ liệu cục bộ",
+    "cachedItems": "Đã lưu {{count}} mục",
+    "readOnlyNotice": "Bạn đang ở chế độ ngoại tuyến. Dữ liệu chỉ xem.",
+    "dataStale": "Dữ liệu có thể đã cũ. Kết nối để đồng bộ.",
+    "loadingData": "Đang tải không gian làm việc ngoại tuyến...",
+    "readOnly": "Chỉ đọc",
+    "dashboardTitle": "Không gian ngoại tuyến",
+    "dashboardDesc": "Bạn hiện đang mất kết nối với máy chủ. Nông trại, cây trồng và sự kiện đã lưu sẵn để tham khảo.",
+    "noDataTitle": "Chưa có dữ liệu",
+    "farms": "Nông trại & Phân khu",
+    "sync": {
+      "title": "Đồng bộ dữ liệu",
+      "subtitle": "Tải dữ liệu nông trại để dùng ngoại tuyến. Sự kiện được đồng bộ cho tháng hiện tại.",
+      "syncNow": "Đồng bộ ngay",
+      "syncAgain": "Đồng bộ lại",
+      "syncing": "Đang đồng bộ...",
+      "syncComplete": "Đồng bộ hoàn tất",
+      "syncFailed": "Đồng bộ thất bại",
+      "farmData": "Nông trại & Phân khu",
+      "zoneData": "Phân khu nông trại",
+      "speciesData": "Loài cây",
+      "plantData": "Cây trồng",
+      "eventData": "Sự kiện cây trồng (Tháng này)",
+      "recordsCached": "Đã đồng bộ {{count}}",
+      "noNetwork": "Không có kết nối internet. Kết nối để đồng bộ.",
+      "lastSyncDuration": "Hoàn thành trong {{seconds}}s",
+      "totalCached": "{{count}} bản ghi tổng cộng",
+      "retry": "Thử lại"
     }
   }
 }

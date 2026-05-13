@@ -1,6 +1,15 @@
 import { X } from "lucide-react-native";
 import React, { useEffect, useRef, type ReactNode } from "react";
-import { Pressable, Text, View, Animated, Dimensions, type DimensionValue } from "react-native";
+import {
+  Pressable,
+  Text,
+  View,
+  Animated,
+  Dimensions,
+  StyleSheet,
+  useColorScheme,
+  type DimensionValue,
+} from "react-native";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -20,6 +29,8 @@ export function BottomSheet({
   children,
 }: BottomSheetProps) {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   useEffect(() => {
     Animated.spring(slideAnim, {
@@ -41,31 +52,87 @@ export function BottomSheet({
   };
 
   return (
-    <View
-      className="flex-1 justify-end"
-      style={{ backgroundColor: "rgba(15, 23, 42, 0.45)" }}
-    >
-      <Pressable className="absolute inset-0" onPress={handleClose} />
+    <View style={bsStyles.backdrop}>
+      <Pressable style={StyleSheet.absoluteFill} onPress={handleClose} />
 
       <Animated.View
-        className="rounded-t-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-black"
-        style={{ height: heightPct, transform: [{ translateY: slideAnim }] }}
+        style={[
+          bsStyles.sheet,
+          isDark && bsStyles.sheetDark,
+          { height: heightPct, transform: [{ translateY: slideAnim }] },
+        ]}
       >
-        <View className="items-center pt-3">
-          <View className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
+        <View style={bsStyles.handleRow}>
+          <View style={[bsStyles.handle, isDark && bsStyles.handleDark]} />
         </View>
 
-        <View className="flex-row items-center justify-between border-b border-slate-200 px-4 py-4 dark:border-slate-800">
-          <Text className="text-lg font-semibold" style={{ color: titleColor }}>
+        <View style={[bsStyles.headerRow, isDark && bsStyles.headerRowDark]}>
+          <Text style={[bsStyles.headerTitle, { color: titleColor }]}>
             {title}
           </Text>
-          <Pressable onPress={handleClose} className="rounded-full p-1">
+          <Pressable onPress={handleClose} style={bsStyles.closeBtn}>
             <X size={20} color={titleColor} />
           </Pressable>
         </View>
 
-        <View className="flex-1">{children}</View>
+        <View style={bsStyles.body}>{children}</View>
       </Animated.View>
     </View>
   );
 }
+
+const bsStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+  },
+  sheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    backgroundColor: "#ffffff",
+  },
+  sheetDark: {
+    borderColor: "#1e293b",
+    backgroundColor: "#000000",
+  },
+  handleRow: {
+    alignItems: "center",
+    paddingTop: 12,
+  },
+  handle: {
+    height: 6,
+    width: 48,
+    borderRadius: 3,
+    backgroundColor: "#cbd5e1",
+  },
+  handleDark: {
+    backgroundColor: "#334155",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e2e8f0",
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  headerRowDark: {
+    borderBottomColor: "#1e293b",
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  closeBtn: {
+    borderRadius: 999,
+    padding: 4,
+  },
+  body: {
+    flex: 1,
+  },
+});
+

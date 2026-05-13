@@ -39,6 +39,7 @@ const formFieldNames: Array<keyof PlantEventFormValues> = [
   "plantId",
   "farmPlotId",
   "farmZoneId",
+  "targetType",
   "eventType",
   "note",
   "description",
@@ -52,12 +53,16 @@ const formFieldNames: Array<keyof PlantEventFormValues> = [
   "mrlNote",
   "estimatedCost",
   "sourcePlanId",
+  "trackingGranularity",
+  "excludedPlantIds",
+  "excludedFarmZoneIds",
 ];
 
 const defaultValues: PlantEventFormValues = {
   plantId: "",
   farmPlotId: "",
   farmZoneId: "",
+  targetType: undefined,
   eventType: "",
   note: "",
   description: "",
@@ -71,6 +76,9 @@ const defaultValues: PlantEventFormValues = {
   mrlNote: "",
   estimatedCost: "",
   sourcePlanId: "",
+  trackingGranularity: "NONE",
+  excludedPlantIds: [],
+  excludedFarmZoneIds: [],
 };
 
 const buildCreatePayload = (
@@ -79,6 +87,7 @@ const buildCreatePayload = (
   plantId: toOptionalText(values.plantId),
   farmPlotId: toOptionalText(values.farmPlotId),
   farmZoneId: toOptionalText(values.farmZoneId),
+  targetType: values.targetType,
   eventType: values.eventType.trim() as EventType,
   note: values.note.trim(),
   description: toOptionalText(values.description),
@@ -92,6 +101,9 @@ const buildCreatePayload = (
   mrlNote: toOptionalText(values.mrlNote),
   estimatedCost: toOptionalText(values.estimatedCost),
   sourcePlanId: toOptionalText(values.sourcePlanId),
+  trackingGranularity: values.trackingGranularity,
+  excludedPlantIds: values.excludedPlantIds,
+  excludedFarmZoneIds: values.excludedFarmZoneIds,
 });
 
 export function usePlantEventFormScreen() {
@@ -173,7 +185,17 @@ export function usePlantEventFormScreen() {
         shouldDirty: false,
       });
     }
-  }, [isEditMode, routePlantId, routeFarmPlotId, routeFarmZoneId, setValue]);
+    
+    // Explicit target mapping for new tracking logic
+    let targetType: any = undefined;
+    if (routeTargetType === "FARM_PLOT") targetType = "FARM";
+    else if (routeTargetType === "FARM_ZONE") targetType = "FARM_ZONE";
+    else if (routeTargetType === "PLANT") targetType = "PLANT";
+    
+    if (targetType) {
+      setValue("targetType", targetType, { shouldDirty: false });
+    }
+  }, [isEditMode, routePlantId, routeFarmPlotId, routeFarmZoneId, routeTargetType, setValue]);
 
   // Populate form in edit mode
   useEffect(() => {
@@ -183,6 +205,7 @@ export function usePlantEventFormScreen() {
       plantId: editingEvent.plantId ?? "",
       farmPlotId: editingEvent.farmPlotId ?? "",
       farmZoneId: editingEvent.farmZoneId ?? "",
+      targetType: editingEvent.targetType ?? undefined,
       eventType: editingEvent.eventType ?? "",
       note: editingEvent.note ?? "",
       description: editingEvent.description ?? "",
@@ -202,6 +225,9 @@ export function usePlantEventFormScreen() {
       mrlNote: editingEvent.mrlNote ?? "",
       estimatedCost: editingEvent.estimatedCost ?? "",
       sourcePlanId: editingEvent.sourcePlanId ?? "",
+      trackingGranularity: editingEvent.trackingGranularity ?? "NONE",
+      excludedPlantIds: editingEvent.excludedPlantIds ?? [],
+      excludedFarmZoneIds: editingEvent.excludedFarmZoneIds ?? [],
     });
   }, [editingEvent, isEditMode, reset]);
 
@@ -390,5 +416,7 @@ export function usePlantEventFormScreen() {
     routeTargetType,
     targetLabel,
     daysFromNowValue,
+    setValue,
+    watch,
   };
 }

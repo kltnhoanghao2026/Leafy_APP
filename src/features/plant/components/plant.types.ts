@@ -58,6 +58,22 @@ export type PlantCreateRequest = {
 
 export type PlantUpdateRequest = Partial<PlantCreateRequest>;
 
+export type BulkPlantStatusUpdateRequest = {
+  plantIds: string[];
+  newStatus: PlantStatus;
+};
+
+export type BulkPlantDeleteRequest = {
+  plantIds: string[];
+};
+
+export type PlantFilterParams = {
+  status?: PlantStatus | "";
+  farmPlotId?: string | "";
+  zoneId?: string | "";
+  speciesId?: string | "";
+};
+
 export type SpeciesResponse = {
   id: string;
   commonName: string;

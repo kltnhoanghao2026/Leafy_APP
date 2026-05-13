@@ -232,7 +232,7 @@ export function PlantEventTimelineScreen() {
             className="ml-3 items-center justify-center rounded-xl bg-slate-50 p-3 dark:bg-slate-800"
             onPress={() =>
               router.push({
-                pathname: "/(main)/plant-events-calendar",
+                pathname: "/(main)/plant-events/calendar",
                 params: { targetType, selectedId, selectedName },
               })
             }

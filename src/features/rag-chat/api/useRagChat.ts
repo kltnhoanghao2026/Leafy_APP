@@ -35,7 +35,7 @@ export const useRagChat = () => {
         answer: raw.answer as string,
         threadId: (raw.thread_id ?? raw.threadId) as string,
         documents: (raw.documents ?? []) as RagChatResponse["documents"],
-        treatmentPlan: raw.treatment_plan ?? raw.treatmentPlan,
+        plan: raw.plan ?? raw.treatment_plan ?? raw.treatmentPlan,
         plantId: (raw.plant_id ?? raw.plantId) as string | undefined,
         webSearchResults: (raw.web_search_results ?? raw.webSearchResults ?? []) as RagChatResponse["webSearchResults"],
         savedPlanId: (raw.saved_plan_id ?? raw.savedPlanId) as string | undefined,

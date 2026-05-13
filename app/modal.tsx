@@ -9,6 +9,7 @@ import {
   View,
   Pressable,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SendHorizonal } from "lucide-react-native";
 
 import { BottomSheet } from "@/src/components/ui/BottomSheet";
@@ -24,6 +25,7 @@ export default function ModalScreen() {
   const { postId } = useLocalSearchParams<{ postId?: string }>();
   const colorScheme = useColorScheme() === "dark" ? "dark" : "light";
   const palette = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
   const [commentText, setCommentText] = useState("");
 
   const safePostId = Array.isArray(postId)
@@ -122,10 +124,11 @@ export default function ModalScreen() {
 
         {/* Input Bar */}
         <View
-          className="flex-row items-center border-t px-4 py-3 pb-8"
+          className="flex-row items-center border-t px-4 py-3"
           style={{
             borderColor: colorScheme === "dark" ? "#334155" : "#E2E8F0",
             backgroundColor: colorScheme === "dark" ? "#0F172A" : "#FFFFFF",
+            paddingBottom: Math.max(12, insets.bottom),
           }}
         >
           <TextInput

@@ -68,6 +68,18 @@ export const plantEventApi = {
       { params },
     ),
 
+  getEventsByPlan: (sourcePlanId: string, params: PageParams) =>
+    apiClient.get<ApiResponse<PageResponse<PlantEventResponse>>>(
+      API_ENDPOINTS.PLANT_EVENTS.BY_PLAN(sourcePlanId),
+      { params },
+    ),
+
+  getEventsByPlanApply: (planApplyId: string, params: PageParams) =>
+    apiClient.get<ApiResponse<PageResponse<PlantEventResponse>>>(
+      API_ENDPOINTS.PLANT_EVENTS.BY_PLAN_APPLY(planApplyId),
+      { params },
+    ),
+
   deleteEvent: (eventId: string) =>
     apiClient.delete<ApiResponse<void>>(
       API_ENDPOINTS.PLANT_EVENTS.ITEM(eventId),
@@ -77,6 +89,11 @@ export const plantEventApi = {
     apiClient.get<ApiResponse<PlantEventResponse[]>>(
       API_ENDPOINTS.PLANT_EVENTS.CALENDAR,
       { params },
+    ),
+
+  toggleTask: (eventId: string, taskIndex: number) =>
+    apiClient.patch<ApiResponse<PlantEventResponse>>(
+      `${API_ENDPOINTS.PLANT_EVENTS.ITEM(eventId)}/tasks/${taskIndex}/toggle`,
     ),
 
   getEventProgress: (eventId: string, params?: PageParams) =>
@@ -93,5 +110,10 @@ export const plantEventApi = {
     apiClient.patch<ApiResponse<EventProgressResponse>>(
       API_ENDPOINTS.PLANT_EVENTS.PROGRESS_ITEM(eventId, progressId),
       body,
+    ),
+
+  generateEventProgress: (eventId: string) =>
+    apiClient.post<ApiResponse<EventProgressResponse[]>>(
+      API_ENDPOINTS.PLANT_EVENTS.PROGRESS_GENERATE(eventId),
     ),
 };

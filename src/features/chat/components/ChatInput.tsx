@@ -161,7 +161,7 @@ export function ChatInput({
 
   if (!canSendMessages && !isDisbanded) {
     return (
-      <View className="bg-white border-t border-gray-100 py-4 px-6 items-center justify-center">
+      <View className="bg-white border-t border-gray-100 px-6 py-4 items-center justify-center">
         <Text className="text-sm text-gray-500 font-medium text-center">
           Trưởng nhóm đã tắt quyền nhắn tin của thành viên
         </Text>

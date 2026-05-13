@@ -45,6 +45,31 @@ export type BackendProfileSummary = {
   isVerified?: boolean;
 };
 
+export type CommunityTreatmentStatus =
+  | "PENDING"
+  | "APPLYING"
+  | "ACTIVE"
+  | "COMPLETED"
+  | "CANCELLED";
+
+export interface CommunityPlanInfo {
+  id: string;
+  planName: string | null;
+  diseaseName: string | null;
+  severityLevel: string | null;
+  urgency: string | null;
+  status: CommunityTreatmentStatus;
+  estimatedCost: string | null;
+  confidenceScore: number | null;
+  requiredInputs: string[] | null;
+  safetyWarnings: string[] | null;
+  successIndicators: string | null;
+  applyCount: number | null;
+  eventCount?: number | null;
+  isPublic: boolean;
+  createdAt: string | null;
+}
+
 export type BackendPost = {
   id: string;
   authorId: string;
@@ -56,6 +81,7 @@ export type BackendPost = {
   originalAuthorId?: string | null;
   sharedPostInfo?: BackendPost | null;
   planId?: string | null;
+  planInfo?: CommunityPlanInfo | null;
   uploadedAt?: string | null;
   updatedAt?: string | null;
   stats: BackendPostStats;
@@ -112,6 +138,7 @@ export type Post = {
   originalAuthorId?: string | null;
   sharedPost?: Post | null;
   planId?: string | null;
+  planInfo?: CommunityPlanInfo | null;
   uploadedAt?: string | null;
   updatedAt?: string | null;
   urgent?: boolean;

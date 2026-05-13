@@ -1,11 +1,9 @@
 // Public API for the community-feed sub-module
 export {
-  CommunityScreen,
   ComposerScreen,
   PostCard,
   ComposerCard,
   CommentCard,
-  PostDetailScreen,
 } from "./components";
 export type { Post } from "./components/community.types";
 export { communityApi } from "./api/community.api";

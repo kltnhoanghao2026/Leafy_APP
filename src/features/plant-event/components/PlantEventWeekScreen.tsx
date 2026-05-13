@@ -272,7 +272,7 @@ export function PlantEventWeekScreen() {
             className="ml-3 items-center justify-center rounded-xl bg-slate-50 p-3 dark:bg-slate-800"
             onPress={() =>
               router.push({
-                pathname: "/(main)/plant-events-calendar",
+                pathname: "/(main)/plant-events/calendar",
                 params: { targetType, selectedId, selectedName },
               })
             }
@@ -318,7 +318,7 @@ export function PlantEventWeekScreen() {
             className="ml-2 items-center justify-center rounded-xl bg-slate-50 p-3 dark:bg-slate-800"
             onPress={() =>
               router.push({
-                pathname: "/(main)/plant-events-timeline",
+                pathname: "/(main)/plant-events/timeline",
                 params:
                   targetType === "FARM_PLOT"
                     ? {

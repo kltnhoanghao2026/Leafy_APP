@@ -10,7 +10,17 @@ import { useAuthContext } from '../../../src/features/auth';
 import type { MessageResponse } from '../../../src/features/chat/api/chatApi';
 import { useHeaderHeight } from '@react-navigation/elements';
 
-export default function ChatScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeChatScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <ChatScreen />
+    </SafeAreaView>
+  );
+}
+
+function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const conversationId = id as string;
   const headerHeight = useHeaderHeight();
@@ -90,7 +100,7 @@ export default function ChatScreen() {
       <KeyboardAvoidingView 
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? headerHeight : 0}
+        keyboardVerticalOffset={headerHeight}
       >
         <View className="flex-1 bg-white">
           {/* Disbanded Banner */}

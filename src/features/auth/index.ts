@@ -3,15 +3,8 @@
 // Public context
 export { AuthProvider, useAuthContext } from "./context/AuthContext";
 
-// Public UI
-export {
-  LoginScreen,
-  LoginScreenView,
-  SignupScreen,
-  SignupScreenView,
-  SignupVerifyOtpScreen,
-  SignupVerifyOtpScreenView,
-} from "./components";
+// Public UI (now empty as screens are orchestrated in route files directly)
+
 
 // Public hooks
 export {

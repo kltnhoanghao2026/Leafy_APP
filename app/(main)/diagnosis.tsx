@@ -3,8 +3,17 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "expo-router";
 import { BotMessageSquare } from "lucide-react-native";
 import { PlantEventHubScreen } from "@/src/features/plant-event/components/PlantEventHubScreen";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function MonitorScreen() {
+export default function SafeMonitorScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']}>
+      <MonitorScreen />
+    </SafeAreaView>
+  );
+}
+
+function MonitorScreen() {
   const { t } = useTranslation();
   const router = useRouter();
 

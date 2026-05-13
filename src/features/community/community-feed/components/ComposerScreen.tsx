@@ -22,6 +22,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
@@ -52,6 +53,7 @@ export function ComposerScreen() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() === "dark" ? "dark" : "light";
   const palette = Colors[colorScheme];
+  const insets = useSafeAreaInsets();
 
   const {
     caption,
@@ -231,7 +233,7 @@ export function ComposerScreen() {
       {/* Bottom Toolbar fixed above keyboard */}
       <View
         className="flex-row items-center border-t px-4 py-3"
-        style={{ borderColor: lineColor, backgroundColor: cardBg }}
+        style={{ borderColor: lineColor, backgroundColor: cardBg, paddingBottom: 12 }}
       >
         <View className="flex-row items-center gap-5">
           <Pressable

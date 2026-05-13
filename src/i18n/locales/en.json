@@ -12,6 +12,7 @@
     "update": "Update",
     "edit": "Edit",
     "loading": "Loading data...",
+    "all": "All",
     "status": {
       "active": "Active",
       "inactive": "Inactive",
@@ -218,6 +219,7 @@
     "languageVi": "Vietnamese",
     "languageEn": "English",
     "darkMode": "Dark mode",
+    "offlineMode": "Offline mode",
     "other": "Other",
     "aboutUs": "About us",
     "logout": "Log out",
@@ -270,6 +272,7 @@
       "options": "Options",
       "manageFarm": "Manage farms",
       "managePlants": "Manage plants",
+      "managePlans": "Manage plans",
       "manageEvents": "Manage events",
       "eventCalendar": "Event calendar",
       "predict": "Disease Detection",
@@ -292,6 +295,7 @@
       "myAccount": "My account",
       "manageFarm": "Farm management",
       "managePlants": "Plant management",
+      "managePlans": "Plan management",
       "manageEvents": "Event management"
     }
   },
@@ -513,6 +517,11 @@
       "deleteFailedMessage": "Please try again later."
     }
   },
+  "plantManagement": {
+    "overview": {
+      "totalPlans": "{{count}} plans"
+    }
+  },
   "sensors": {
     "screen": {
       "title": "Farm & Device Management",
@@ -595,6 +604,11 @@
       "durationDaysInvalid": "Must be a non-negative whole number",
       "phiDaysInvalid": "Must be a non-negative whole number",
       "endDateBeforeStart": "End date must be on or after start date"
+    },
+    "targetType": {
+      "FARM": "Farm Plot",
+      "FARM_ZONE": "Farm Zone",
+      "PLANT": "Plant"
     },
     "eventType": {
       "IRRIGATION": "Irrigation",
@@ -739,7 +753,18 @@
       "phi": "PHI",
       "ppe": "PPE",
       "mrl": "MRL note",
-      "viewDetails": "View details"
+      "viewDetails": "View details",
+      "tasksTitle": "Tasks",
+      "completed": "completed",
+      "tasksCount": "{{count}} tasks",
+      "childEventsCount": "{{count}} child events",
+      "trackProgress": "Track progress"
+    },
+    "progress": {
+      "targetProgress": "Target progress",
+      "progressDetails": "Progress details ({{count}})",
+      "markIncomplete": "Mark as incomplete",
+      "markComplete": "Mark as complete"
     },
     "detail": {
       "title": "Event details",
@@ -798,7 +823,8 @@
       "apply": "Apply filter",
       "targetSection": "Target",
       "typeSection": "Event type"
-    }
+    },
+    "planApply": "Applied Plan"
   },
   "diseaseDetection": {
     "title": "Disease Detection",
@@ -872,6 +898,65 @@
         "scheduleRequired": "The plan must contain at least one event.",
         "submitFailed": "Could not submit treatment plan. Please try again."
       }
+    }
+  },
+  "plan": {
+    "tabs": {
+      "my": "My Plans",
+      "applied": "Applied",
+      "public": "Community"
+    },
+    "list": {
+      "searchAppliedPlaceholder": "Search by ID...",
+      "searchPlaceholder": "Search plans...",
+      "loadFailed": "Failed to load list",
+      "emptySearchTitle": "No results found",
+      "emptyTitle": "No data yet",
+      "emptySearchMessage": "Try changing the search keywords",
+      "emptyMessage": "Your data will appear here",
+      "itemAppliedLabel": "applies",
+      "itemLabel": "plans"
+    }
+  },
+  "offline": {
+    "title": "Offline Mode",
+    "dashboard": "Offline Dashboard",
+    "plants": "My Plants (Offline)",
+    "farm": "My Farm (Offline)",
+    "events": "Plant Events (Offline)",
+    "lastSynced": "Last synced: {{time}}",
+    "neverSynced": "Never synced",
+    "noData": "No offline data available. Please connect to the internet to sync.",
+    "goOnline": "Go Online",
+    "continueOffline": "Continue Offline",
+    "syncStatus": "Local Data Status",
+    "cachedItems": "{{count}} items cached",
+    "readOnlyNotice": "You are in offline mode. Data is read-only.",
+    "dataStale": "Data may be outdated. Connect to sync.",
+    "loadingData": "Loading offline workspace...",
+    "readOnly": "Read Only Mode",
+    "dashboardTitle": "Offline Workspace",
+    "dashboardDesc": "You are currently disconnected from the main server. Your cached farms, plants, and events are available here for reference.",
+    "noDataTitle": "Workspace Empty",
+    "farms": "Farms & Zones",
+    "sync": {
+      "title": "Sync Data",
+      "subtitle": "Download your farm data for offline use. Events are synced for the current month.",
+      "syncNow": "Sync Now",
+      "syncAgain": "Sync Again",
+      "syncing": "Syncing...",
+      "syncComplete": "Sync complete",
+      "syncFailed": "Sync failed",
+      "farmData": "Farms & Zones",
+      "zoneData": "Farm Zones",
+      "speciesData": "Species",
+      "plantData": "Plants",
+      "eventData": "Plant Events (This Month)",
+      "recordsCached": "{{count}} synced",
+      "noNetwork": "No internet connection. Connect to sync.",
+      "lastSyncDuration": "Completed in {{seconds}}s",
+      "totalCached": "{{count}} total records",
+      "retry": "Retry Sync"
     }
   }
 }

@@ -110,13 +110,38 @@ export const EVENT_TYPE_ICONS: Record<EventType, LucideIcon> = {
 export const getEventTypeIcon = (eventType: EventType): LucideIcon =>
   EVENT_TYPE_ICONS[eventType] ?? Droplets;
 
-// ── Event target ─────────────────────────────────────────────────────────
+// ── Event target (UI-level, used for screen routing / filter state) ──────
 
 export type EventTargetType = "PLANT" | "FARM_PLOT" | "FARM_ZONE";
+
+// ── Backend target type (matches FE / backend DTO) ──────────────────────
+
+/** Scope of a PlantEvent or EmbeddedPlanEvent (backend DTO value). */
+export type TargetType = "FARM" | "FARM_ZONE" | "PLANT";
 
 // ── Tracking granularity ──────────────────────────────────────────────────
 
 export type TrackingGranularity = "NONE" | "ZONE" | "PLANT";
+
+// ── Event tasks ───────────────────────────────────────────────────────────
+
+export interface EventTaskResponse {
+  title: string;
+  description: string | null;
+  order: number | null;
+  estimatedCost: string | null;
+  completed: boolean;
+}
+
+export interface EventTaskRequest {
+  title: string;
+  description?: string;
+  order?: number;
+  estimatedCost?: string;
+  completed?: boolean;
+}
+
+// ── Event progress ────────────────────────────────────────────────────────
 
 export type EventProgressResponse = {
   id: string;
@@ -145,6 +170,8 @@ export type PlantEventResponse = {
   farmPlotId?: string | null;
   farmZoneId?: string | null;
   eventType: EventType;
+  /** Scope this event targets: FARM (plot-level), FARM_ZONE (zone-level), or PLANT (individual). */
+  targetType: TargetType | null;
   note: string;
   description?: string | null;
   daysFromNow?: number | null;
@@ -157,6 +184,10 @@ export type PlantEventResponse = {
   mrlNote?: string | null;
   estimatedCost?: string | null;
   sourcePlanId?: string | null;
+  planApplyId?: string | null;
+  /** ID of the parent PlantEvent in the hierarchy (FARM → FARM_ZONE → PLANT). */
+  parentPlantEventId?: string | null;
+  completed: boolean;
   createdAt?: string | null;
   lastModifiedAt?: string | null;
   createdBy?: string | null;
@@ -167,6 +198,9 @@ export type PlantEventResponse = {
   excludedFarmZoneIds?: string[] | null;
   progressTotal?: number | null;
   progressCompleted?: number | null;
+  tasks: EventTaskResponse[] | null;
+  /** Child events in the hierarchy (FARM → FARM_ZONE → PLANT). Empty array for leaf nodes. */
+  children: PlantEventResponse[];
 };
 
 export type PlantEventCreateRequest = {
@@ -174,11 +208,16 @@ export type PlantEventCreateRequest = {
   farmPlotId?: string;
   farmZoneId?: string;
   eventType: EventType;
+  /**
+   * Explicit scope override. Omit to let the server derive it automatically
+   * from plantId / farmZoneId / farmPlotId.
+   */
+  targetType?: TargetType;
   note: string;
   description?: string;
   daysFromNow?: number;
   durationDays?: number;
-  isPlanned: boolean;
+  isPlanned?: boolean;
   calculatedStartDate?: string;
   calculatedEndDate?: string;
   phiDays?: number;
@@ -186,19 +225,46 @@ export type PlantEventCreateRequest = {
   mrlNote?: string;
   estimatedCost?: string;
   sourcePlanId?: string;
+  planApplyId?: string;
+  parentPlantEventId?: string;
+  tasks?: EventTaskRequest[];
   trackingGranularity?: TrackingGranularity;
   excludedPlantIds?: string[];
   excludedFarmZoneIds?: string[];
 };
 
-export type PlantEventUpdateRequest = Partial<
-  Omit<PlantEventCreateRequest, "plantId" | "farmPlotId" | "farmZoneId">
->;
+export interface PlantEventUpdateRequest {
+  farmPlotId?: string;
+  farmZoneId?: string;
+  /** Optional scope correction. Null leaves existing targetType unchanged. */
+  targetType?: TargetType;
+  eventType?: EventType;
+  note?: string;
+  description?: string;
+  daysFromNow?: number;
+  durationDays?: number;
+  isPlanned?: boolean;
+  calculatedStartDate?: string;
+  calculatedEndDate?: string;
+  phiDays?: number;
+  ppeRequired?: string;
+  mrlNote?: string;
+  estimatedCost?: string;
+  sourcePlanId?: string;
+  planApplyId?: string;
+  parentPlantEventId?: string;
+  completed?: boolean;
+  /** Replace the entire task list. Omit to leave tasks unchanged. */
+  tasks?: EventTaskRequest[];
+}
 
 export type CalendarParams = {
   farmPlotId?: string;
   farmZoneId?: string;
   plantId?: string;
+  profileId?: string;
+  sourcePlanId?: string;
+  planApplyId?: string;
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
 };

@@ -102,7 +102,7 @@ const mapCompletedResult = (raw: JsonRecord): RagChatResponse => {
     answer: asString(raw.answer) ?? "",
     threadId: asString(raw.thread_id ?? raw.threadId) ?? "",
     documents: (raw.documents ?? []) as RagChatResponse["documents"],
-    treatmentPlan: raw.treatment_plan ?? raw.treatmentPlan,
+    plan: raw.plan ?? raw.treatment_plan ?? raw.treatmentPlan,
     plantId: asString(raw.plant_id ?? raw.plantId),
     webSearchResults: (raw.web_search_results ??
       raw.webSearchResults ??

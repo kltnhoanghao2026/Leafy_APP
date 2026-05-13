@@ -6,7 +6,17 @@ import { Check, X, Users } from 'lucide-react-native';
 
 import { chatApi } from '@/src/features/chat/api/chatApi';
 
-export default function JoinRequestsScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeJoinRequestsScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <JoinRequestsScreen />
+    </SafeAreaView>
+  );
+}
+
+function JoinRequestsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const qc = useQueryClient();
 

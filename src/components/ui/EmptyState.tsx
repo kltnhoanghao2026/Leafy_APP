@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react-native";
 import { Text, TouchableOpacity, View } from "react-native";
+import { useColorScheme } from "@/src/hooks/useColorScheme";
 
 type EmptyStateProps = {
   icon: LucideIcon;
@@ -16,11 +17,13 @@ export function EmptyState({
   actionLabel,
   onAction,
 }: EmptyStateProps) {
+  const colorScheme = useColorScheme();
+  const iconColor = colorScheme === "dark" ? "#64748b" : "#94a3b8";
   return (
     <View className="flex-1 items-center justify-center py-12">
       <Icon
         size={48}
-        className="text-slate-400 dark:text-slate-500"
+        color={iconColor}
         strokeWidth={1.5}
       />
       <Text className="mt-4 text-center text-[15px] font-semibold text-slate-500 dark:text-slate-400">

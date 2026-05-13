@@ -23,9 +23,13 @@ import { initializeI18n } from "@/src/i18n";
 import { OfflineNotice } from "@/src/components/ui/OfflineNotice";
 import { NetworkProvider } from "@/src/providers/NetworkProvider";
 import { WebSocketProvider } from "@/src/providers/WebSocketProvider";
-import { TreatmentPlanReviewProvider } from "@/src/features/rag-chat/context/TreatmentPlanReviewContext";
+import { PlanReviewProvider } from "@/src/features/rag-chat/context/PlanReviewContext";
 import { ExpoPushProvider } from "@/src/features/notifications/context/ExpoPushContext";
 import { ExpoPushBootstrap, configurePushNotifications } from "@/src/features/notifications";
+import { OfflineDataProvider } from "@/src/features/offline";
+
+import { useOfflineCacheSync } from "@/src/hooks/useOfflineCacheSync";
+import { useIsOffline } from "@/src/providers/NetworkProvider";
 
 // Configure how notifications appear while the app is in the foreground.
 configurePushNotifications();
@@ -86,21 +90,25 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <NetworkProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <WebSocketProvider>
-              <TreatmentPlanReviewProvider>
-                <ExpoPushProvider>
-                  <RootLayoutNav />
-                </ExpoPushProvider>
-              </TreatmentPlanReviewProvider>
-            </WebSocketProvider>
-          </AuthProvider>
-        </QueryClientProvider>
-      </NetworkProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <NetworkProvider>
+          <QueryClientProvider client={queryClient}>
+            <AuthProvider>
+              <WebSocketProvider>
+                <PlanReviewProvider>
+                  <ExpoPushProvider>
+                    <OfflineDataProvider>
+                      <RootLayoutNav />
+                    </OfflineDataProvider>
+                  </ExpoPushProvider>
+                </PlanReviewProvider>
+              </WebSocketProvider>
+            </AuthProvider>
+          </QueryClientProvider>
+        </NetworkProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 
@@ -110,19 +118,28 @@ function RootLayoutNav() {
   const { isAuthenticated, isRestoringAuth } = useAuthContext();
   const router = useRouter();
   const segments = useSegments();
+  const isOffline = useIsOffline();
+
+  // Mount cache sync hook here since we are authenticated
+  useOfflineCacheSync();
 
   // Redirect based on auth state
   useEffect(() => {
     if (isRestoringAuth) return;
 
     const inAuthGroup = segments[0] === "(auth)";
+    const inOfflineGroup = segments[0] === "(offline)";
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace("/login");
-    } else if (isAuthenticated && inAuthGroup) {
-      router.replace("/");
+    } else if (isAuthenticated) {
+      if (isOffline && !inOfflineGroup) {
+        router.replace("/(offline)");
+      } else if (!isOffline && (inAuthGroup || inOfflineGroup)) {
+        router.replace("/(main)");
+      }
     }
-  }, [isAuthenticated, isRestoringAuth, segments]);
+  }, [isAuthenticated, isRestoringAuth, isOffline, segments]);
 
   // Show splash while restoring authentication state
   if (isRestoringAuth) {
@@ -131,30 +148,29 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <SafeAreaProvider>
-        {/* Mount push bootstrap inside auth so it has access to the user */}
-        {isAuthenticated && <ExpoPushBootstrap />}
-        <Stack>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(main)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="composer"
-            options={{
-              title: t("community.composer.title"),
-            }}
-          />
-          <Stack.Screen
-            name="modal"
-            options={{
-              presentation: "transparentModal",
-              animation: "slide_from_bottom",
-              headerShown: false,
-              contentStyle: { backgroundColor: "transparent" },
-            }}
-          />
-        </Stack>
-        <OfflineNotice />
-      </SafeAreaProvider>
+      {/* Mount push bootstrap inside auth so it has access to the user */}
+      {isAuthenticated && <ExpoPushBootstrap />}
+      <Stack>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(main)" options={{ headerShown: false }} />
+        <Stack.Screen name="(offline)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="composer"
+          options={{
+            title: t("community.composer.title"),
+          }}
+        />
+        <Stack.Screen
+          name="modal"
+          options={{
+            presentation: "transparentModal",
+            animation: "slide_from_bottom",
+            headerShown: false,
+            contentStyle: { backgroundColor: "transparent" },
+          }}
+        />
+      </Stack>
+      <OfflineNotice />
     </ThemeProvider>
   );
 }

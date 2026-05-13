@@ -59,6 +59,9 @@ export type TargetProps = {
   setSelectedPlotIdForZones: (id: string) => void;
   onSelectTarget: (id: string, name: string, type: EventTargetType) => void;
   primaryColor: string;
+  selectedApplyId: string;
+  setSelectedApplyId: (id: string) => void;
+  applies: any[];
 };
 
 type PlantEventHubFilterSheetProps = {
@@ -219,6 +222,9 @@ export function PlantEventHubFilterSheet({
                     targetProps.onSelectTarget(id, name, type);
                   }}
                   primaryColor={targetProps.primaryColor}
+                  selectedApplyId={targetProps.selectedApplyId}
+                  setSelectedApplyId={targetProps.setSelectedApplyId}
+                  applies={targetProps.applies}
                 />
               </View>
 

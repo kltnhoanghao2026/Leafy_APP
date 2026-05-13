@@ -7,8 +7,8 @@ export type StatCardProps = {
   iconBg: string;
   label: string;
   value: string;
-  badge: string;
-  badgeColor: string;
+  badge?: string;
+  badgeColor?: string;
   bg: string;
   borderColor: string;
   textColor: string;

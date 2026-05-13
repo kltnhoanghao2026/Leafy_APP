@@ -15,7 +15,17 @@ interface Profile {
   role: string;
 }
 
-export default function NewDmScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeNewDmScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <NewDmScreen />
+    </SafeAreaView>
+  );
+}
+
+function NewDmScreen() {
   const [query, setQuery] = useState('');
   const queryClient = useQueryClient();
 

@@ -9,7 +9,7 @@ export function ChatFAB() {
   
   return (
     <TouchableOpacity
-      style={[styles.fab, { bottom: Math.max(insets.bottom + 20, 20) }]}
+      style={[styles.fab, { bottom: 20 }]}
       onPress={() => router.push('/chat')}
     >
       <MessageCircle size={28} color="white" />

@@ -64,6 +64,22 @@ export const plantEventKeys = {
       withPlantEventPageDefaults(params),
     ] as const,
 
+  listByPlan: (sourcePlanId: string, params?: PageParams) =>
+    [
+      ...plantEventKeys.lists(),
+      "plan",
+      sourcePlanId,
+      withPlantEventPageDefaults(params),
+    ] as const,
+
+  listByPlanApply: (planApplyId: string, params?: PageParams) =>
+    [
+      ...plantEventKeys.lists(),
+      "plan-apply",
+      planApplyId,
+      withPlantEventPageDefaults(params),
+    ] as const,
+
   detail: (eventId: string) =>
     [...plantEventKeys.all(), "detail", eventId] as const,
 

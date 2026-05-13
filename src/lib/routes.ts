@@ -154,9 +154,12 @@ export const API_ENDPOINTS = {
 
   PLANTS: {
     LIST: "/plants",
+    ME: "/plants/me",
     ITEM: (id: string) => `/plants/${id}`,
     BY_FARM_PLOT: (farmPlotId: string) => `/plants/farm-plot/${farmPlotId}`,
     BY_SPECIES: (speciesId: string) => `/plants/species/${speciesId}`,
+    BULK_STATUS: "/plants/bulk/status",
+    BULK_DELETE: "/plants/bulk",
   },
 
   SPECIES: {
@@ -174,6 +177,7 @@ export const API_ENDPOINTS = {
     BY_PLANT_PLANNED: (plantId: string) =>
       `/plant-events/plant/${plantId}/planned`,
     BY_PLAN: (sourcePlanId: string) => `/plant-events/plan/${sourcePlanId}`,
+    BY_PLAN_APPLY: (planApplyId: string) => `/plant-events/plan-apply/${planApplyId}`,
     BY_FARM_PLOT: (farmPlotId: string) =>
       `/plant-events/farm-plot/${farmPlotId}`,
     BY_FARM_ZONE: (farmZoneId: string) =>
@@ -182,18 +186,30 @@ export const API_ENDPOINTS = {
     PROGRESS: (eventId: string) => `/plant-events/${eventId}/progress`,
     PROGRESS_ITEM: (eventId: string, progressId: string) =>
       `/plant-events/${eventId}/progress/${progressId}`,
+    PROGRESS_GENERATE: (eventId: string) =>
+      `/plant-events/${eventId}/progress/generate`,
   },
 
-  TREATMENT_PLANS: {
-    CREATE: "/treatment-plans",
-    ITEM: (planId: string) => `/treatment-plans/${planId}`,
-    VISIBILITY: (planId: string) => `/treatment-plans/${planId}/visibility`,
-    MY: "/treatment-plans/me",
-    BY_PLANT: (plantId: string) => `/treatment-plans/plant/${plantId}`,
+  PLANS: {
+    CREATE: "/plans",
+    ITEM: (planId: string) => `/plans/${planId}`,
+    VISIBILITY: (planId: string) => `/plans/${planId}/visibility/toggle`,
+    MY: "/plans/me",
+    PUBLIC: "/plans/public",
+    MY_APPLIES: "/plans/applies/me",
+    BY_PLANT: (planId: string) => `/plans/plant/${planId}`,
     BY_FARM_PLOT: (farmPlotId: string) =>
-      `/treatment-plans/farm-plot/${farmPlotId}`,
+      `/plans/farm-plot/${farmPlotId}`,
     BY_FARM_ZONE: (farmZoneId: string) =>
-      `/treatment-plans/farm-zone/${farmZoneId}`,
+      `/plans/farm-zone/${farmZoneId}`,
+    APPLY: (planId: string) => `/plans/${planId}/apply`,
+    APPLIES: (planId: string) => `/plans/${planId}/applies`,
+    APPLY_DETAIL: (applyId: string) => `/plans/applies/${applyId}`,
+    APPLY_STATUS: (applyId: string) => `/plans/applies/${applyId}/status`,
+  },
+
+  STATS: {
+    AGRICULTURE: "/stats/agriculture",
   },
 
   SEARCH: {

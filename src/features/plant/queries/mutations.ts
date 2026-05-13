@@ -43,3 +43,27 @@ export const useDeletePlantMutation = () => {
     },
   });
 };
+
+export const useBulkUpdatePlantStatusMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { plantIds: string[]; newStatus: string }) =>
+      plantApi.bulkUpdateStatus(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: plantKeys.all() });
+    },
+  });
+};
+
+export const useBulkDeletePlantsMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { plantIds: string[] }) =>
+      plantApi.bulkDeletePlants(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: plantKeys.all() });
+    },
+  });
+};

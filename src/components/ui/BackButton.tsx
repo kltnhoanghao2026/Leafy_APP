@@ -1,7 +1,7 @@
-import Colors from "@/src/constants/Colors";
-import { useNavigation, useRouter } from "expo-router";
-import { ChevronLeft } from "lucide-react-native";
-import { Pressable, useColorScheme } from "react-native";
+import Colors from '@/src/constants/Colors';
+import { useRouter } from 'expo-router';
+import { ChevronLeft } from 'lucide-react-native';
+import { Pressable, useColorScheme } from 'react-native';
 
 type BackButtonProps = {
   /** Route to replace with when there is no navigation history. Defaults to '/'. */
@@ -19,40 +19,38 @@ type BackButtonProps = {
 /**
  * A reusable back button for headers and screens.
  *
+ * All feature screens now live inside their own Stack navigator so
+ * router.back() correctly unwinds the Stack. The fallback is only used
+ * when there is genuinely no history (e.g. deep-link cold start).
+ *
  * Usage in a layout headerLeft:
  *   headerLeft: () => <BackButton fallback="/(main)/farm" />
- *
- * Usage inside a screen:
- *   <BackButton fallback="/(main)/home" className="ml-4" />
  *
  * Usage with custom logic:
  *   <BackButton onPress={() => { ... }} />
  */
 export default function BackButton({
-  fallback = "/",
+  fallback = '/',
   size = 20,
-  className = "",
+  className = '',
   onPress,
   unstyled = false,
 }: BackButtonProps) {
   const router = useRouter();
-  const navigation = useNavigation();
-  const scheme = useColorScheme() ?? "light";
+  const scheme = useColorScheme() ?? 'light';
   const iconColor = Colors[scheme].primary;
 
   const handleBack = () => {
-    const state = navigation.getState();
-    const isTabNavigator = state?.type === "tab";
-    if (!isTabNavigator && navigation.canGoBack()) {
-      navigation.goBack();
+    if (router.canGoBack()) {
+      router.back();
     } else {
       router.replace(fallback as any);
     }
   };
 
   const baseClass = unstyled
-    ? "p-1"
-    : "h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800";
+    ? 'p-1'
+    : 'h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800';
 
   return (
     <Pressable

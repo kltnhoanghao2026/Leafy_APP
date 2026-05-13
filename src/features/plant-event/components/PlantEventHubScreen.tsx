@@ -46,7 +46,11 @@ import type {
   PlantEventResponse,
 } from "./plant-event.types";
 import { EVENT_CATEGORY_MAP, getEventCategory } from "./plant-event.types";
-import { usePlantEventsCalendar } from "../queries";
+import {
+  usePlantEventsCalendar,
+  useUpdatePlantEventMutation,
+  useToggleTaskMutation,
+} from "../queries";
 import { usePlants } from "../../plant/queries";
 import { useFarmPlotsByOwner, useFarmZonesByPlot } from "../../farm/queries";
 import { useAuthContext } from "@/src/features/auth/context/AuthContext";
@@ -59,6 +63,7 @@ import {
   PlantEventHubFilterSheet,
   type FilterState,
 } from "./PlantEventHubFilterSheet";
+import { useMyApplies } from "../../plan/queries/plan.queries";
 
 const SELECTED_DAY_COLOR = "#2F7F34";
 
@@ -107,6 +112,7 @@ export function PlantEventHubScreen({
   const [selectedId, setSelectedId] = useState(params.selectedId ?? "");
   const [selectedName, setSelectedName] = useState(params.selectedName ?? "");
   const [selectedPlotIdForZones, setSelectedPlotIdForZones] = useState("");
+  const [selectedApplyId, setSelectedApplyId] = useState("");
 
   // ── Month view state ──────────────────────────────────────────────────
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -127,8 +133,10 @@ export function PlantEventHubScreen({
   const farmPlotsQuery = useFarmPlotsByOwner(profileId ?? "");
   const plantsQuery = usePlants({ page: 0, size: 100 });
   const farmZonesQuery = useFarmZonesByPlot(selectedPlotIdForZones);
+  const appliesQuery = useMyApplies({ size: 100 });
   const farmPlots = farmPlotsQuery.data ?? [];
   const plants = plantsQuery.data?.content ?? [];
+  const applies = appliesQuery.data?.content ?? [];
 
   // ── Date ranges ───────────────────────────────────────────────────────
   const monthStart = format(startOfMonth(currentMonth), "yyyy-MM-dd");
@@ -154,6 +162,7 @@ export function PlantEventHubScreen({
         : targetType === "FARM_ZONE"
           ? { farmZoneId: selectedId }
           : { plantId: selectedId }),
+      ...(selectedApplyId ? { planApplyId: selectedApplyId } : {}),
       ...(activeView === "week"
         ? { startDate: weekStartStr, endDate: weekEndStr }
         : activeView === "timeline"
@@ -170,10 +179,13 @@ export function PlantEventHubScreen({
       tlMonthEnd,
       monthStart,
       monthEnd,
+      selectedApplyId,
     ],
   );
 
   const eventsQuery = usePlantEventsCalendar(calendarParams);
+  const updateEventMutation = useUpdatePlantEventMutation();
+  const toggleTaskMutation = useToggleTaskMutation();
 
   // Optimistic: keep last known events so UI never blanks out on refetch
   const stableEventsRef = useRef<PlantEventResponse[]>([]);
@@ -181,6 +193,18 @@ export function PlantEventHubScreen({
     stableEventsRef.current = eventsQuery.data;
   }
   const events = eventsQuery.data ?? stableEventsRef.current;
+
+  // ── Toggle handlers ───────────────────────────────────────────────────
+  const handleToggleComplete = (event: PlantEventResponse) => {
+    updateEventMutation.mutate({
+      eventId: event.id,
+      body: { completed: !event.completed },
+    });
+  };
+
+  const handleToggleTask = (event: PlantEventResponse, taskIndex: number) => {
+    toggleTaskMutation.mutate({ eventId: event.id, taskIndex });
+  };
 
   // Apply active filter
   const filteredEvents = useMemo(() => {
@@ -440,6 +464,8 @@ export function PlantEventHubScreen({
               category={cat}
               events={catEvents}
               onPressEvent={handleNavigateToEvent}
+              onToggleComplete={handleToggleComplete}
+              onToggleTask={handleToggleTask}
             />
           );
         })}
@@ -1290,6 +1316,9 @@ export function PlantEventHubScreen({
           setTargetType,
           selectedId,
           selectedName,
+          selectedApplyId,
+          setSelectedApplyId,
+          applies,
           farmPlots,
           plants,
           farmZonesData: farmZonesQuery.data ?? [],

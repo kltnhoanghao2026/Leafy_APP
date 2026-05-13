@@ -15,6 +15,7 @@ import { Post, CommunityPalette } from "./community.types";
 import { formatStat } from "./community.utils";
 import { useHandleVoteMutation } from "../queries/mutations";
 import { PostVoteListModal } from "./PostVoteListModal";
+import { PlanReferenceCard } from "./PlanReferenceCard";
 
 const FALLBACK_AVATAR =
   "https://ui-avatars.com/api/?background=E5E7EB&color=334155&name=Leafy";
@@ -254,17 +255,7 @@ export function PostCard({
 
         {/* Plan Reference Embed */}
         {planId && (
-          <View className="mx-4 mb-3 flex-row items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-800 dark:bg-green-950">
-            <ClipboardList size={18} color="#245A34" />
-            <View className="flex-1">
-              <Text className="text-[11px] font-black uppercase tracking-widest text-[#245A34]">
-                Kế hoạch điều trị
-              </Text>
-              <Text className="mt-0.5 text-[13px] text-slate-500">
-                ID: {planId.slice(0, 12)}...
-              </Text>
-            </View>
-          </View>
+          <PlanReferenceCard planId={planId} planInfo={post.planInfo} />
         )}
 
         {/* Media Content */}

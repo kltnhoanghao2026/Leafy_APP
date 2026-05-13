@@ -13,6 +13,7 @@ import {
   Layers,
   MapPin,
   Sprout,
+  ClipboardList,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
@@ -34,6 +35,9 @@ type TargetPickerDropdownProps = {
   setSelectedPlotIdForZones: (id: string) => void;
   onSelectTarget: (id: string, name: string, type: EventTargetType) => void;
   primaryColor: string;
+  selectedApplyId?: string;
+  setSelectedApplyId?: (id: string) => void;
+  applies?: any[];
 };
 
 export function TargetPickerDropdown({
@@ -48,6 +52,9 @@ export function TargetPickerDropdown({
   setSelectedPlotIdForZones,
   onSelectTarget,
   primaryColor,
+  selectedApplyId,
+  setSelectedApplyId,
+  applies,
 }: TargetPickerDropdownProps) {
   const { t } = useTranslation();
 
@@ -93,6 +100,74 @@ export function TargetPickerDropdown({
 
   return (
     <>
+      {/* Plan Apply selector */}
+      {applies && applies.length > 0 && (
+        <View className="mb-4">
+          <Text className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            {t("calendar.planApply")}
+          </Text>
+          <ScrollView className="max-h-32" showsVerticalScrollIndicator={false}>
+            <TouchableOpacity
+              className="mb-1.5 flex-row items-center justify-between rounded-xl border px-3 py-2.5"
+              style={{
+                borderColor: !selectedApplyId ? `${primaryColor}99` : "#e2e8f0",
+                backgroundColor: !selectedApplyId ? `${primaryColor}14` : "#f8fafc",
+              }}
+              onPress={() => setSelectedApplyId?.("")}
+            >
+              <Text
+                className="text-sm font-medium"
+                style={{
+                  color: !selectedApplyId ? primaryColor : "#334155",
+                }}
+              >
+                {t("common.all")}
+              </Text>
+            </TouchableOpacity>
+            {applies.map((apply: any) => (
+              <TouchableOpacity
+                key={apply.id}
+                className="mb-1.5 flex-row items-center justify-between rounded-xl border px-3 py-2.5"
+                style={{
+                  borderColor: selectedApplyId === apply.id ? `${primaryColor}99` : "#e2e8f0",
+                  backgroundColor: selectedApplyId === apply.id ? `${primaryColor}14` : "#f8fafc",
+                }}
+                onPress={() => {
+                  setSelectedApplyId?.(apply.id);
+                  // Auto-select target based on apply scope
+                  if (apply.plantId) {
+                    const plant = plants.find(p => p.id === apply.plantId);
+                    onSelectTarget(apply.plantId, plant?.nickName ?? plant?.plantNumber ?? "", "PLANT");
+                  } else if (apply.farmZoneId) {
+                    const zone = farmZonesData.find(z => z.id === apply.farmZoneId);
+                    onSelectTarget(apply.farmZoneId, zone?.zoneName ?? "", "FARM_ZONE");
+                  } else if (apply.farmPlotId) {
+                    const plot = farmPlots.find(p => p.id === apply.farmPlotId);
+                    onSelectTarget(apply.farmPlotId, plot?.name ?? "", "FARM_PLOT");
+                  }
+                }}
+              >
+                <View className="flex-row items-center flex-1">
+                  <ClipboardList
+                    size={16}
+                    color={selectedApplyId === apply.id ? primaryColor : "#64748b"}
+                  />
+                  <Text
+                    className="ml-2 text-sm font-medium flex-1"
+                    numberOfLines={1}
+                    style={{
+                      color: selectedApplyId === apply.id ? primaryColor : "#334155",
+                    }}
+                  >
+                    {apply.treatmentPlanName}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
       {/* Target type selector */}
       <View className="mb-3">
         {renderTypeButton("FARM_PLOT", t("calendar.farmPlots"), MapPin)}

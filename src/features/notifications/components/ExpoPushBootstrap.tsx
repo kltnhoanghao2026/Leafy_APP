@@ -3,6 +3,7 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { useAuthContext } from "@/src/features/auth";
 import { pushApi } from "../api/push.api";
+import { useIsOffline } from "@/src/providers/NetworkProvider";
 import { useExpoPushContext } from "../context/ExpoPushContext";
 import {
   requestPushPermission,
@@ -25,12 +26,13 @@ export function ExpoPushBootstrap() {
   const { isAuthenticated, isRestoringAuth, user } = useAuthContext();
   const { startSync, markSynced, markSyncError, lastSyncedToken, lastSyncedUserId, syncStatus } =
     useExpoPushContext();
+  const isOffline = useIsOffline();
 
   const userId = user?.userId ?? null;
 
   const syncToken = useCallback(
     async (uid: string) => {
-      if (syncStatus === "syncing") return;
+      if (syncStatus === "syncing" || isOffline) return;
 
       startSync();
       try {
@@ -65,24 +67,24 @@ export function ExpoPushBootstrap() {
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Push sync failed";
         markSyncError(msg);
-        console.error("[ExpoPush] Sync error:", err);
+        console.warn("[ExpoPush] Sync error:", err);
       }
     },
-    [startSync, markSynced, markSyncError, lastSyncedToken, lastSyncedUserId, syncStatus],
+    [startSync, markSynced, markSyncError, lastSyncedToken, lastSyncedUserId, syncStatus, isOffline],
   );
 
   const attemptedUserIdRef = useRef<string | null>(null);
 
   // Trigger token sync once authenticated
   useEffect(() => {
-    if (isRestoringAuth || !isAuthenticated || !userId) return;
+    if (isRestoringAuth || !isAuthenticated || !userId || isOffline) return;
     
     // Prevent infinite loop if syncStatus changes cause syncToken to recreate
     if (attemptedUserIdRef.current === userId) return;
     attemptedUserIdRef.current = userId;
     
     void syncToken(userId);
-  }, [isAuthenticated, isRestoringAuth, userId, syncToken]);
+  }, [isAuthenticated, isRestoringAuth, userId, isOffline, syncToken]);
 
   // Forward tapped notifications (background → foreground) to the app
   useEffect(() => {

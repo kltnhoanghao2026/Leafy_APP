@@ -8,7 +8,17 @@ import { chatApi } from '@/src/features/chat/api/chatApi';
 import { useAuthContext } from '@/src/features/auth';
 import { useConversations } from '@/src/features/chat/hooks/useChatQueries';
 
-export default function ChatMembersScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeChatMembersScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <ChatMembersScreen />
+    </SafeAreaView>
+  );
+}
+
+function ChatMembersScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const qc = useQueryClient();

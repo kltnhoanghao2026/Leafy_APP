@@ -6,7 +6,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatApi } from '@/src/features/chat/api/chatApi';
 import { useConversations } from '@/src/features/chat/hooks/useChatQueries';
 
-export default function GroupSettingsScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeGroupSettingsScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <GroupSettingsScreen />
+    </SafeAreaView>
+  );
+}
+
+function GroupSettingsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const qc = useQueryClient();
 

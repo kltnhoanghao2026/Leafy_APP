@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { plantApi } from "../api/plant.api";
 import { plantKeys, withPlantPageDefaults } from "./keys";
-import type { PageParams } from "../components/plant.types";
+import type { PageParams, PlantFilterParams } from "../components/plant.types";
 
-export const usePlants = (params?: PageParams, enabled = true) => {
+export const usePlants = (params?: PageParams & PlantFilterParams, enabled = true) => {
   const resolvedParams = withPlantPageDefaults(params);
 
   return useQuery({
@@ -11,12 +11,13 @@ export const usePlants = (params?: PageParams, enabled = true) => {
     queryFn: () => plantApi.getPlants(resolvedParams),
     select: (response) => response.data.data,
     enabled,
+    placeholderData: keepPreviousData,
   });
 };
 
 export const usePlantsByFarmPlot = (
   farmPlotId: string,
-  params?: PageParams,
+  params?: PageParams & PlantFilterParams,
 ) => {
   const resolvedParams = withPlantPageDefaults(params);
 
@@ -25,6 +26,7 @@ export const usePlantsByFarmPlot = (
     queryFn: () => plantApi.getPlantsByFarmPlot(farmPlotId, resolvedParams),
     select: (response) => response.data.data,
     enabled: !!farmPlotId,
+    placeholderData: keepPreviousData,
   });
 };
 

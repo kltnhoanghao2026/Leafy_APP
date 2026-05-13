@@ -8,18 +8,28 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { Home, Plus, SlidersHorizontal } from "lucide-react-native";
+import { Check, CheckSquare, Home, Plus, SlidersHorizontal, Trash2, X, LayoutGrid, List } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { EmptyState } from "@/src/components/ui/EmptyState";
 import { SearchInput } from "@/src/components/ui/SearchInput";
 import { LoadingView } from "@/src/components/ui/LoadingView";
-import { usePaginatedList } from "@/src/hooks/usePaginatedList";
+import { Pagination } from "@/src/components/ui/Pagination";
 import { useFilteredList } from "@/src/hooks/useFilteredList";
-import { getSpeciesLabel, type PlantResponse } from "./plant.types";
-import { PlantCard } from "./PlantCard";
+import { useAuthContext } from "@/src/features/auth";
+import { useFarmPlotsByOwner } from "@/src/features/farm";
 import {
+  getSpeciesLabel,
+  PLANT_STATUS_VALUES,
+  type PlantResponse,
+  type PlantStatus,
+} from "./plant.types";
+import { PlantCard } from "./PlantCard";
+import { PlantFilterSheet } from "./PlantFilterSheet";
+import {
+  useBulkDeletePlantsMutation,
+  useBulkUpdatePlantStatusMutation,
   useDeletePlantMutation,
   usePlants,
   usePlantsByFarmPlot,
@@ -34,6 +44,7 @@ const PAGE_SIZE = 20;
 export function PlantScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { profileId } = useAuthContext();
 
   const params = useLocalSearchParams<{
     farmPlotId?: string | string[];
@@ -45,6 +56,11 @@ export function PlantScreen() {
 
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<PlantStatus | "">("");
+  const [isFilterSheetVisible, setIsFilterSheetVisible] = useState(false);
+  const [filters, setFilters] = useState<import("./plant.types").PlantFilterParams>({});
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
 
   const pageParams = useMemo(
     () => ({
@@ -52,8 +68,9 @@ export function PlantScreen() {
       size: PAGE_SIZE,
       sortBy: "createdAt",
       sortDir: "DESC" as const,
+      ...filters,
     }),
-    [page],
+    [page, filters],
   );
 
   const plantsQuery = usePlants(pageParams, !farmPlotId);
@@ -67,21 +84,94 @@ export function PlantScreen() {
     sortDir: "ASC",
   });
 
+  const { data: farmPlots } = useFarmPlotsByOwner(profileId ?? "");
+
   const deletePlant = useDeletePlantMutation();
+  const bulkUpdateStatus = useBulkUpdatePlantStatusMutation();
+  const bulkDeletePlants = useBulkDeletePlantsMutation();
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setBulkStatus("");
+  };
+
+  const handleSelectAll = () => {
+    if (filteredPlants.length === 0) return;
+    
+    // If all visible plants are already selected, deselect them
+    const allSelected = filteredPlants.every(p => selectedIds.has(p.id));
+    if (allSelected) {
+      clearSelection();
+    } else {
+      // Select all visible plants
+      setSelectedIds(new Set(filteredPlants.map((p) => p.id)));
+    }
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    if (!bulkStatus || selectedIds.size === 0) return;
+    try {
+      await bulkUpdateStatus.mutateAsync({
+        plantIds: Array.from(selectedIds),
+        newStatus: bulkStatus,
+      });
+      clearSelection();
+      setPage(0);
+      void activeQuery.refetch();
+    } catch {
+      Alert.alert(
+        t("plant.alerts.updateFailedTitle"),
+        t("plant.alerts.updateFailedMessage")
+      );
+    }
+  };
+
+  const handleBulkDelete = () => {
+    Alert.alert(
+      t("plant.list.bulkDeleteTitle", { defaultValue: "Xóa nhiều cây trồng" }),
+      t("plant.list.bulkDeleteMessage", {
+        count: selectedIds.size,
+        defaultValue: `Bạn có chắc muốn xóa ${selectedIds.size} cây trồng đã chọn?`,
+      }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("common.delete"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await bulkDeletePlants.mutateAsync({
+                plantIds: Array.from(selectedIds),
+              });
+              clearSelection();
+              setPage(0);
+              void activeQuery.refetch();
+            } catch {
+              Alert.alert(
+                t("plant.alerts.deleteFailedTitle"),
+                t("plant.alerts.deleteFailedMessage")
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
 
   useEffect(() => {
     setPage(0);
-    resetCache();
   }, [farmPlotId]);
 
-  const {
-    items: plantsCache,
-    setCache: setPlantsCache,
-    resetCache,
-  } = usePaginatedList({
-    data: activeQuery.data?.content,
-    page,
-  });
+  const plantsCache = activeQuery.data?.content ?? [];
 
   const plantSearchFields = useCallback(
     () => [
@@ -108,6 +198,11 @@ export function PlantScreen() {
         ]),
       ),
     [speciesPage?.content],
+  );
+
+  const farmPlotById = useMemo(
+    () => new Map((farmPlots ?? []).map((plot) => [plot.id, plot.name])),
+    [farmPlots]
   );
 
   const handleRefresh = () => {
@@ -159,10 +254,8 @@ export function PlantScreen() {
           onPress: async () => {
             try {
               await deletePlant.mutateAsync(plant.id);
-              setPlantsCache((previousPlants) =>
-                previousPlants.filter((item) => item.id !== plant.id),
-              );
               setPage(0);
+              void activeQuery.refetch();
             } catch {
               Alert.alert(
                 t("plant.alerts.deleteFailedTitle"),
@@ -175,23 +268,13 @@ export function PlantScreen() {
     );
   };
 
-  const handleLoadMore = () => {
-    if (activeQuery.isFetching || activeQuery.data?.last) return;
-    setPage((currentPage) => currentPage + 1);
-  };
 
-  const title = farmName
-    ? t("plant.list.titleByFarm", { name: farmName })
-    : t("plant.list.title");
-
-  const subtitle = farmName
-    ? t("plant.list.subtitleByFarm")
-    : t("plant.list.subtitle");
 
   return (
-    <ScrollView
-      className="flex-1 bg-slate-50 dark:bg-slate-950"
-      contentContainerClassName="flex-grow p-4 pb-24"
+    <View className="flex-1 bg-slate-50 dark:bg-slate-950">
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="flex-grow p-4 pb-24"
       showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl
@@ -202,28 +285,51 @@ export function PlantScreen() {
         />
       }
     >
-      <View className="mb-6 mt-2 px-1">
-        <Text className="text-[26px] font-bold text-slate-800 dark:text-slate-100">
-          {title}
-        </Text>
-        <Text className="mt-1 text-[15px] leading-6 text-slate-500 dark:text-slate-400">
-          {subtitle}
-        </Text>
-      </View>
 
-      <View className="mb-6 flex-row items-center gap-3">
+      <View className="mb-6 mt-2 flex-row items-center justify-between">
         <SearchInput
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholder={t("plant.list.searchPlaceholder")}
         />
-        <TouchableOpacity className="items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <SlidersHorizontal
-            size={20}
-            className="text-emerald-600 dark:text-emerald-500"
-          />
-        </TouchableOpacity>
+
+        <View className="flex-row items-center gap-2">
+          <TouchableOpacity
+            onPress={handleSelectAll}
+            className={`items-center justify-center rounded-xl border p-2 shadow-sm ${
+              filteredPlants.length > 0 && filteredPlants.every(p => selectedIds.has(p.id))
+                ? "border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/30"
+                : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+            }`}
+          >
+            <CheckSquare size={18} className="text-emerald-600 dark:text-emerald-500" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setViewMode((prev) => (prev === "list" ? "grid" : "list"))}
+            className="items-center justify-center rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+          >
+            {viewMode === "list" ? (
+              <LayoutGrid size={18} className="text-emerald-600 dark:text-emerald-500" />
+            ) : (
+              <List size={18} className="text-emerald-600 dark:text-emerald-500" />
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setIsFilterSheetVisible(true)}
+            className={`items-center justify-center rounded-xl border p-2 shadow-sm ${
+              Object.keys(filters).some((k) => k !== "status" && filters[k as keyof typeof filters])
+                ? "border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/30"
+                : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+            }`}
+          >
+            <SlidersHorizontal size={18} className="text-emerald-600 dark:text-emerald-500" />
+          </TouchableOpacity>
+        </View>
       </View>
+
+
 
       {activeQuery.isLoading && page === 0 ? <LoadingView /> : null}
 
@@ -257,52 +363,149 @@ export function PlantScreen() {
       ) : null}
 
       {!activeQuery.isError ? (
-        <View className="mt-2">
+        <View className={`mt-2 ${viewMode === "grid" ? "flex-row flex-wrap justify-between" : "flex-col gap-3"}`}>
           {filteredPlants.map((plant) => (
-            <PlantCard
-              key={plant.id}
-              plant={plant}
-              speciesName={speciesById.get(plant.speciesId)}
-              onEdit={handleOpenEdit}
-              onDelete={handleDeletePlant}
-            />
+            <View key={plant.id} className={viewMode === "grid" ? "w-[48%] mb-3" : "w-full"}>
+              <PlantCard
+                plant={plant}
+                speciesName={speciesById.get(plant.speciesId)}
+                farmPlotName={farmPlotById.get(plant.farmPlotId)}
+                onEdit={handleOpenEdit}
+                onDelete={handleDeletePlant}
+                selected={selectedIds.has(plant.id)}
+                onToggleSelect={toggleSelect}
+                selectionMode={selectedIds.size > 0}
+                viewMode={viewMode}
+              />
+            </View>
           ))}
         </View>
       ) : null}
 
-      {!activeQuery.isError && !activeQuery.data?.last ? (
-        <TouchableOpacity
-          className="mt-1 flex-row items-center justify-center rounded-xl border border-emerald-600 bg-white py-3 dark:border-emerald-500 dark:bg-slate-900"
-          onPress={handleLoadMore}
-          disabled={activeQuery.isFetching}
-        >
-          {activeQuery.isFetching ? (
-            <ActivityIndicator size="small" color="#10B981" />
-          ) : (
-            <Text className="text-sm font-bold text-emerald-600 dark:text-emerald-500">
-              {t("plant.list.loadMore")}
-            </Text>
-          )}
-        </TouchableOpacity>
-      ) : null}
-
-      <View className="pt-3">
-        <TouchableOpacity
-          className="mt-0 flex-row items-center justify-center rounded-xl border-2 border-dashed border-emerald-600 bg-white py-3.5 dark:border-emerald-500 dark:bg-slate-900"
-          onPress={handleOpenCreate}
-        >
-          <Plus
-            size={18}
-            className="text-emerald-600 dark:text-emerald-500"
-            strokeWidth={3}
-          />
-          <Text className="ml-2 text-sm font-bold text-emerald-600 dark:text-emerald-500">
-            {farmPlotId
-              ? t("plant.list.createPlantInFarm")
-              : t("plant.list.createPlant")}
-          </Text>
-        </TouchableOpacity>
-      </View>
     </ScrollView>
+
+    {activeQuery.isFetching && !activeQuery.isLoading && (
+      <View className="pointer-events-none absolute bottom-0 left-0 right-0 top-0 z-50 items-center justify-center bg-slate-900/10 dark:bg-black/20">
+        <View className="rounded-2xl bg-white p-4 shadow-xl dark:bg-slate-800">
+          <ActivityIndicator size="large" color="#10B981" />
+        </View>
+      </View>
+    )}
+
+    {/* Fixed Pagination Footer */}
+    {!activeQuery.isError && (activeQuery.data?.totalPages ?? 0) > 1 ? (
+      <View className="bg-white border-t border-slate-200 dark:bg-slate-950 dark:border-slate-800 pb-4">
+        <Pagination
+          page={page}
+          totalPages={activeQuery.data?.totalPages ?? 0}
+          totalElements={activeQuery.data?.totalElements}
+          onPageChange={setPage}
+          itemLabel={t("plant.list.itemLabel", { defaultValue: "cây" })}
+        />
+      </View>
+    ) : null}
+
+      {/* Floating Action Button */}
+      {selectedIds.size === 0 && (
+        <TouchableOpacity
+          onPress={handleOpenCreate}
+          className="absolute right-6 h-14 w-14 items-center justify-center rounded-full bg-emerald-600 shadow-lg dark:bg-emerald-500 shadow-emerald-600/30"
+          style={{ bottom: (activeQuery.data?.totalPages ?? 0) > 1 ? 96 : 24 }}
+        >
+          <Plus size={24} color="#fff" strokeWidth={2.5} />
+        </TouchableOpacity>
+      )}
+
+      {/* Bulk Action Toolbar */}
+      {selectedIds.size > 0 && (
+        <View 
+          className="absolute left-4 right-4 rounded-2xl bg-emerald-800 px-4 py-3 shadow-xl dark:bg-emerald-900"
+          style={{ bottom: (activeQuery.data?.totalPages ?? 0) > 1 ? 96 : 24 }}
+        >
+          <View className="flex-row items-center justify-between mb-3">
+            <View className="flex-row items-center gap-2">
+              <View className="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">
+                <Check size={14} color="#fff" strokeWidth={3} />
+              </View>
+              <Text className="text-sm font-bold text-white">
+                {selectedIds.size} {t("plant.list.selected", { defaultValue: "đã chọn" })}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={clearSelection}
+              className="rounded-full bg-white/10 p-1.5"
+            >
+              <X size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          <View className="flex-row items-center justify-between">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mr-3">
+              <View className="flex-row gap-2">
+                {PLANT_STATUS_VALUES.map((status) => (
+                  <TouchableOpacity
+                    key={status}
+                    onPress={() => setBulkStatus(bulkStatus === status ? "" : status)}
+                    className={`rounded-xl px-3 py-1.5 border border-white/20 ${
+                      bulkStatus === status ? "bg-white" : "bg-transparent"
+                    }`}
+                  >
+                    <Text
+                      className={`text-xs font-bold ${
+                        bulkStatus === status ? "text-emerald-800" : "text-white"
+                      }`}
+                    >
+                      {status}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+
+            <View className="flex-row items-center gap-2">
+              <TouchableOpacity
+                onPress={handleBulkStatusUpdate}
+                disabled={!bulkStatus || bulkUpdateStatus.isPending}
+                className={`rounded-xl px-3 py-2 ${
+                  !bulkStatus || bulkUpdateStatus.isPending
+                    ? "bg-white/30"
+                    : "bg-white"
+                }`}
+              >
+                {bulkUpdateStatus.isPending ? (
+                  <ActivityIndicator size="small" color="#065f46" />
+                ) : (
+                  <Text className="text-xs font-bold text-emerald-800">
+                    {t("common.apply", { defaultValue: "Áp dụng" })}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleBulkDelete}
+                disabled={bulkDeletePlants.isPending}
+                className="rounded-xl bg-red-500 p-2"
+              >
+                <Trash2 size={16} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+      <PlantFilterSheet
+        visible={isFilterSheetVisible}
+        initialFilters={filters}
+        profileId={profileId ?? undefined}
+        fixedFarmPlotId={farmPlotId ?? undefined}
+        onApply={(newFilters) => {
+          setFilters(newFilters);
+          setIsFilterSheetVisible(false);
+          setPage(0);
+          void activeQuery.refetch();
+        }}
+        onClose={() => setIsFilterSheetVisible(false)}
+      />
+    </View>
   );
 }

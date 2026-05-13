@@ -60,7 +60,8 @@
       ],
       "react-native-fast-tflite",
       "expo-dev-client",
-      "expo-video"
+      "expo-video",
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true

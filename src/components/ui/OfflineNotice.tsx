@@ -1,7 +1,7 @@
-import React from 'react';
-import { Text } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { WifiOff } from 'lucide-react-native';
+import { WifiOff, X } from 'lucide-react-native';
 import { useIsOffline } from '@/src/providers/NetworkProvider';
 import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
@@ -10,8 +10,19 @@ export function OfflineNotice() {
   const isOffline = useIsOffline();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const [isVisible, setIsVisible] = useState(true);
 
-  if (!isOffline) {
+  useEffect(() => {
+    if (isOffline) {
+      setIsVisible(true);
+      const timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOffline]);
+
+  if (!isOffline || !isVisible) {
     return null;
   }
 
@@ -32,7 +43,7 @@ export function OfflineNotice() {
         paddingHorizontal: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'space-between',
         zIndex: 9999,
         elevation: 9999,
         shadowColor: '#000',
@@ -41,10 +52,15 @@ export function OfflineNotice() {
         shadowRadius: 4,
       }}
     >
-      <WifiOff color="#FFFFFF" size={20} />
-      <Text style={{ marginLeft: 8, fontWeight: '600', color: '#FFFFFF' }}>
-        {t('network.offline', 'No Internet Connection. Leafy App is offline.')}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+        <WifiOff color="#FFFFFF" size={20} />
+        <Text style={{ marginLeft: 8, fontWeight: '600', color: '#FFFFFF' }}>
+          {t('network.offline', 'No Internet Connection. Leafy App is offline.')}
+        </Text>
+      </View>
+      <Pressable onPress={() => setIsVisible(false)} hitSlop={15}>
+        <X color="#FFFFFF" size={20} />
+      </Pressable>
     </MotiView>
   );
 }

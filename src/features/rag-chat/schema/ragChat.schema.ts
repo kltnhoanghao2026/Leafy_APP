@@ -15,17 +15,17 @@ export const ragDocumentSchema = z.object({
 
 export type RagDocument = z.infer<typeof ragDocumentSchema>;
 
-export const treatmentPlanSourceSchema = z.enum(["websearch", "documents"]);
+export const planSourceSchema = z.enum(["websearch", "documents"]);
 
-export const ragTreatmentPlanSchema = z.object({
+export const ragPlanSchema = z.object({
   diseaseName: z.string().optional(),
   severityLevel: z.string().optional(),
   urgency: z.string().optional(),
-  source: treatmentPlanSourceSchema.optional(),
+  source: planSourceSchema.optional(),
   plan: z.record(z.string(), z.any()).optional(), // Assuming unstructured plan for now
 });
 
-export type RagTreatmentPlan = z.infer<typeof ragTreatmentPlanSchema>;
+export type RagPlan = z.infer<typeof ragPlanSchema>;
 
 export const ragWebSearchResultSchema = z.object({
   url: z.string(),
@@ -39,7 +39,7 @@ export const ragChatResponseSchema = z.object({
   answer: z.string(),
   threadId: z.string(),
   documents: z.array(ragDocumentSchema).optional(),
-  treatmentPlan: z.any().optional(), // Flexible for now
+  plan: z.any().optional(), // Flexible for now
   plantId: z.string().optional(),
   webSearchResults: z.array(ragWebSearchResultSchema).optional(),
   savedPlanId: z.string().optional(),

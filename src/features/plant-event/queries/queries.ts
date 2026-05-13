@@ -5,6 +5,7 @@ import type {
   CalendarParams,
   PageParams,
 } from "../components/plant-event.types";
+
 export const usePlantEventsByPlant = (plantId: string, params?: PageParams) => {
   const resolvedParams = withPlantEventPageDefaults(params);
 
@@ -74,15 +75,42 @@ export const usePlantEventsByFarmZone = (
   });
 };
 
+export const usePlantEventsByPlan = (
+  sourcePlanId: string,
+  params?: PageParams,
+) => {
+  const resolvedParams = withPlantEventPageDefaults(params);
+
+  return useQuery({
+    queryKey: plantEventKeys.listByPlan(sourcePlanId, resolvedParams),
+    queryFn: () =>
+      plantEventApi.getEventsByPlan(sourcePlanId, resolvedParams),
+    select: (response) => response.data.data,
+    enabled: !!sourcePlanId,
+  });
+};
+
+export const usePlantEventsByPlanApply = (
+  planApplyId: string,
+  params?: PageParams,
+) => {
+  const resolvedParams = withPlantEventPageDefaults(params);
+
+  return useQuery({
+    queryKey: plantEventKeys.listByPlanApply(planApplyId, resolvedParams),
+    queryFn: () =>
+      plantEventApi.getEventsByPlanApply(planApplyId, resolvedParams),
+    select: (response) => response.data.data,
+    enabled: !!planApplyId,
+  });
+};
+
 export const usePlantEventsCalendar = (params: CalendarParams) =>
   useQuery({
     queryKey: plantEventKeys.calendar(params),
     queryFn: () => plantEventApi.getEventsForCalendar(params),
     select: (response) => response.data.data,
-    enabled:
-      !!(params.farmPlotId || params.farmZoneId || params.plantId) &&
-      !!params.startDate &&
-      !!params.endDate,
+    enabled: Boolean(params.startDate && params.endDate),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });

@@ -1,4 +1,4 @@
-import type { PageParams } from "../components/plant.types";
+import type { PageParams, PlantFilterParams } from "../components/plant.types";
 
 type RequiredPageParams = Required<PageParams>;
 
@@ -9,9 +9,10 @@ const DEFAULT_PAGE_PARAMS: RequiredPageParams = {
   sortDir: "DESC",
 };
 
-export const withPlantPageDefaults = (
-  params?: PageParams,
-): RequiredPageParams => ({
+export const withPlantPageDefaults = <T extends PageParams>(
+  params?: T,
+): T & RequiredPageParams => ({
+  ...(params as any),
   page: params?.page ?? DEFAULT_PAGE_PARAMS.page,
   size: params?.size ?? DEFAULT_PAGE_PARAMS.size,
   sortBy: params?.sortBy ?? DEFAULT_PAGE_PARAMS.sortBy,
@@ -22,9 +23,9 @@ export const plantKeys = {
   all: () => ["plants"] as const,
 
   lists: () => [...plantKeys.all(), "list"] as const,
-  list: (params?: PageParams) =>
+  list: (params?: PageParams & PlantFilterParams) =>
     [...plantKeys.lists(), withPlantPageDefaults(params)] as const,
-  listByFarmPlot: (farmPlotId: string, params?: PageParams) =>
+  listByFarmPlot: (farmPlotId: string, params?: PageParams & PlantFilterParams) =>
     [
       ...plantKeys.lists(),
       "farm-plot",

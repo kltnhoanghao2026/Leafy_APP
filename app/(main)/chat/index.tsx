@@ -9,7 +9,17 @@ import { useAuthContext } from '../../../src/features/auth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { chatApi } from '../../../src/features/chat/api/chatApi';
 
-export default function ChatListScreen() {
+import { SafeAreaView } from "react-native-safe-area-context";
+
+export default function SafeChatListScreen() {
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+      <ChatListScreen />
+    </SafeAreaView>
+  );
+}
+
+function ChatListScreen() {
   const qc = useQueryClient();
   const { data: conversations = [], isLoading, refetch, isRefetching } = useConversations();
   const { user } = useAuthContext();

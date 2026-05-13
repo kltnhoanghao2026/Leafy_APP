@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+// trigger reload
 import en from "./locales/en.json";
 import vi from "./locales/vi.json";
 import {
