@@ -1,8 +1,10 @@
+import i18n from "@/src/i18n";
+
 export const SENSOR_LABELS: Record<string, string> = {
-  AIR_TEMP: "Nhiệt độ không khí",
-  AIR_HUMIDITY: "Độ ẩm không khí",
-  SOIL_MOISTURE: "Độ ẩm đất",
-  LIGHT_INTENSITY: "Cường độ ánh sáng",
+  AIR_TEMP: "iot.metrics.sensors.AIR_TEMP",
+  AIR_HUMIDITY: "iot.metrics.sensors.AIR_HUMIDITY",
+  SOIL_MOISTURE: "iot.metrics.sensors.SOIL_MOISTURE",
+  LIGHT_INTENSITY: "iot.metrics.sensors.LIGHT_INTENSITY",
 };
 
 export const SENSOR_UNIT_FALLBACKS: Record<string, string> = {
@@ -17,10 +19,11 @@ export const getSensorLabel = (
   sensorName?: string | null,
 ): string => {
   if (!sensorCode) {
-    return sensorName || "Cảm biến";
+    return sensorName || i18n.t("iot.metrics.sensors.generic", { defaultValue: "Sensor" });
   }
 
-  return SENSOR_LABELS[sensorCode] || sensorName || sensorCode;
+  const key = SENSOR_LABELS[sensorCode];
+  return key ? i18n.t(key) : sensorName || sensorCode;
 };
 
 export const getSensorUnit = (

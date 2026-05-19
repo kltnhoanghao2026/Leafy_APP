@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { AlertEventCard } from "../components/AlertEventCard";
 import {
@@ -29,6 +30,7 @@ const getParamValue = (value?: string | string[]): string | undefined => {
 };
 
 export function AlertEventsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{
     status?: string | string[];
@@ -80,9 +82,9 @@ export function AlertEventsScreen() {
       ListEmptyComponent={
         alertsQuery.isLoading ? null : (
           <View style={styles.emptyBox}>
-            <Text style={styles.emptyTitle}>Khong co canh bao nao</Text>
+            <Text style={styles.emptyTitle}>{t("iot.alerts.emptyTitle")}</Text>
             <Text style={styles.emptyText}>
-              Thu thay doi bo loc hoac kiem tra lai sau khi thiet bi gui telemetry.
+              {t("iot.alerts.emptyDescription")}
             </Text>
           </View>
         )
@@ -91,13 +93,13 @@ export function AlertEventsScreen() {
         <View style={styles.headerWrap}>
           <Pressable style={styles.backButton} onPress={() => router.back()}>
             <ArrowLeft color="#0f172a" size={20} />
-            <Text style={styles.backText}>IoT</Text>
+            <Text style={styles.backText}>{t("iot.devices.list.kicker")}</Text>
           </Pressable>
           <View style={styles.header}>
-            <Text style={styles.kicker}>IoT alerts</Text>
-            <Text style={styles.title}>Canh bao IoT</Text>
+            <Text style={styles.kicker}>{t("iot.alerts.kicker")}</Text>
+            <Text style={styles.title}>{t("iot.alerts.title")}</Text>
             <Text style={styles.subtitle}>
-              Theo doi canh bao theo muc do, trang thai, thiet bi va khu vuc.
+              {t("iot.alerts.description")}
             </Text>
           </View>
           <AlertFilters
@@ -117,15 +119,15 @@ export function AlertEventsScreen() {
           {alertsQuery.isLoading ? (
             <View style={styles.loadingBox}>
               <ActivityIndicator color="#15803d" />
-              <Text style={styles.hint}>Dang tai danh sach canh bao...</Text>
+              <Text style={styles.hint}>{t("iot.alerts.loading")}</Text>
             </View>
           ) : null}
           {alertsQuery.isError ? (
             <View style={styles.errorBox}>
-              <Text style={styles.errorText}>Khong tai duoc danh sach canh bao.</Text>
+              <Text style={styles.errorText}>{t("iot.alerts.loadFailed")}</Text>
               <Pressable style={styles.retryButton} onPress={() => alertsQuery.refetch()}>
                 <RefreshCw color="#ffffff" size={16} />
-                <Text style={styles.retryText}>Thu lai</Text>
+                <Text style={styles.retryText}>{t("iot.common.retry")}</Text>
               </Pressable>
             </View>
           ) : null}

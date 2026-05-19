@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { DeviceReadingList } from "../components/DeviceReadingList";
 import { RangeSelector } from "../components/RangeSelector";
@@ -29,6 +30,7 @@ const getParamValue = (value?: string | string[]): string | undefined => {
 };
 
 export function ZoneMetricsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{
     zoneId?: string | string[];
@@ -57,10 +59,10 @@ export function ZoneMetricsScreen() {
   if (!zoneId) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorTitle}>Thiếu mã khu vực</Text>
-        <Text style={styles.errorText}>Không thể mở số liệu nếu route thiếu zoneId.</Text>
+        <Text style={styles.errorTitle}>{t("iot.metrics.zone.missingZoneId")}</Text>
+        <Text style={styles.errorText}>{t("iot.metrics.zone.missingZoneIdDescription")}</Text>
         <Pressable style={styles.retryButton} onPress={() => router.back()}>
-          <Text style={styles.retryText}>Quay lại</Text>
+          <Text style={styles.retryText}>{t("iot.common.back")}</Text>
         </Pressable>
       </View>
     );
@@ -80,23 +82,23 @@ export function ZoneMetricsScreen() {
     >
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>Tổng quan IoT</Text>
+        <Text style={styles.backText}>{t("iot.metrics.dashboard.title")}</Text>
       </Pressable>
 
       <View style={styles.header}>
-        <Text style={styles.kicker}>Zone metrics</Text>
-        <Text style={styles.title}>Số liệu khu vực</Text>
+        <Text style={styles.kicker}>{t("iot.metrics.zone.kicker")}</Text>
+        <Text style={styles.title}>{t("iot.metrics.zone.title")}</Text>
         <Text style={styles.subtitle}>{zoneName || zoneId}</Text>
       </View>
 
       {overviewQuery.isLoading ? (
         <View style={styles.loadingBox}>
           <ActivityIndicator color="#15803d" />
-          <Text style={styles.hint}>Đang tải tổng quan khu vực...</Text>
+          <Text style={styles.hint}>{t("iot.metrics.zone.loadingOverview")}</Text>
         </View>
       ) : overviewQuery.isError ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>Không tải được tổng quan khu vực.</Text>
+          <Text style={styles.errorText}>{t("iot.metrics.zone.overviewLoadFailed")}</Text>
         </View>
       ) : (
         <ZoneOverviewCard overview={overviewQuery.data} />
@@ -111,25 +113,27 @@ export function ZoneMetricsScreen() {
           })
         }
       >
-        <Text style={styles.alertShortcutTitle}>Xem cảnh báo khu vực</Text>
+        <Text style={styles.alertShortcutTitle}>{t("iot.metrics.zone.viewZoneAlerts")}</Text>
         <Text style={styles.alertShortcutMeta}>
-          {overviewQuery.data?.openAlertCount ??
-            overviewQuery.data?.openAlerts ??
-            overviewQuery.data?.alertSummary?.totalOpen ??
-            0}{" "}
-          cảnh báo mở
+          {t("iot.metrics.zone.openAlertsCount", {
+            count:
+              overviewQuery.data?.openAlertCount ??
+              overviewQuery.data?.openAlerts ??
+              overviewQuery.data?.alertSummary?.totalOpen ??
+              0,
+          })}
         </Text>
       </Pressable>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dữ liệu mới nhất</Text>
+        <Text style={styles.sectionTitle}>{t("iot.metrics.zone.latestReadings")}</Text>
         <DeviceReadingList readings={readings} />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Biểu đồ khu vực</Text>
+        <Text style={styles.sectionTitle}>{t("iot.metrics.zone.chartTitle")}</Text>
         <View style={styles.selectorBlock}>
-          <Text style={styles.selectorLabel}>Chỉ số</Text>
+          <Text style={styles.selectorLabel}>{t("iot.metrics.zone.sensor")}</Text>
           <SensorSelector
             onChange={setSelectedSensor}
             readings={readings}
@@ -137,7 +141,7 @@ export function ZoneMetricsScreen() {
           />
         </View>
         <View style={styles.selectorBlock}>
-          <Text style={styles.selectorLabel}>Khoảng thời gian</Text>
+          <Text style={styles.selectorLabel}>{t("iot.metrics.zone.range")}</Text>
           <RangeSelector onChange={setSelectedRange} value={selectedRange} />
         </View>
         <SensorChartCard

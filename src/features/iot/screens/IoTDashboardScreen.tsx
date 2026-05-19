@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { useFarmPlots, useFarmZones } from "@/src/features/farm";
 import type { FarmPlotResponse, FarmZoneResponse } from "@/src/features/farm";
@@ -20,6 +21,7 @@ import { DashboardOverviewCard } from "../components/DashboardOverviewCard";
 import { useDashboardOverview } from "../hooks/useIotDashboard";
 
 export function IoTDashboardScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const profileQuery = useQuery(getMyProfileQueryOptions());
   const plotsQuery = useFarmPlots(profileQuery.data?.id);
@@ -57,27 +59,27 @@ export function IoTDashboardScreen() {
     >
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>Thiết bị IoT</Text>
+        <Text style={styles.backText}>{t("iot.devices.list.title")}</Text>
       </Pressable>
 
       <View style={styles.header}>
-        <Text style={styles.kicker}>IoT dashboard</Text>
-        <Text style={styles.title}>Tổng quan IoT</Text>
+        <Text style={styles.kicker}>{t("iot.metrics.dashboard.kicker")}</Text>
+        <Text style={styles.title}>{t("iot.metrics.dashboard.title")}</Text>
         <Text style={styles.subtitle}>
-          Theo dõi số lượng thiết bị, trạng thái online và khu vực trong vườn.
+          {t("iot.metrics.dashboard.description")}
         </Text>
       </View>
 
       <View style={styles.card}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.cardTitle}>Chọn vườn</Text>
+          <Text style={styles.cardTitle}>{t("iot.metrics.dashboard.selectFarm")}</Text>
           {plotsQuery.isFetching ? <ActivityIndicator color="#15803d" /> : null}
         </View>
         {profileQuery.isError || plotsQuery.isError ? (
-          <ErrorText text="Không tải được danh sách vườn. Kéo xuống để thử lại." />
+          <ErrorText text={t("iot.metrics.dashboard.farmsLoadFailed")} />
         ) : null}
         {!plotsQuery.isLoading && !plotsQuery.data?.length ? (
-          <Text style={styles.hint}>Bạn chưa có vườn nào để xem tổng quan IoT.</Text>
+          <Text style={styles.hint}>{t("iot.metrics.dashboard.noFarms")}</Text>
         ) : null}
         <View style={styles.optionWrap}>
           {plotsQuery.data?.map((plot) => (
@@ -92,13 +94,13 @@ export function IoTDashboardScreen() {
       </View>
 
       {overviewQuery.isLoading ? (
-        <LoadingBox text="Đang tải tổng quan IoT..." />
+        <LoadingBox text={t("iot.metrics.dashboard.loadingOverview")} />
       ) : overviewQuery.isError ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>Không tải được tổng quan IoT.</Text>
+          <Text style={styles.errorText}>{t("iot.metrics.dashboard.overviewLoadFailed")}</Text>
           <Pressable style={styles.retryButton} onPress={() => overviewQuery.refetch()}>
             <RefreshCw color="#ffffff" size={16} />
-            <Text style={styles.retryText}>Thử lại</Text>
+            <Text style={styles.retryText}>{t("iot.common.retry")}</Text>
           </Pressable>
         </View>
       ) : selectedPlotId ? (
@@ -115,25 +117,27 @@ export function IoTDashboardScreen() {
         }
       >
         <View style={styles.alertShortcutText}>
-          <Text style={styles.alertShortcutTitle}>Cảnh báo mở</Text>
+          <Text style={styles.alertShortcutTitle}>{t("iot.metrics.dashboard.openAlerts")}</Text>
           <Text style={styles.alertShortcutMeta}>
-            {overviewQuery.data?.openAlerts ?? 0} cảnh báo cần xử lý
+            {t("iot.metrics.dashboard.openAlertsCount", {
+              count: overviewQuery.data?.openAlerts ?? 0,
+            })}
           </Text>
         </View>
         <ChevronRight color="#be123c" size={20} />
       </Pressable>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Khu vực trong vườn</Text>
+        <Text style={styles.cardTitle}>{t("iot.metrics.dashboard.farmZones")}</Text>
         {selectedPlot ? (
-          <Text style={styles.hint}>Vườn: {selectedPlot.name}</Text>
+          <Text style={styles.hint}>{t("iot.metrics.dashboard.selectedFarm", { farm: selectedPlot.name })}</Text>
         ) : null}
-        {zonesQuery.isLoading ? <LoadingBox text="Đang tải khu vực..." /> : null}
+        {zonesQuery.isLoading ? <LoadingBox text={t("iot.metrics.dashboard.loadingZones")} /> : null}
         {zonesQuery.isError ? (
-          <ErrorText text="Không tải được danh sách khu vực." />
+          <ErrorText text={t("iot.metrics.dashboard.zonesLoadFailed")} />
         ) : null}
         {selectedPlotId && !zonesQuery.isLoading && !zonesQuery.data?.length ? (
-          <Text style={styles.hint}>Vườn này chưa có khu vực.</Text>
+          <Text style={styles.hint}>{t("iot.metrics.dashboard.noZones")}</Text>
         ) : null}
         <View style={styles.zoneList}>
           {zonesQuery.data?.map((zone) => (

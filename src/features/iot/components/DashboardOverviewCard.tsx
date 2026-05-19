@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import type { DashboardOverviewResponse } from "../types";
 import { MetricSummaryCard } from "./MetricSummaryCard";
@@ -8,24 +9,33 @@ type DashboardOverviewCardProps = {
 };
 
 export function DashboardOverviewCard({ overview }: DashboardOverviewCardProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Tổng quan vườn</Text>
+      <Text style={styles.title}>{t("iot.metrics.dashboard.farmOverview")}</Text>
       <View style={styles.grid}>
-        <MetricSummaryCard label="Tổng thiết bị" value={overview?.totalDevices ?? 0} />
         <MetricSummaryCard
-          label="Online"
+          label={t("iot.metrics.dashboard.totalDevices")}
+          value={overview?.totalDevices ?? 0}
+        />
+        <MetricSummaryCard
+          label={t("iot.metrics.dashboard.online")}
           tone="green"
           value={overview?.onlineDevices ?? 0}
         />
         <MetricSummaryCard
-          label="Offline"
+          label={t("iot.metrics.dashboard.offline")}
           tone="amber"
           value={overview?.offlineDevices ?? 0}
         />
-        <MetricSummaryCard label="Khu vực" tone="blue" value={overview?.totalZones ?? 0} />
         <MetricSummaryCard
-          label="Cảnh báo mở"
+          label={t("iot.metrics.dashboard.zones")}
+          tone="blue"
+          value={overview?.totalZones ?? 0}
+        />
+        <MetricSummaryCard
+          label={t("iot.metrics.dashboard.openAlerts")}
           tone="red"
           value={overview?.openAlerts ?? 0}
         />

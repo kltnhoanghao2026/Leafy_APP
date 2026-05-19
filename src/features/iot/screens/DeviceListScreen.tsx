@@ -9,13 +9,14 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { DeviceCard } from "../components/DeviceCard";
 import { DeviceEmptyState } from "../components/DeviceEmptyState";
 import { useMyDevices } from "../hooks/useDevices";
 import type { DeviceResponse } from "../types";
 
-const getFriendlyError = (error: unknown): string => {
+const getFriendlyError = (error: unknown, t: ReturnType<typeof useTranslation>["t"]): string => {
   const status =
     typeof error === "object" &&
     error !== null &&
@@ -27,21 +28,22 @@ const getFriendlyError = (error: unknown): string => {
       : undefined;
 
   if (status === 401) {
-    return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+    return t("iot.devices.list.errorAuth");
   }
 
   if (status === 403) {
-    return "Bạn không có quyền xem danh sách thiết bị.";
+    return t("iot.devices.list.errorForbidden");
   }
 
   if (status === 404) {
-    return "Không tìm thấy dữ liệu thiết bị.";
+    return t("iot.devices.list.errorNotFound");
   }
 
-  return "Không kết nối được máy chủ. Vui lòng thử lại.";
+  return t("iot.devices.list.errorNetwork");
 };
 
 export function DeviceListScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const devicesQuery = useMyDevices({
     page: 0,
@@ -63,7 +65,7 @@ export function DeviceListScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color="#15803d" size="large" />
-        <Text style={styles.loadingText}>Đang tải thiết bị...</Text>
+        <Text style={styles.loadingText}>{t("iot.devices.list.loading")}</Text>
       </View>
     );
   }
@@ -72,16 +74,16 @@ export function DeviceListScreen() {
     return (
       <View style={styles.screen}>
         <View style={styles.header}>
-          <Text style={styles.title}>Thiết bị IoT</Text>
+          <Text style={styles.title}>{t("iot.devices.list.title")}</Text>
           <Text style={styles.subtitle}>
-            Theo dõi trạng thái và dữ liệu cảm biến trong vườn.
+            {t("iot.devices.list.errorSubtitle")}
           </Text>
         </View>
         <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>Không tải được danh sách</Text>
-          <Text style={styles.errorText}>{getFriendlyError(devicesQuery.error)}</Text>
+          <Text style={styles.errorTitle}>{t("iot.devices.list.loadFailed")}</Text>
+          <Text style={styles.errorText}>{getFriendlyError(devicesQuery.error, t)}</Text>
           <Pressable style={styles.retryButton} onPress={() => devicesQuery.refetch()}>
-            <Text style={styles.retryButtonText}>Thử lại</Text>
+            <Text style={styles.retryButtonText}>{t("iot.common.retry")}</Text>
           </Pressable>
         </View>
       </View>
@@ -98,10 +100,10 @@ export function DeviceListScreen() {
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={styles.headerText}>
-              <Text style={styles.kicker}>Leafy IoT</Text>
-              <Text style={styles.title}>Thiết bị IoT</Text>
+              <Text style={styles.kicker}>{t("iot.devices.list.kicker")}</Text>
+              <Text style={styles.title}>{t("iot.devices.list.title")}</Text>
               <Text style={styles.subtitle}>
-                Theo dõi trạng thái online, vị trí gắn và dữ liệu cảm biến mới nhất.
+                {t("iot.devices.list.description")}
               </Text>
             </View>
             <Pressable
@@ -109,7 +111,7 @@ export function DeviceListScreen() {
               onPress={() => router.push("/iot/onboarding")}
             >
               <Plus color="#ffffff" size={18} />
-              <Text style={styles.addButtonText}>Thêm</Text>
+              <Text style={styles.addButtonText}>{t("iot.common.add")}</Text>
             </Pressable>
           </View>
           <Pressable
@@ -117,7 +119,7 @@ export function DeviceListScreen() {
             onPress={() => router.push("/iot/dashboard")}
           >
             <BarChart3 color="#166534" size={18} />
-            <Text style={styles.dashboardButtonText}>Xem tổng quan IoT</Text>
+            <Text style={styles.dashboardButtonText}>{t("iot.devices.list.viewDashboard")}</Text>
           </Pressable>
         </View>
       }
