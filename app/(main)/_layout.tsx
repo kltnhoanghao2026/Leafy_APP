@@ -35,6 +35,8 @@ import {
   notificationKeys,
 } from '@/src/features/notifications';
 import type { UserNotificationResponse } from '@/src/features/notifications';
+import { useAlertEvents } from '@/src/features/iot/hooks/useAlerts';
+import { getIotAlertRoute, isIotAlertNotification } from '@/src/features/iot/utils/alertNotification';
 
 // ── Notification deep-link map ────────────────────────────────────────────────
 
@@ -52,6 +54,11 @@ const NOTIFICATION_ROUTES: Record<
   PLAN_APPLIED: () => null,
   SYSTEM: () => null,
   DIRECT_MESSAGE: (id) => `/(main)/chat/${id}`,
+  IOT_ALERT: (id) => `/(main)/iot/alerts/${id}`,
+  IOT_ALERT_EVENT: (id) => `/(main)/iot/alerts/${id}`,
+  ALERT_EVENT: (id) => `/(main)/iot/alerts/${id}`,
+  ALERT_TRIGGERED: (id) => `/(main)/iot/alerts/${id}`,
+  DEVICE_ALERT: (id) => `/(main)/iot/alerts/${id}`,
 };
 
 const DRAWER_WIDTH = 280;
@@ -93,6 +100,13 @@ export default function MainLayout() {
   const colorScheme = useColorScheme();
   const queryClient = useQueryClient();
   const markReadMutation = useMarkNotificationReadMutation();
+  const openAlertsQuery = useAlertEvents({
+    page: 0,
+    size: 1,
+    status: "OPEN",
+    sortBy: "openedAt",
+    sortDir: "desc",
+  });
 
   const { data: historyData, isLoading: historyLoading } = useNotificationHistory(false, true);
   const recentNotifications = historyData?.pages?.[0]?.data?.slice(0, 5) ?? [];
@@ -117,6 +131,18 @@ export default function MainLayout() {
         },
       });
     }
+    if (isIotAlertNotification({
+      referenceId: notification.referenceId ?? undefined,
+      type: notification.type,
+    })) {
+      const path = getIotAlertRoute({
+        referenceId: notification.referenceId ?? undefined,
+        type: notification.type,
+      });
+      if (path) router.push(path as never);
+      return;
+    }
+
     if (notification.referenceId && notification.type) {
       const routeFn = NOTIFICATION_ROUTES[notification.type];
       if (routeFn) {
@@ -247,6 +273,11 @@ export default function MainLayout() {
     animation: 'shift' as const,
     transitionSpec: { animation: 'timing' as const, config: { duration: 220 } },
   };
+  const openAlertCount =
+    openAlertsQuery.data?.totalItems ??
+    openAlertsQuery.data?.totalElements ??
+    openAlertsQuery.data?.items?.length ??
+    0;
 
   return (
     <Drawer
@@ -285,6 +316,7 @@ export default function MainLayout() {
               title: 'IoT',
               headerTitle: 'IoT Dashboard',
               tabBarIcon: ({ color }) => <RadioTower color={color} size={24} />,
+              tabBarBadge: openAlertCount > 0 ? (openAlertCount > 99 ? "99+" : openAlertCount) : undefined,
             }}
           />
           <Tabs.Screen

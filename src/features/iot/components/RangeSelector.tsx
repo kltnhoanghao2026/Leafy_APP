@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import type { ChartRange } from "../types";
 import { CHART_RANGES } from "../utils/chartFormat";
@@ -8,7 +9,17 @@ type RangeSelectorProps = {
   onChange: (range: ChartRange) => void;
 };
 
+const rangeLabelKeys: Record<ChartRange, string> = {
+  H24: "iot.metrics.ranges.H24",
+  D3: "iot.metrics.ranges.D3",
+  D7: "iot.metrics.ranges.D7",
+  D30: "iot.metrics.ranges.D30",
+  D90: "iot.metrics.ranges.D90",
+};
+
 export function RangeSelector({ value, onChange }: RangeSelectorProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.wrap}>
       {CHART_RANGES.map((range) => (
@@ -18,7 +29,7 @@ export function RangeSelector({ value, onChange }: RangeSelectorProps) {
           style={[styles.chip, value === range.value && styles.chipActive]}
         >
           <Text style={[styles.label, value === range.value && styles.labelActive]}>
-            {range.label}
+            {t(rangeLabelKeys[range.value])}
           </Text>
         </Pressable>
       ))}

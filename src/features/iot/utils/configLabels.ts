@@ -1,20 +1,37 @@
 import type { DeviceConfigPushStatus } from "../types";
 import { formatDateTime } from "./deviceLabels";
 
+export const getConfigPushStatusKey = (
+  status?: DeviceConfigPushStatus | null,
+): string => {
+  switch (status) {
+    case "PENDING":
+      return "iot.config.status.PENDING";
+    case "SENT":
+      return "iot.config.status.SENT";
+    case "ACKED":
+      return "iot.config.status.ACKED";
+    case "FAILED":
+      return "iot.config.status.FAILED";
+    default:
+      return "iot.config.status.NOT_SENT";
+  }
+};
+
 export const getConfigPushStatusLabel = (
   status?: DeviceConfigPushStatus | null,
 ): string => {
   switch (status) {
     case "PENDING":
-      return "Dang cho";
+      return "Pending";
     case "SENT":
-      return "Da gui";
+      return "Sent";
     case "ACKED":
-      return "Thiet bi da xac nhan";
+      return "Acknowledged";
     case "FAILED":
-      return "Thiet bi bao loi";
+      return "Failed";
     default:
-      return "Chua gui";
+      return "Not sent";
   }
 };
 

@@ -69,6 +69,16 @@ export const uploadFile = async (
 // ─── Convenience wrappers (kept for backward compatibility) ───────────────────
 
 export const fileApi = {
+  /** Resolve an existing file-service ID into a short-lived image URL. */
+  getPresignedUrl: async (fileId: string): Promise<string> => {
+    const response = await apiClient.get<ApiResponse<string>>(
+      API_ENDPOINTS.FILES.PRESIGNED_URL(fileId),
+      { params: { expirationMinutes: MAX_PRESIGNED_EXPIRATION_MINUTES } },
+    );
+
+    return response.data.data;
+  },
+
   /** Upload an avatar; returns only the pre-signed URL. */
   uploadAvatar: async (asset: ImagePickerAsset): Promise<string> => {
     const { url } = await uploadFile(asset);

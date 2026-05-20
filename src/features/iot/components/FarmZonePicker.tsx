@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
 import { useFarmPlots, useFarmZones } from "@/src/features/farm";
@@ -18,6 +19,7 @@ type FarmZonePickerProps = {
 };
 
 export function FarmZonePicker({ value, onChange }: FarmZonePickerProps) {
+  const { t } = useTranslation();
   const profileQuery = useQuery(getMyProfileQueryOptions());
   const plotsQuery = useFarmPlots(profileQuery.data?.id);
   const zonesQuery = useFarmZones(value.farmPlotId);
@@ -41,18 +43,18 @@ export function FarmZonePicker({ value, onChange }: FarmZonePickerProps) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Chọn vị trí lắp đặt</Text>
+      <Text style={styles.title}>{t("iot.devices.onboarding.locationTitle")}</Text>
 
       <View style={styles.section}>
-        <Text style={styles.label}>Chọn vườn</Text>
+        <Text style={styles.label}>{t("iot.devices.onboarding.selectFarm")}</Text>
         {profileQuery.isLoading || plotsQuery.isLoading ? (
-          <Text style={styles.hint}>Đang tải danh sách vườn...</Text>
+          <Text style={styles.hint}>{t("iot.devices.onboarding.loadingFarms")}</Text>
         ) : null}
         {profileQuery.isError || plotsQuery.isError ? (
-          <Text style={styles.error}>Không tải được danh sách vườn.</Text>
+          <Text style={styles.error}>{t("iot.devices.onboarding.farmsLoadFailed")}</Text>
         ) : null}
         {!plotsQuery.isLoading && !plotsQuery.data?.length ? (
-          <Text style={styles.hint}>Bạn chưa có vườn nào.</Text>
+          <Text style={styles.hint}>{t("iot.devices.onboarding.noFarms")}</Text>
         ) : null}
         <View style={styles.optionWrap}>
           {plotsQuery.data?.map((plot) => (
@@ -68,18 +70,18 @@ export function FarmZonePicker({ value, onChange }: FarmZonePickerProps) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>Chọn khu vực</Text>
+        <Text style={styles.label}>{t("iot.devices.onboarding.selectZone")}</Text>
         {!value.farmPlotId ? (
-          <Text style={styles.hint}>Chọn vườn trước để xem khu vực.</Text>
+          <Text style={styles.hint}>{t("iot.devices.onboarding.selectFarmFirst")}</Text>
         ) : null}
         {value.farmPlotId && zonesQuery.isLoading ? (
-          <Text style={styles.hint}>Đang tải danh sách khu vực...</Text>
+          <Text style={styles.hint}>{t("iot.devices.onboarding.loadingZones")}</Text>
         ) : null}
         {value.farmPlotId && zonesQuery.isError ? (
-          <Text style={styles.error}>Không tải được danh sách khu vực.</Text>
+          <Text style={styles.error}>{t("iot.devices.onboarding.zonesLoadFailed")}</Text>
         ) : null}
         {value.farmPlotId && !zonesQuery.isLoading && !zonesQuery.data?.length ? (
-          <Text style={styles.hint}>Vườn này chưa có khu vực.</Text>
+          <Text style={styles.hint}>{t("iot.devices.onboarding.noZones")}</Text>
         ) : null}
         <View style={styles.optionWrap}>
           {zonesQuery.data?.map((zone) => (

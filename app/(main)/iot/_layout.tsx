@@ -46,6 +46,13 @@ export default function IotLayout() {
         }}
       />
       <Stack.Screen
+        name="camera-schedules"
+        options={{
+          headerShown: false,
+          title: "Lịch camera",
+        }}
+      />
+      <Stack.Screen
         name="zones/[zoneId]"
         options={{
           headerShown: false,
@@ -57,6 +64,13 @@ export default function IotLayout() {
         options={{
           headerShown: false,
           title: "Cảnh báo IoT",
+        }}
+      />
+      <Stack.Screen
+        name="alerts/rules"
+        options={{
+          headerShown: false,
+          title: "Quy tắc cảnh báo",
         }}
       />
       <Stack.Screen

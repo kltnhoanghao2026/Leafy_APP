@@ -1,17 +1,22 @@
+import i18n from "@/src/i18n";
+
 import type { AlertSeverity, AlertStatus } from "../types";
+
+const label = (key: string, fallback: string) =>
+  i18n.t(key, { defaultValue: fallback });
 
 export const getAlertStatusLabel = (status?: AlertStatus | null): string => {
   switch (status) {
     case "OPEN":
-      return "Dang mo";
+      return label("iot.alerts.status.OPEN", "Open");
     case "ACKNOWLEDGED":
-      return "Da xac nhan";
+      return label("iot.alerts.status.ACKNOWLEDGED", "Acknowledged");
     case "RESOLVED":
-      return "Da xu ly";
+      return label("iot.alerts.status.RESOLVED", "Resolved");
     case "CLOSED":
-      return "Da dong";
+      return label("iot.alerts.status.CLOSED", "Closed");
     default:
-      return status ? String(status) : "Khong ro";
+      return status ? String(status) : label("iot.common.unknown", "Unknown");
   }
 };
 
@@ -33,15 +38,15 @@ export const getAlertStatusColor = (status?: AlertStatus | null): string => {
 export const getAlertSeverityLabel = (severity?: AlertSeverity | null): string => {
   switch (severity) {
     case "LOW":
-      return "Thap";
+      return label("iot.alerts.severity.LOW", "Low");
     case "MEDIUM":
-      return "Trung binh";
+      return label("iot.alerts.severity.MEDIUM", "Medium");
     case "HIGH":
-      return "Cao";
+      return label("iot.alerts.severity.HIGH", "High");
     case "CRITICAL":
-      return "Nghiem trong";
+      return label("iot.alerts.severity.CRITICAL", "Critical");
     default:
-      return severity ? String(severity) : "Khong ro";
+      return severity ? String(severity) : label("iot.common.unknown", "Unknown");
   }
 };
 

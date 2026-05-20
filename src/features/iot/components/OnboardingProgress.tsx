@@ -1,27 +1,31 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 type OnboardingProgressProps = {
   currentStep?: string;
 };
 
-const steps = [
-  "Đang đăng ký thiết bị...",
-  "Đang tạo mã xác nhận...",
-  "Đang gán thiết bị vào khu vực...",
-  "Đang cập nhật danh sách...",
+const stepKeys = [
+  "iot.devices.onboarding.progressProvisioning",
+  "iot.devices.onboarding.progressClaimCode",
+  "iot.devices.onboarding.progressClaiming",
+  "iot.devices.onboarding.progressRefreshing",
 ];
 
 export function OnboardingProgress({ currentStep }: OnboardingProgressProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.card}>
       <ActivityIndicator color="#15803d" />
       <View style={styles.list}>
-        {steps.map((step) => {
+        {stepKeys.map((stepKey) => {
+          const step = t(stepKey);
           const active = step === currentStep;
 
           return (
-            <Text key={step} style={[styles.step, active && styles.activeStep]}>
-              {active ? "• " : ""}{step}
+            <Text key={stepKey} style={[styles.step, active && styles.activeStep]}>
+              {active ? "- " : ""}{step}
             </Text>
           );
         })}

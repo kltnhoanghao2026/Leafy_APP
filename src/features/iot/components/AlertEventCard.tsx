@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react-native";
 
 import type { AlertEventItemResponse } from "../types";
@@ -10,17 +11,24 @@ import { AlertStatusBadge } from "./AlertStatusBadge";
 type AlertEventCardProps = {
   alert: AlertEventItemResponse;
   onPress: (alert: AlertEventItemResponse) => void;
+  highlighted?: boolean;
 };
 
-export function AlertEventCard({ alert, onPress }: AlertEventCardProps) {
+export function AlertEventCard({ alert, onPress, highlighted }: AlertEventCardProps) {
+  const { t } = useTranslation();
   const sensorCode = alert.sensorCode || alert.alertType || undefined;
   const value = alert.triggerValue ?? alert.readingValue;
   const unit = getSensorUnit(sensorCode, alert.unit);
+  const unknown = t("iot.common.unknown");
 
   return (
     <Pressable
       onPress={() => onPress(alert)}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.card,
+        highlighted && styles.highlighted,
+        pressed && styles.pressed,
+      ]}
     >
       <View style={styles.header}>
         <View style={styles.badges}>
@@ -35,11 +43,11 @@ export function AlertEventCard({ alert, onPress }: AlertEventCardProps) {
       </Text>
       <Text style={styles.meta}>
         {getSensorLabel(sensorCode, alert.sensorName)}
-        {typeof value === "number" ? ` • ${value.toFixed(1)}${unit ? ` ${unit}` : ""}` : ""}
+        {typeof value === "number" ? ` - ${value.toFixed(1)}${unit ? ` ${unit}` : ""}` : ""}
       </Text>
       <Text style={styles.meta}>
-        Device: {alert.deviceName || alert.deviceId || "Khong ro"} • Zone:{" "}
-        {alert.zoneId || "Khong ro"}
+        {t("iot.common.device")}: {alert.deviceName || alert.deviceId || unknown} - {t("iot.common.zone")}:{" "}
+        {alert.zoneId || unknown}
       </Text>
       <Text style={styles.time}>
         {formatDateTime(alert.openedAt || alert.triggeredAt || alert.createdAt)}
@@ -66,6 +74,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  highlighted: {
+    borderColor: "#16a34a",
+    borderWidth: 2,
   },
   message: {
     color: "#0f172a",

@@ -34,9 +34,44 @@ export type DeviceConfigPushStatus =
   | "FAILED"
   | string;
 
+export type DeviceMediaEventStatus =
+  | "REQUESTED"
+  | "COMMAND_SENT"
+  | "UPLOADING"
+  | "UPLOADED"
+  | "FAILED"
+  | "TIMEOUT"
+  | string;
+
+export type CameraCaptureQuality = "LOW" | "MEDIUM" | "HIGH" | string;
+
+export type CameraCaptureResolution = "QVGA" | "VGA" | "HD" | string;
+
+export type CameraScheduleRecurrence = "DAILY" | "WEEKLY" | "MONTHLY" | string;
+
+export type CameraScheduleTriggerType = "MANUAL" | "SCHEDULED" | string;
+
+export type DeviceCameraScheduleStatus =
+  | "ENABLED"
+  | "DISABLED"
+  | "RUNNING"
+  | "SUCCEEDED"
+  | "FAILED"
+  | string;
+
+export type DeviceMediaAnalysisStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "PROCESSED"
+  | "DISEASE_DETECTED"
+  | "FAILED"
+  | string;
+
 export type AlertStatus = "OPEN" | "ACKNOWLEDGED" | "RESOLVED" | "CLOSED" | string;
 
 export type AlertSeverity = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" | string;
+
+export type AlertRuleStatus = "ENABLED" | "DISABLED" | string;
 
 export type MyDevicesParams = {
   page?: number;
@@ -156,6 +191,109 @@ export type SensorChartResponse = {
   points: SensorChartPointResponse[];
 };
 
+export type DeviceMediaAnalysis = {
+  id: string;
+  mediaEventId: string;
+  alertEventId?: string | null;
+  fileId: string;
+  deviceUid: string;
+  requestId?: string | null;
+  triggerType?: CameraScheduleTriggerType | string | null;
+  status: DeviceMediaAnalysisStatus;
+  analysisStatus?: DeviceMediaAnalysisStatus | string | null;
+  diseaseDetected?: boolean | null;
+  severity?: AlertSeverity | string | null;
+  diseaseType?: string | null;
+  diseaseName?: string | null;
+  confidence?: number | null;
+  notes?: string | null;
+  fileUrl?: string | null;
+  capturedAt?: string | null;
+  analyzedAt?: string | null;
+  timestamp?: string | null;
+  error?: string | null;
+};
+
+export type DeviceMediaEvent = {
+  id: string;
+  requestId?: string | null;
+  deviceId?: string | null;
+  deviceUid?: string | null;
+  zoneId?: string | null;
+  fileId?: string | null;
+  fileUrl?: string | null;
+  mediaType?: string | null;
+  triggerType?: CameraScheduleTriggerType | string | null;
+  status: DeviceMediaEventStatus;
+  contentType?: string | null;
+  sizeBytes?: number | null;
+  width?: number | null;
+  height?: number | null;
+  resolution?: CameraCaptureResolution | string | null;
+  quality?: CameraCaptureQuality | string | null;
+  uploadEndpoint?: string | null;
+  requestedAt?: string | null;
+  commandSentAt?: string | null;
+  uploadedAt?: string | null;
+  capturedAt?: string | null;
+  timestamp?: string | null;
+  error?: string | null;
+  analysis?: DeviceMediaAnalysis | null;
+};
+
+export type CameraCaptureRequest = {
+  quality?: CameraCaptureQuality;
+  resolution?: CameraCaptureResolution;
+};
+
+export type CameraCaptureResponse = {
+  requestId: string;
+  deviceId: string;
+  deviceUid?: string | null;
+  status: DeviceMediaEventStatus;
+  requestedAt?: string | null;
+  timestamp?: string | null;
+};
+
+export type DiseaseDetectRequest = {
+  mediaEventId?: string;
+  fileId?: string;
+  fileUrl?: string;
+  deviceUid?: string;
+  force?: boolean;
+};
+
+export type DeviceCameraScheduleRequest = {
+  deviceUid?: string;
+  enabled?: boolean;
+  triggerType?: CameraScheduleTriggerType;
+  timeOfDay: string;
+  recurrence: CameraScheduleRecurrence;
+  resolution?: CameraCaptureResolution;
+  quality?: CameraCaptureQuality;
+  uploadEndpoint?: string;
+};
+
+export type DeviceCameraSchedule = {
+  scheduleId: string;
+  id?: string;
+  deviceId?: string | null;
+  deviceUid: string;
+  enabled: boolean;
+  triggerType: CameraScheduleTriggerType;
+  status?: DeviceCameraScheduleStatus | null;
+  timeOfDay: string;
+  recurrence: CameraScheduleRecurrence;
+  resolution?: CameraCaptureResolution | string | null;
+  quality?: CameraCaptureQuality | string | null;
+  uploadEndpoint?: string | null;
+  lastRunAt?: string | null;
+  nextRunAt?: string | null;
+  lastMediaEvent?: DeviceMediaEvent | null;
+};
+
+export type DeviceCameraScheduleResponse = DeviceCameraSchedule;
+
 export type DashboardOverviewResponse = {
   farmPlotId: string;
   totalDevices?: number;
@@ -177,7 +315,7 @@ export type ZoneOverviewResponse = {
   openAlerts?: number;
   latestReadings?: LatestReadingItemResponse[];
   alertSummary?: AlertSummary | null;
-  latestMedia?: unknown;
+  latestMedia?: DeviceMediaEvent | null;
   latestAlertAt?: string | null;
   lastUpdatedAt?: string | null;
 };
@@ -211,6 +349,51 @@ export type AlertEventItemResponse = {
 };
 
 export type AlertEventDetailResponse = AlertEventItemResponse;
+
+export type AlertRule = {
+  ruleId: string;
+  id?: string;
+  name?: string | null;
+  sensorType: string;
+  sensorTypeId?: string | null;
+  deviceId?: string | null;
+  zoneId?: string | null;
+  farmPlotId?: string | null;
+  ownerUserId?: string | null;
+  thresholdMin?: number | null;
+  thresholdMax?: number | null;
+  minThreshold?: number | null;
+  maxThreshold?: number | null;
+  severity: AlertSeverity;
+  enabled: boolean;
+  status?: AlertRuleStatus | null;
+  cooldownMinutes?: number | null;
+  notifyWeb?: boolean | null;
+  notifyMobile?: boolean | null;
+  lastTriggeredAt?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type AlertRuleResponse = AlertRule;
+
+export type AlertRuleRequest = {
+  name?: string | null;
+  sensorType?: string;
+  sensorTypeId?: string;
+  deviceId?: string | null;
+  zoneId?: string | null;
+  farmPlotId?: string | null;
+  thresholdMin?: number | null;
+  thresholdMax?: number | null;
+  minThreshold?: number | null;
+  maxThreshold?: number | null;
+  severity: AlertSeverity;
+  enabled?: boolean;
+  cooldownMinutes?: number | null;
+  notifyWeb?: boolean;
+  notifyMobile?: boolean;
+};
 
 export type DeviceConfigSummary = {
   deviceId?: string;
@@ -272,5 +455,5 @@ export type DeviceDetailResponse = {
   latestReadings?: LatestReadingItemResponse[];
   config?: DeviceConfigSummary | null;
   alertSummary?: AlertSummary | null;
-  latestMedia?: unknown;
+  latestMedia?: DeviceMediaEvent | null;
 };

@@ -28,6 +28,8 @@ export const ROUTES = {
     AI_CHAT: "/ai-chat",
     IOT: "/iot",
     IOT_DEVICE_DETAIL: (deviceId: string) => `/iot/devices/${deviceId}`,
+    IOT_ALERT_DETAIL: (alertId: string) => `/iot/alerts/${alertId}`,
+    IOT_CAMERA_SCHEDULES: "/iot/camera-schedules",
   },
 
   // Modal routes
@@ -133,12 +135,33 @@ export const API_ENDPOINTS = {
       CHARTS: (deviceId: string) => `/iot/devices/${deviceId}/charts`,
       CONFIG: (deviceId: string) => `/iot/devices/${deviceId}/config`,
       PUSH_CONFIG: (deviceId: string) => `/iot/devices/${deviceId}/config/push`,
+      CAMERA_CAPTURE: (deviceId: string) =>
+        `/iot/devices/${deviceId}/camera/capture`,
+      CAMERA_DETECT: (deviceUid: string) =>
+        `/iot/devices/${deviceUid}/camera/detect`,
+      MEDIA: (deviceId: string) => `/iot/devices/${deviceId}/media`,
+      CAMERA_SCHEDULES: (deviceUid: string) =>
+        `/iot/devices/${deviceUid}/camera/schedules`,
+      CAMERA_SCHEDULE: (deviceUid: string, scheduleId: string) =>
+        `/iot/devices/${deviceUid}/camera/schedules/${scheduleId}`,
+      CAMERA_SCHEDULE_RUN_NOW: (deviceUid: string, scheduleId: string) =>
+        `/iot/devices/${deviceUid}/camera/run-scheduled/${scheduleId}`,
+      CAMERA_CAPTURE_SCHEDULE: (deviceUid: string) =>
+        `/iot/devices/${deviceUid}/camera/capture-schedule`,
     },
+    CAMERA_SCHEDULES: "/iot/camera-schedules",
+    CAMERA_SCHEDULE: (scheduleId: string) => `/iot/camera-schedules/${scheduleId}`,
+    CAMERA_SCHEDULE_RUN_NOW: (scheduleId: string) =>
+      `/iot/camera-schedules/${scheduleId}/run-now`,
+    ADMIN_CAMERA_RUN_SCHEDULED: (deviceUid: string) =>
+      `/admin/camera/run-scheduled/${deviceUid}`,
     DASHBOARD_OVERVIEW: "/iot/dashboard/overview",
     FARM_ZONE_OVERVIEW: (zoneId: string) => `/iot/farm-zones/${zoneId}/overview`,
     FARM_ZONE_CHARTS: (zoneId: string) => `/iot/farm-zones/${zoneId}/charts`,
     ALERT_EVENTS: "/iot/alert-events",
     ALERT_EVENT: (alertId: string) => `/iot/alert-events/${alertId}`,
+    ALERT_RULES: "/iot/alert-rules",
+    ALERT_RULE: (ruleId: string) => `/iot/alert-rules/${ruleId}`,
     ALERT_EVENT_ACKNOWLEDGE: (alertId: string) =>
       `/iot/alert-events/${alertId}/acknowledge`,
     ALERT_EVENT_RESOLVE: (alertId: string) =>

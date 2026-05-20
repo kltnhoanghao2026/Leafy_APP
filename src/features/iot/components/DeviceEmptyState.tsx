@@ -1,19 +1,21 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { WifiOff } from "lucide-react-native";
 
 export function DeviceEmptyState() {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.container}>
       <View style={styles.iconWrap}>
         <WifiOff color="#64748b" size={28} />
       </View>
-      <Text style={styles.title}>Chưa có thiết bị nào</Text>
+      <Text style={styles.title}>{t("iot.devices.list.emptyTitle")}</Text>
       <Text style={styles.description}>
-        Luồng thêm thiết bị bằng QR sẽ được bổ sung ở Phase 2. Hiện tại bạn có
-        thể xem các thiết bị đã claim từ web.
+        {t("iot.devices.list.emptyDescription")}
       </Text>
       <View style={styles.disabledButton}>
-        <Text style={styles.disabledButtonText}>Thêm thiết bị - Phase 2</Text>
+        <Text style={styles.disabledButtonText}>{t("iot.devices.list.emptyAction")}</Text>
       </View>
     </View>
   );

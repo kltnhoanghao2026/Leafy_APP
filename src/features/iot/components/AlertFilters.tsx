@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import type { AlertEventsParams, AlertSeverity, AlertStatus } from "../types";
 
@@ -17,26 +18,26 @@ type AlertFiltersProps = {
   ) => void;
 };
 
-const statusOptions: Array<{ label: string; value?: AlertStatus }> = [
-  { label: "Tat ca" },
-  { label: "Dang mo", value: "OPEN" },
-  { label: "Da xac nhan", value: "ACKNOWLEDGED" },
-  { label: "Da xu ly", value: "RESOLVED" },
+const statusOptions: Array<{ labelKey: string; value?: AlertStatus }> = [
+  { labelKey: "iot.common.all" },
+  { labelKey: "iot.alerts.status.OPEN", value: "OPEN" },
+  { labelKey: "iot.alerts.status.ACKNOWLEDGED", value: "ACKNOWLEDGED" },
+  { labelKey: "iot.alerts.status.RESOLVED", value: "RESOLVED" },
 ];
 
-const severityOptions: Array<{ label: string; value?: AlertSeverity }> = [
-  { label: "Tat ca" },
-  { label: "Thap", value: "LOW" },
-  { label: "Trung binh", value: "MEDIUM" },
-  { label: "Cao", value: "HIGH" },
-  { label: "Nghiem trong", value: "CRITICAL" },
+const severityOptions: Array<{ labelKey: string; value?: AlertSeverity }> = [
+  { labelKey: "iot.common.all" },
+  { labelKey: "iot.alerts.severity.LOW", value: "LOW" },
+  { labelKey: "iot.alerts.severity.MEDIUM", value: "MEDIUM" },
+  { labelKey: "iot.alerts.severity.HIGH", value: "HIGH" },
+  { labelKey: "iot.alerts.severity.CRITICAL", value: "CRITICAL" },
 ];
 
-const timeOptions: Array<{ label: string; value: AlertTimeRange }> = [
-  { label: "24h", value: "H24" },
-  { label: "7 ngay", value: "D7" },
-  { label: "30 ngay", value: "D30" },
-  { label: "Tat ca", value: "ALL" },
+const timeOptions: Array<{ labelKey: string; value: AlertTimeRange }> = [
+  { labelKey: "iot.alerts.time.H24", value: "H24" },
+  { labelKey: "iot.alerts.time.D7", value: "D7" },
+  { labelKey: "iot.alerts.time.D30", value: "D30" },
+  { labelKey: "iot.common.all", value: "ALL" },
 ];
 
 export function AlertFilters({
@@ -47,6 +48,8 @@ export function AlertFilters({
   timeRange,
   onChange,
 }: AlertFiltersProps) {
+  const { t } = useTranslation();
+
   const update = (
     patch: Partial<{
       status?: AlertStatus;
@@ -68,21 +71,27 @@ export function AlertFilters({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Bo loc</Text>
+      <Text style={styles.title}>{t("iot.alerts.filters.title")}</Text>
       <ChipGroup
-        label="Trang thai"
-        options={statusOptions}
+        label={t("iot.alerts.filters.status")}
+        options={statusOptions.map((option) => ({
+          label: t(option.labelKey),
+          value: option.value,
+        }))}
         value={status}
         onSelect={(value) => update({ status: value })}
       />
       <ChipGroup
-        label="Muc do"
-        options={severityOptions}
+        label={t("iot.alerts.filters.severity")}
+        options={severityOptions.map((option) => ({
+          label: t(option.labelKey),
+          value: option.value,
+        }))}
         value={severity}
         onSelect={(value) => update({ severity: value })}
       />
       <View style={styles.group}>
-        <Text style={styles.label}>Thoi gian</Text>
+        <Text style={styles.label}>{t("iot.alerts.filters.time")}</Text>
         <View style={styles.chips}>
           {timeOptions.map((option) => (
             <Pressable
@@ -91,7 +100,7 @@ export function AlertFilters({
               style={[styles.chip, timeRange === option.value && styles.chipActive]}
             >
               <Text style={[styles.chipText, timeRange === option.value && styles.chipTextActive]}>
-                {option.label}
+                {t(option.labelKey)}
               </Text>
             </Pressable>
           ))}
@@ -101,7 +110,7 @@ export function AlertFilters({
         <TextInput
           autoCapitalize="none"
           onChangeText={(text) => update({ deviceId: text })}
-          placeholder="deviceId"
+          placeholder={t("iot.alerts.filters.deviceId")}
           placeholderTextColor="#94a3b8"
           style={styles.input}
           value={deviceId}
@@ -109,7 +118,7 @@ export function AlertFilters({
         <TextInput
           autoCapitalize="none"
           onChangeText={(text) => update({ zoneId: text })}
-          placeholder="zoneId"
+          placeholder={t("iot.alerts.filters.zoneId")}
           placeholderTextColor="#94a3b8"
           style={styles.input}
           value={zoneId}

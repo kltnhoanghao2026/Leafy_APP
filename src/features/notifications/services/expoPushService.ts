@@ -3,6 +3,7 @@ import * as Device from "expo-device";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import type { NotificationPlatform } from "../types";
+import { isIotAlertNotification } from "@/src/features/iot/utils/alertNotification";
 
 /**
  * Configure how incoming push notifications appear while the app is
@@ -10,12 +11,19 @@ import type { NotificationPlatform } from "../types";
  */
 export function configurePushNotifications() {
   Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
+    handleNotification: async (notification: any) => {
+      const data = notification.request.content.data as Record<string, unknown> | undefined;
+      const hasIotTranslationKeys =
+        isIotAlertNotification(data) &&
+        (typeof data?.titleKey === "string" || typeof data?.bodyKey === "string");
+
+      return {
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: !hasIotTranslationKeys,
+        shouldShowList: !hasIotTranslationKeys,
+      };
+    },
   });
 }
 

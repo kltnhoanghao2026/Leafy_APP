@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, RefreshCw, Send } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Pressable,
@@ -47,6 +48,7 @@ const isTerminalStatus = (status?: DeviceConfigPushStatus | null): boolean => {
 };
 
 export function DeviceConfigScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ deviceId?: string | string[] }>();
   const deviceId = getParamValue(params.deviceId);
@@ -67,22 +69,22 @@ export function DeviceConfigScreen() {
 
   const readiness = useMemo(() => {
     if (!device) {
-      return { ready: false, reason: "Dang tai thong tin thiet bi." };
+      return { ready: false, reasonKey: "iot.config.readiness.loadingDevice" };
     }
 
     if (device.isActive === false) {
-      return { ready: false, reason: "Thiet bi chua active nen khong the cau hinh." };
+      return { ready: false, reasonKey: "iot.config.readiness.inactive" };
     }
 
     if (device.provisioningStatus !== "CLAIMED") {
-      return { ready: false, reason: "Thiet bi chua duoc ket noi vao tai khoan." };
+      return { ready: false, reasonKey: "iot.config.readiness.unclaimed" };
     }
 
     if (device.status === "DISABLED") {
-      return { ready: false, reason: "Thiet bi da bi vo hieu hoa." };
+      return { ready: false, reasonKey: "iot.config.readiness.disabled" };
     }
 
-    return { ready: true, reason: null };
+    return { ready: true, reasonKey: null };
   }, [device]);
 
   useEffect(() => {
@@ -128,7 +130,7 @@ export function DeviceConfigScreen() {
 
     if (nextConfig.lastPushStatus === "FAILED") {
       setPushState("failed");
-      setPushError(nextConfig.lastPushError || "Thiet bi bao loi khi ap dung cau hinh.");
+      setPushError(nextConfig.lastPushError || t("iot.config.pushProgress.failed"));
       stopPolling();
       configQuery.refetch();
       detailQuery.refetch();
@@ -152,7 +154,7 @@ export function DeviceConfigScreen() {
 
       if (Date.now() - pollStartedAtRef.current >= pollTimeoutMs) {
         setPushState("timeout");
-        setPushError("Khong nhan duoc ACK sau 45 giay. Hay kiem tra ket noi cua thiet bi.");
+        setPushError(t("iot.config.ackTimeoutMessage"));
         stopPolling();
         configQuery.refetch();
         detailQuery.refetch();
@@ -174,14 +176,14 @@ export function DeviceConfigScreen() {
     setMessage(null);
     const validation = validateConfigForm(form);
     if (!validation.ok) {
-      setMessage(validation.errors[0] || "Cau hinh khong hop le.");
+      setMessage(t(validation.errors[0] || "iot.config.validation.invalid"));
       return;
     }
 
     try {
       await updateMutation.mutateAsync(validation.payload);
       setFormInitialized(false);
-      setMessage("Da luu cau hinh. Bam gui xuong thiet bi de ap dung qua MQTT.");
+      setMessage(t("iot.config.updateSuccess"));
     } catch (error) {
       setMessage(getOnboardingErrorMessage(error));
     }
@@ -192,7 +194,7 @@ export function DeviceConfigScreen() {
     setPushError(null);
 
     if (!readiness.ready) {
-      setMessage(readiness.reason);
+      setMessage(readiness.reasonKey ? t(readiness.reasonKey) : null);
       return;
     }
 
@@ -214,10 +216,10 @@ export function DeviceConfigScreen() {
   if (!deviceId) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorTitle}>Thieu ma thiet bi</Text>
-        <Text style={styles.errorText}>Khong the mo cau hinh neu route thieu deviceId.</Text>
+        <Text style={styles.errorTitle}>{t("iot.config.missingDeviceId")}</Text>
+        <Text style={styles.errorText}>{t("iot.config.missingDeviceIdDescription")}</Text>
         <Pressable style={styles.retryButton} onPress={() => router.back()}>
-          <Text style={styles.retryText}>Quay lai</Text>
+          <Text style={styles.retryText}>{t("iot.common.back")}</Text>
         </Pressable>
       </View>
     );
@@ -227,7 +229,7 @@ export function DeviceConfigScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color="#15803d" size="large" />
-        <Text style={styles.loadingText}>Dang tai cau hinh thiet bi...</Text>
+        <Text style={styles.loadingText}>{t("iot.config.loading")}</Text>
       </View>
     );
   }
@@ -242,12 +244,12 @@ export function DeviceConfigScreen() {
     >
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>Chi tiet thiet bi</Text>
+        <Text style={styles.backText}>{t("iot.devices.detail.kicker")}</Text>
       </Pressable>
 
       <View style={styles.header}>
-        <Text style={styles.kicker}>Device config</Text>
-        <Text style={styles.title}>Cau hinh thiet bi</Text>
+        <Text style={styles.kicker}>{t("iot.config.kicker")}</Text>
+        <Text style={styles.title}>{t("iot.config.title")}</Text>
         <Text style={styles.subtitle}>
           {device?.deviceName || device?.deviceCode || deviceId}
         </Text>
@@ -255,26 +257,27 @@ export function DeviceConfigScreen() {
 
       {!readiness.ready ? (
         <View style={styles.warningBox}>
-          <Text style={styles.warningTitle}>Thiet bi chua san sang de cau hinh</Text>
-          <Text style={styles.warningText}>{readiness.reason}</Text>
+          <Text style={styles.warningTitle}>{t("iot.config.notReadyTitle")}</Text>
+          <Text style={styles.warningText}>
+            {readiness.reasonKey ? t(readiness.reasonKey) : ""}
+          </Text>
         </View>
       ) : device?.status !== "ONLINE" ? (
         <View style={styles.warningBox}>
-          <Text style={styles.warningTitle}>Thiet bi dang offline</Text>
+          <Text style={styles.warningTitle}>{t("iot.config.offlineWarningTitle")}</Text>
           <Text style={styles.warningText}>
-            Ban van co the luu cau hinh, nhung push MQTT co the timeout neu thiet bi
-            chua online.
+            {t("iot.config.offlineWarningDescription")}
           </Text>
         </View>
       ) : null}
 
       {configQuery.isError ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>Khong tai duoc cau hinh</Text>
-          <Text style={styles.errorText}>Kiem tra ket noi mang hoac quyen truy cap.</Text>
+          <Text style={styles.errorTitle}>{t("iot.config.loadFailed")}</Text>
+          <Text style={styles.errorText}>{t("iot.config.loadFailedDescription")}</Text>
           <Pressable style={styles.retryButton} onPress={() => configQuery.refetch()}>
             <RefreshCw color="#ffffff" size={16} />
-            <Text style={styles.retryText}>Thu lai</Text>
+            <Text style={styles.retryText}>{t("iot.common.retry")}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -301,7 +304,7 @@ export function DeviceConfigScreen() {
       <View style={styles.actionRow}>
         <Pressable style={styles.secondaryButton} onPress={refresh}>
           <RefreshCw color="#166534" size={16} />
-          <Text style={styles.secondaryButtonText}>Tai lai</Text>
+          <Text style={styles.secondaryButtonText}>{t("iot.config.reload")}</Text>
         </Pressable>
         <Pressable
           disabled={
@@ -323,7 +326,7 @@ export function DeviceConfigScreen() {
           ]}
         >
           <Send color="#ffffff" size={16} />
-          <Text style={styles.primaryButtonText}>Gui xuong thiet bi</Text>
+          <Text style={styles.primaryButtonText}>{t("iot.config.pushToDevice")}</Text>
         </Pressable>
       </View>
     </ScrollView>

@@ -1,28 +1,30 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
-const steps = [
-  "Bật nguồn thiết bị.",
-  "Nếu thiết bị chưa có Wi-Fi, kết nối Wi-Fi Leafy-Setup-xxxx.",
-  "Mở trình duyệt tại http://192.168.4.1.",
-  "Nhập Wi-Fi của vườn/nhà.",
-  "Quay lại app và kéo để làm mới trạng thái thiết bị.",
+const stepKeys = [
+  "iot.devices.onboarding.wifiStepPower",
+  "iot.devices.onboarding.wifiStepConnect",
+  "iot.devices.onboarding.wifiStepBrowser",
+  "iot.devices.onboarding.wifiStepCredentials",
+  "iot.devices.onboarding.wifiStepRefresh",
 ];
 
 export function WifiSetupGuide() {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Thiết lập Wi-Fi cho thiết bị</Text>
+      <Text style={styles.title}>{t("iot.devices.onboarding.wifiTitle")}</Text>
       <Text style={styles.description}>
-        Thiết bị đã được gán vào tài khoản. Nếu chưa online, hãy cấu hình Wi-Fi
-        qua portal cục bộ của thiết bị.
+        {t("iot.devices.onboarding.wifiDescription")}
       </Text>
       <View style={styles.steps}>
-        {steps.map((step, index) => (
-          <View key={step} style={styles.stepRow}>
+        {stepKeys.map((stepKey, index) => (
+          <View key={stepKey} style={styles.stepRow}>
             <View style={styles.indexBadge}>
               <Text style={styles.indexText}>{index + 1}</Text>
             </View>
-            <Text style={styles.stepText}>{step}</Text>
+            <Text style={styles.stepText}>{t(stepKey)}</Text>
           </View>
         ))}
       </View>
