@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, BarChart3, Bell, SlidersHorizontal } from "lucide-react-native";
 import type { ReactNode } from "react";
@@ -14,6 +15,8 @@ import {
 } from "react-native";
 
 import { DeviceReadingList } from "../components/DeviceReadingList";
+import { DeviceChartsPanel } from "../components/DeviceChartsPanel";
+import { DeviceMediaPanel } from "../components/DeviceMediaPanel";
 import { DeviceStatusBadge } from "../components/DeviceStatusBadge";
 import { RangeSelector } from "../components/RangeSelector";
 import { SensorChartCard } from "../components/SensorChartCard";
@@ -23,6 +26,7 @@ import {
   useDeviceDetail,
   useDeviceLatestReadings,
 } from "../hooks/useDeviceDetail";
+import { iotKeys } from "../hooks/useDevices";
 import {
   formatDateTime,
   formatDeviceCode,
@@ -68,6 +72,7 @@ const getFriendlyError = (error: unknown, t: ReturnType<typeof useTranslation>["
 export function DeviceDetailScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ deviceId?: string | string[] }>();
   const deviceId = getParamValue(params.deviceId);
   const detailQuery = useDeviceDetail(deviceId);
@@ -91,6 +96,14 @@ export function DeviceDetailScreen() {
     detailQuery.refetch();
     readingsQuery.refetch();
     chartQuery.refetch();
+    if (device?.deviceUid) {
+      queryClient.invalidateQueries({
+        queryKey: iotKeys.deviceCameraSchedules(device.deviceUid),
+      });
+    }
+    if (deviceId) {
+      queryClient.invalidateQueries({ queryKey: iotKeys.deviceMedia(deviceId) });
+    }
   };
 
   if (!deviceId) {
@@ -221,6 +234,10 @@ export function DeviceDetailScreen() {
           range={selectedRange}
         />
       </View>
+
+      <DeviceChartsPanel deviceId={deviceId} />
+
+      <DeviceMediaPanel deviceId={deviceId} deviceUid={device.deviceUid} />
 
       <View style={styles.actions}>
         <PlaceholderAction

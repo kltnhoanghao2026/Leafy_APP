@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, RefreshCw } from "lucide-react-native";
+import { ArrowLeft, BellRing, RefreshCw } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -102,6 +102,15 @@ export function AlertEventsScreen() {
               {t("iot.alerts.description")}
             </Text>
           </View>
+          <Pressable
+            style={styles.rulesButton}
+            onPress={() => router.push("/iot/alerts/rules")}
+          >
+            <BellRing color="#166534" size={16} />
+            <Text style={styles.rulesButtonText}>
+              {t("iot.alertRules.listTitle")}
+            </Text>
+          </Pressable>
           <AlertFilters
             deviceId={deviceId}
             severity={severity}
@@ -233,6 +242,21 @@ const styles = StyleSheet.create({
   },
   retryText: {
     color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  rulesButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#f0fdf4",
+    borderRadius: 999,
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  rulesButtonText: {
+    color: "#166534",
     fontSize: 13,
     fontWeight: "900",
   },

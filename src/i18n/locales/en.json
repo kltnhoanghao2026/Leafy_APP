@@ -932,6 +932,71 @@
       "unassigned": "Unassigned",
       "zone": "Zone"
     },
+    "config": {
+      "kicker": "Device config",
+      "title": "Device configuration",
+      "loading": "Loading device configuration...",
+      "missingDeviceId": "Missing device ID",
+      "missingDeviceIdDescription": "Cannot open configuration because this route is missing deviceId.",
+      "notReadyTitle": "Device is not ready for configuration",
+      "offlineWarningTitle": "Device is offline",
+      "offlineWarningDescription": "You can still save configuration, but MQTT push may time out while the device is offline.",
+      "loadFailed": "Unable to load configuration",
+      "loadFailedDescription": "Check network connectivity or access permission.",
+      "reload": "Reload",
+      "pushToDevice": "Send to device",
+      "updateSuccess": "Configuration saved. Send it to the device to apply via MQTT.",
+      "updateFailed": "Unable to save configuration.",
+      "ackTimeoutMessage": "No ACK received after 45 seconds. Check the device connection.",
+      "formTitle": "Configuration parameters",
+      "deviceName": "Device name",
+      "samplingInterval": "Sensor sampling interval",
+      "publishInterval": "Data publish interval",
+      "offlineTimeout": "Offline timeout",
+      "alertEnabled": "Enable alerts",
+      "alertEnabledHint": "Allow backend alert rules to evaluate this device.",
+      "seconds": "sec",
+      "save": "Save configuration",
+      "saving": "Saving...",
+      "statusTitle": "Configuration status",
+      "version": "Version {{version}}",
+      "pushStatus": "Push status",
+      "lastAckAt": "ACK time",
+      "appliedAt": "Applied at",
+      "deviceError": "Device error",
+      "status": {
+        "PENDING": "Pending",
+        "SENT": "Sent",
+        "ACKED": "Acknowledged",
+        "FAILED": "Failed",
+        "NOT_SENT": "Not sent"
+      },
+      "pushProgress": {
+        "idle": "",
+        "sending": "Sending configuration...",
+        "waiting": "Waiting for device ACK...",
+        "acked": "Device acknowledged configuration.",
+        "failed": "Device reported an error while applying configuration.",
+        "timeout": "ACK wait timed out."
+      },
+      "readiness": {
+        "loadingDevice": "Loading device information.",
+        "inactive": "Device is not active, so it cannot be configured.",
+        "unclaimed": "Device has not been connected to this account.",
+        "disabled": "Device has been disabled."
+      },
+      "validation": {
+        "invalid": "Configuration is invalid.",
+        "samplingRequired": "Sensor sampling interval must be a positive integer.",
+        "samplingRange": "Sensor sampling interval must be between 5 and 3600 seconds.",
+        "publishRequired": "Data publish interval must be a positive integer.",
+        "publishRange": "Data publish interval must be between 10 and 86400 seconds.",
+        "offlineRequired": "Offline timeout must be a positive integer.",
+        "offlineRange": "Offline timeout must be between 60 and 86400 seconds.",
+        "publishAfterSampling": "Data publish interval should be greater than or equal to sensor sampling interval.",
+        "offlineAfterPublish": "Offline timeout must be greater than data publish interval."
+      }
+    },
     "devices": {
       "defaultName": "IoT device",
       "noCode": "No code",
@@ -1045,7 +1110,137 @@
         "wifiStepBrowser": "Open http://192.168.4.1 in a browser.",
         "wifiStepCredentials": "Enter the farm or home Wi-Fi credentials.",
         "wifiStepRefresh": "Return to the app and pull to refresh device status."
+      },
+      "media": {
+        "title": "Media & camera",
+        "description": "Review captured images, analysis status, and camera schedules for this device.",
+        "loading": "Loading media events...",
+        "loadFailed": "Unable to load media events.",
+        "latestImage": "Latest uploaded image",
+        "noImage": "No uploaded image yet.",
+        "placeholderImage": "No image",
+        "mediaHistory": "Media history",
+        "noEvents": "No media events yet.",
+        "requiresDeviceUid": "This action requires a device UID.",
+        "analysisStatus": "Analysis status",
+        "diseaseType": "Disease",
+        "severity": "Severity",
+        "noAnalysis": "No analysis result yet.",
+        "alertBadge": "Disease detected",
+        "triggerAnalysis": "Run analysis",
+        "analyzing": "Analyzing...",
+        "analysisSuccessTitle": "Analysis requested",
+        "analysisSuccess": "The image analysis request was sent.",
+        "analysisFailed": "Unable to trigger image analysis.",
+        "status": {
+          "REQUESTED": "Requested",
+          "COMMAND_SENT": "Command sent",
+          "UPLOADING": "Uploading",
+          "UPLOADED": "Uploaded",
+          "FAILED": "Failed",
+          "TIMEOUT": "Timed out"
+        },
+        "analysisStatusOptions": {
+          "PENDING": "Pending",
+          "PROCESSING": "Processing",
+          "PROCESSED": "Processed",
+          "DISEASE_DETECTED": "Disease detected",
+          "FAILED": "Failed"
+        },
+        "triggerType": {
+          "MANUAL": "Manual",
+          "SCHEDULED": "Scheduled"
+        }
       }
+    },
+    "cameraSchedules": {
+      "adminKicker": "Admin camera",
+      "adminTitle": "Scheduled captures",
+      "adminDescription": "Review camera schedules across devices and run scheduled captures for testing.",
+      "title": "Camera schedules",
+      "create": "Create schedule",
+      "createSchedule": "Create schedule",
+      "creating": "Creating...",
+      "createdTitle": "Schedule created",
+      "created": "The camera schedule was created.",
+      "createFailed": "Unable to create camera schedule.",
+      "updatedTitle": "Schedule updated",
+      "updated": "The camera schedule was updated.",
+      "updateFailed": "Unable to update camera schedule.",
+      "editSchedule": "Edit schedule",
+      "deleteSchedule": "Delete schedule",
+      "deleteConfirm": "Delete this camera schedule?",
+      "deleteFailed": "Unable to delete camera schedule.",
+      "runNow": "Run now",
+      "runScheduledCaptureNow": "Run scheduled capture now",
+      "runSuccessTitle": "Capture queued",
+      "runSuccess": "The scheduled camera capture request was sent.",
+      "runFailed": "Unable to run scheduled capture.",
+      "captureOptions": "Capture options",
+      "resolution": "Resolution",
+      "quality": "Quality",
+      "uploadEndpoint": "Upload endpoint",
+      "uploadEndpointPlaceholder": "Optional upload endpoint",
+      "status": "Status",
+      "alertBadge": "Alert",
+      "deviceUid": "Device UID",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "timeOfDay": "Time of day",
+      "recurrenceLabel": "Recurrence",
+      "lastRunAt": "Last run",
+      "nextRunAt": "Next run",
+      "filters": "Filters",
+      "filterDeviceUid": "Filter by device UID",
+      "loading": "Loading camera schedules...",
+      "loadFailed": "Unable to load camera schedules.",
+      "empty": "No camera schedules found.",
+      "errorTitle": "Camera schedule error",
+      "filter": {
+        "all": "All",
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "validation": {
+        "timeOfDay": "Time must use HH:mm:ss format.",
+        "deviceUid": "Device UID is required.",
+        "recurrence": "Choose a recurrence.",
+        "resolution": "Choose a supported resolution.",
+        "quality": "Choose a supported quality."
+      },
+      "recurrence": {
+        "DAILY": "Daily",
+        "WEEKLY": "Weekly",
+        "MONTHLY": "Monthly"
+      },
+      "qualityOptions": {
+        "LOW": "Low",
+        "MEDIUM": "Medium",
+        "HIGH": "High"
+      },
+      "resolutionOptions": {
+        "QVGA": "QVGA",
+        "VGA": "VGA",
+        "HD": "HD"
+      }
+    },
+    "charts": {
+      "title": "Telemetry analytics",
+      "description": "Compare historical device metrics and inspect alert markers.",
+      "loading": "Loading telemetry...",
+      "loadFailed": "Unable to load telemetry charts.",
+      "emptyTitle": "No telemetry points",
+      "emptyDescription": "Try another range or wait for the device to send readings.",
+      "compareMode": "Compare mode",
+      "expand": "Expand",
+      "expandedTitle": "Telemetry chart",
+      "alertMarkers": "Alert markers",
+      "markerTimestamp": "Time",
+      "markerSeverity": "Severity",
+      "dismissMarker": "Hide marker",
+      "legend": "Legend",
+      "liveRefresh": "Live refresh",
+      "tooltipAlert": "{{name}} · {{severity}} · {{time}}"
     },
     "metrics": {
       "ranges": {
@@ -1159,6 +1354,43 @@
         "H24": "24h",
         "D7": "7 days",
         "D30": "30 days"
+      }
+    },
+    "alertRules": {
+      "kicker": "IoT rules",
+      "listTitle": "Alert rules",
+      "description": "Create and tune telemetry thresholds for mobile and web alerts.",
+      "createButton": "Create rule",
+      "editButton": "Edit rule",
+      "deleteButton": "Delete rule",
+      "deleteConfirm": "Delete this alert rule?",
+      "enabled": "Enabled",
+      "severity": "Severity",
+      "thresholdMin": "Min threshold",
+      "thresholdMax": "Max threshold",
+      "lastTriggered": "Last triggered",
+      "name": "Rule name",
+      "sensorType": "Sensor type",
+      "searchPlaceholder": "Search rules...",
+      "loading": "Loading alert rules...",
+      "loadFailed": "Unable to load alert rules.",
+      "emptyTitle": "No alert rules found",
+      "emptyDescription": "Create a rule to receive alerts when telemetry crosses a threshold.",
+      "errorTitle": "Alert rule error",
+      "saveFailed": "Unable to save alert rule.",
+      "deleteFailed": "Unable to delete alert rule.",
+      "toggleFailed": "Unable to update rule status.",
+      "filters": {
+        "all": "All",
+        "enabled": "Enabled",
+        "disabled": "Disabled"
+      },
+      "validation": {
+        "nameRequired": "Rule name is required.",
+        "sensorTypeRequired": "Sensor type is required.",
+        "severityInvalid": "Choose a valid severity.",
+        "thresholdNumber": "Threshold values must be valid numbers.",
+        "minLessThanMax": "Min threshold must be less than or equal to max threshold."
       }
     }
   },

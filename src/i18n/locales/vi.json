@@ -932,6 +932,71 @@
       "unassigned": "Chưa gán",
       "zone": "Khu vực"
     },
+    "config": {
+      "kicker": "Cấu hình thiết bị",
+      "title": "Cấu hình thiết bị",
+      "loading": "Đang tải cấu hình thiết bị...",
+      "missingDeviceId": "Thiếu mã thiết bị",
+      "missingDeviceIdDescription": "Không thể mở cấu hình nếu route thiếu deviceId.",
+      "notReadyTitle": "Thiết bị chưa sẵn sàng để cấu hình",
+      "offlineWarningTitle": "Thiết bị đang offline",
+      "offlineWarningDescription": "Bạn vẫn có thể lưu cấu hình, nhưng push MQTT có thể timeout khi thiết bị offline.",
+      "loadFailed": "Không tải được cấu hình",
+      "loadFailedDescription": "Kiểm tra kết nối mạng hoặc quyền truy cập.",
+      "reload": "Tải lại",
+      "pushToDevice": "Gửi xuống thiết bị",
+      "updateSuccess": "Đã lưu cấu hình. Gửi xuống thiết bị để áp dụng qua MQTT.",
+      "updateFailed": "Không thể lưu cấu hình.",
+      "ackTimeoutMessage": "Không nhận được ACK sau 45 giây. Hãy kiểm tra kết nối của thiết bị.",
+      "formTitle": "Thông số cấu hình",
+      "deviceName": "Tên thiết bị",
+      "samplingInterval": "Chu kỳ đọc cảm biến",
+      "publishInterval": "Chu kỳ gửi dữ liệu",
+      "offlineTimeout": "Thời gian xác định offline",
+      "alertEnabled": "Bật cảnh báo",
+      "alertEnabledHint": "Cho phép backend đánh giá rule cảnh báo cho thiết bị này.",
+      "seconds": "giây",
+      "save": "Lưu cấu hình",
+      "saving": "Đang lưu...",
+      "statusTitle": "Trạng thái cấu hình",
+      "version": "Phiên bản {{version}}",
+      "pushStatus": "Trạng thái push",
+      "lastAckAt": "ACK lúc",
+      "appliedAt": "Áp dụng lúc",
+      "deviceError": "Lỗi từ thiết bị",
+      "status": {
+        "PENDING": "Đang chờ",
+        "SENT": "Đã gửi",
+        "ACKED": "Thiết bị đã xác nhận",
+        "FAILED": "Thiết bị báo lỗi",
+        "NOT_SENT": "Chưa gửi"
+      },
+      "pushProgress": {
+        "idle": "",
+        "sending": "Đang gửi cấu hình...",
+        "waiting": "Đang chờ thiết bị xác nhận...",
+        "acked": "Thiết bị đã xác nhận cấu hình.",
+        "failed": "Thiết bị báo lỗi khi áp dụng cấu hình.",
+        "timeout": "Quá thời gian chờ ACK."
+      },
+      "readiness": {
+        "loadingDevice": "Đang tải thông tin thiết bị.",
+        "inactive": "Thiết bị chưa active nên không thể cấu hình.",
+        "unclaimed": "Thiết bị chưa được kết nối vào tài khoản.",
+        "disabled": "Thiết bị đã bị vô hiệu hóa."
+      },
+      "validation": {
+        "invalid": "Cấu hình không hợp lệ.",
+        "samplingRequired": "Chu kỳ đọc cảm biến phải là số nguyên dương.",
+        "samplingRange": "Chu kỳ đọc cảm biến phải trong khoảng 5-3600 giây.",
+        "publishRequired": "Chu kỳ gửi dữ liệu phải là số nguyên dương.",
+        "publishRange": "Chu kỳ gửi dữ liệu phải trong khoảng 10-86400 giây.",
+        "offlineRequired": "Thời gian xác định offline phải là số nguyên dương.",
+        "offlineRange": "Thời gian xác định offline phải trong khoảng 60-86400 giây.",
+        "publishAfterSampling": "Chu kỳ gửi dữ liệu nên lớn hơn hoặc bằng chu kỳ đọc cảm biến.",
+        "offlineAfterPublish": "Thời gian offline phải lớn hơn chu kỳ gửi dữ liệu."
+      }
+    },
     "devices": {
       "defaultName": "Thiết bị IoT",
       "noCode": "Chưa có mã",
@@ -1045,7 +1110,137 @@
         "wifiStepBrowser": "Mở trình duyệt tại http://192.168.4.1.",
         "wifiStepCredentials": "Nhập Wi-Fi của vườn/nhà.",
         "wifiStepRefresh": "Quay lại app và kéo để làm mới trạng thái thiết bị."
+      },
+      "media": {
+        "title": "Media & camera",
+        "description": "Xem ảnh đã chụp, trạng thái phân tích và lịch camera của thiết bị.",
+        "loading": "Đang tải sự kiện media...",
+        "loadFailed": "Không tải được sự kiện media.",
+        "latestImage": "Ảnh đã tải lên mới nhất",
+        "noImage": "Chưa có ảnh nào được tải lên.",
+        "placeholderImage": "Chưa có ảnh",
+        "mediaHistory": "Lịch sử media",
+        "noEvents": "Chưa có sự kiện media.",
+        "requiresDeviceUid": "Tác vụ này cần device UID.",
+        "analysisStatus": "Trạng thái phân tích",
+        "diseaseType": "Bệnh",
+        "severity": "Mức độ",
+        "noAnalysis": "Chưa có kết quả phân tích.",
+        "alertBadge": "Phát hiện bệnh",
+        "triggerAnalysis": "Chạy phân tích",
+        "analyzing": "Đang phân tích...",
+        "analysisSuccessTitle": "Đã gửi yêu cầu phân tích",
+        "analysisSuccess": "Yêu cầu phân tích ảnh đã được gửi.",
+        "analysisFailed": "Không thể chạy phân tích ảnh.",
+        "status": {
+          "REQUESTED": "Đã yêu cầu",
+          "COMMAND_SENT": "Đã gửi lệnh",
+          "UPLOADING": "Đang tải lên",
+          "UPLOADED": "Đã tải lên",
+          "FAILED": "Thất bại",
+          "TIMEOUT": "Quá hạn"
+        },
+        "analysisStatusOptions": {
+          "PENDING": "Đang chờ",
+          "PROCESSING": "Đang xử lý",
+          "PROCESSED": "Đã xử lý",
+          "DISEASE_DETECTED": "Phát hiện bệnh",
+          "FAILED": "Thất bại"
+        },
+        "triggerType": {
+          "MANUAL": "Thủ công",
+          "SCHEDULED": "Theo lịch"
+        }
       }
+    },
+    "cameraSchedules": {
+      "adminKicker": "Admin camera",
+      "adminTitle": "Lịch chụp camera",
+      "adminDescription": "Xem lịch camera trên toàn bộ thiết bị và chạy chụp theo lịch để kiểm thử.",
+      "title": "Lịch camera",
+      "create": "Tạo lịch",
+      "createSchedule": "Tạo lịch",
+      "creating": "Đang tạo...",
+      "createdTitle": "Đã tạo lịch",
+      "created": "Lịch camera đã được tạo.",
+      "createFailed": "Không thể tạo lịch camera.",
+      "updatedTitle": "Đã cập nhật lịch",
+      "updated": "Lịch camera đã được cập nhật.",
+      "updateFailed": "Không thể cập nhật lịch camera.",
+      "editSchedule": "Chỉnh sửa lịch",
+      "deleteSchedule": "Xóa lịch",
+      "deleteConfirm": "Xóa lịch camera này?",
+      "deleteFailed": "Không thể xóa lịch camera.",
+      "runNow": "Chạy ngay",
+      "runScheduledCaptureNow": "Chạy lịch chụp ngay",
+      "runSuccessTitle": "Đã gửi yêu cầu chụp",
+      "runSuccess": "Yêu cầu chụp theo lịch đã được gửi.",
+      "runFailed": "Không thể chạy lịch chụp.",
+      "captureOptions": "Tùy chọn chụp",
+      "resolution": "Độ phân giải",
+      "quality": "Chất lượng",
+      "uploadEndpoint": "Upload endpoint",
+      "uploadEndpointPlaceholder": "Upload endpoint tùy chọn",
+      "status": "Trạng thái",
+      "alertBadge": "Cảnh báo",
+      "deviceUid": "Device UID",
+      "enabled": "Đang bật",
+      "disabled": "Đã tắt",
+      "timeOfDay": "Giờ chụp",
+      "recurrenceLabel": "Tần suất",
+      "lastRunAt": "Chạy lần cuối",
+      "nextRunAt": "Lần chạy tiếp theo",
+      "filters": "Bộ lọc",
+      "filterDeviceUid": "Lọc theo device UID",
+      "loading": "Đang tải lịch camera...",
+      "loadFailed": "Không tải được lịch camera.",
+      "empty": "Không có lịch camera nào.",
+      "errorTitle": "Lỗi lịch camera",
+      "filter": {
+        "all": "Tất cả",
+        "enabled": "Đang bật",
+        "disabled": "Đã tắt"
+      },
+      "validation": {
+        "timeOfDay": "Thời gian phải đúng định dạng HH:mm:ss.",
+        "deviceUid": "Device UID là bắt buộc.",
+        "recurrence": "Vui lòng chọn tần suất.",
+        "resolution": "Vui lòng chọn độ phân giải hợp lệ.",
+        "quality": "Vui lòng chọn chất lượng hợp lệ."
+      },
+      "recurrence": {
+        "DAILY": "Hằng ngày",
+        "WEEKLY": "Hằng tuần",
+        "MONTHLY": "Hằng tháng"
+      },
+      "qualityOptions": {
+        "LOW": "Thấp",
+        "MEDIUM": "Trung bình",
+        "HIGH": "Cao"
+      },
+      "resolutionOptions": {
+        "QVGA": "QVGA",
+        "VGA": "VGA",
+        "HD": "HD"
+      }
+    },
+    "charts": {
+      "title": "Phân tích telemetry",
+      "description": "So sánh chỉ số lịch sử của thiết bị và xem mốc cảnh báo.",
+      "loading": "Đang tải telemetry...",
+      "loadFailed": "Không tải được biểu đồ telemetry.",
+      "emptyTitle": "Chưa có điểm telemetry",
+      "emptyDescription": "Hãy thử khoảng thời gian khác hoặc đợi thiết bị gửi dữ liệu.",
+      "compareMode": "Chế độ so sánh",
+      "expand": "Phóng to",
+      "expandedTitle": "Biểu đồ telemetry",
+      "alertMarkers": "Mốc cảnh báo",
+      "markerTimestamp": "Thời gian",
+      "markerSeverity": "Mức độ",
+      "dismissMarker": "Ẩn mốc",
+      "legend": "Chú giải",
+      "liveRefresh": "Tự làm mới",
+      "tooltipAlert": "{{name}} · {{severity}} · {{time}}"
     },
     "metrics": {
       "ranges": {
@@ -1159,6 +1354,43 @@
         "H24": "24h",
         "D7": "7 ngày",
         "D30": "30 ngày"
+      }
+    },
+    "alertRules": {
+      "kicker": "Quy tắc IoT",
+      "listTitle": "Quy tắc cảnh báo",
+      "description": "Tạo và điều chỉnh ngưỡng telemetry cho cảnh báo mobile và web.",
+      "createButton": "Tạo quy tắc",
+      "editButton": "Chỉnh sửa",
+      "deleteButton": "Xóa",
+      "deleteConfirm": "Xóa quy tắc cảnh báo này?",
+      "enabled": "Đang bật",
+      "severity": "Mức độ",
+      "thresholdMin": "Ngưỡng min",
+      "thresholdMax": "Ngưỡng max",
+      "lastTriggered": "Kích hoạt lần cuối",
+      "name": "Tên quy tắc",
+      "sensorType": "Loại cảm biến",
+      "searchPlaceholder": "Tìm quy tắc...",
+      "loading": "Đang tải quy tắc cảnh báo...",
+      "loadFailed": "Không tải được quy tắc cảnh báo.",
+      "emptyTitle": "Không có quy tắc cảnh báo",
+      "emptyDescription": "Tạo quy tắc để nhận cảnh báo khi telemetry vượt ngưỡng.",
+      "errorTitle": "Lỗi quy tắc cảnh báo",
+      "saveFailed": "Không thể lưu quy tắc cảnh báo.",
+      "deleteFailed": "Không thể xóa quy tắc cảnh báo.",
+      "toggleFailed": "Không thể cập nhật trạng thái quy tắc.",
+      "filters": {
+        "all": "Tất cả",
+        "enabled": "Đang bật",
+        "disabled": "Đã tắt"
+      },
+      "validation": {
+        "nameRequired": "Tên quy tắc là bắt buộc.",
+        "sensorTypeRequired": "Loại cảm biến là bắt buộc.",
+        "severityInvalid": "Vui lòng chọn mức độ hợp lệ.",
+        "thresholdNumber": "Giá trị ngưỡng phải là số hợp lệ.",
+        "minLessThanMax": "Ngưỡng min phải nhỏ hơn hoặc bằng ngưỡng max."
       }
     }
   },

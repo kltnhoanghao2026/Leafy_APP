@@ -36,12 +36,42 @@ export const zoneChartQueryOptions = (
     staleTime: 60_000,
   });
 
+export const deviceMetricsComparisonQueryOptions = (
+  deviceId?: string,
+  sensorCodes: SensorCode[] = [],
+  range?: ChartRange,
+) =>
+  queryOptions({
+    queryKey: iotKeys.deviceMetricsComparison(deviceId, sensorCodes, range),
+    queryFn: () =>
+      Promise.all(
+        sensorCodes.map((sensorCode) =>
+          collectorApi.getDeviceChart(deviceId as string, {
+            sensorCode,
+            range: range as ChartRange,
+          }),
+        ),
+      ),
+    enabled: Boolean(deviceId && range && sensorCodes.length),
+    staleTime: 60_000,
+  });
+
 export const useDeviceChart = (
   deviceId?: string,
   sensorCode?: SensorCode,
   range?: ChartRange,
 ) => {
   return useQuery(deviceChartQueryOptions(deviceId, sensorCode, range));
+};
+
+export const useDeviceTelemetry = useDeviceChart;
+
+export const useDeviceMetricsComparison = (
+  deviceId?: string,
+  sensorCodes: SensorCode[] = [],
+  range?: ChartRange,
+) => {
+  return useQuery(deviceMetricsComparisonQueryOptions(deviceId, sensorCodes, range));
 };
 
 export const useZoneChart = (

@@ -12,6 +12,12 @@ export const iotKeys = {
     [...iotKeys.all, "devices", deviceId, "latest-readings"] as const,
   deviceChart: (deviceId?: string, sensorCode?: string, range?: string) =>
     [...iotKeys.all, "devices", deviceId, "charts", sensorCode, range] as const,
+  deviceMetricsComparison: (
+    deviceId?: string,
+    sensorCodes?: readonly string[],
+    range?: string,
+  ) =>
+    [...iotKeys.all, "devices", deviceId, "charts", "compare", sensorCodes, range] as const,
   dashboardOverview: (farmPlotId?: string) =>
     [...iotKeys.all, "dashboard-overview", farmPlotId] as const,
   zoneOverview: (zoneId?: string) =>
@@ -20,10 +26,19 @@ export const iotKeys = {
     [...iotKeys.all, "zones", zoneId, "charts", sensorCode, range] as const,
   deviceConfig: (deviceId?: string) =>
     [...iotKeys.all, "devices", deviceId, "config"] as const,
+  deviceMedia: (deviceId?: string) =>
+    [...iotKeys.all, "devices", deviceId, "media"] as const,
+  deviceCameraSchedules: (deviceUid?: string) =>
+    [...iotKeys.all, "devices", deviceUid, "camera-schedules"] as const,
+  deviceCameraSchedule: (scheduleId?: string) =>
+    [...iotKeys.all, "camera-schedules", scheduleId] as const,
   alerts: (params?: unknown) =>
     params ? ([...iotKeys.all, "alerts", params] as const) : ([...iotKeys.all, "alerts"] as const),
   alertDetail: (alertId?: string) =>
     [...iotKeys.all, "alerts", alertId, "detail"] as const,
+  alertRules: () => [...iotKeys.all, "alert-rules"] as const,
+  alertRule: (ruleId?: string) =>
+    [...iotKeys.all, "alert-rules", ruleId] as const,
 };
 
 export const myDevicesQueryOptions = (params?: MyDevicesParams) =>

@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import type { ConfigFormValues } from "../utils/configValidation";
 import { validateConfigForm } from "../utils/configValidation";
@@ -20,6 +21,7 @@ export function ConfigForm({
   changed,
   saving,
 }: ConfigFormProps) {
+  const { t } = useTranslation();
   const validation = validateConfigForm(value);
   const canSave = !disabled && changed && validation.ok && !saving;
 
@@ -29,32 +31,32 @@ export function ConfigForm({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Thong so cau hinh</Text>
+      <Text style={styles.title}>{t("iot.config.formTitle")}</Text>
       <NumericField
         disabled={disabled}
-        label="Chu ky doc cam bien"
+        label={t("iot.config.samplingInterval")}
         onChangeText={(text) => update("samplingIntervalSec", text)}
-        suffix="giay"
+        suffix={t("iot.config.seconds")}
         value={value.samplingIntervalSec}
       />
       <NumericField
         disabled={disabled}
-        label="Chu ky gui du lieu"
+        label={t("iot.config.publishInterval")}
         onChangeText={(text) => update("publishIntervalSec", text)}
-        suffix="giay"
+        suffix={t("iot.config.seconds")}
         value={value.publishIntervalSec}
       />
       <NumericField
         disabled={disabled}
-        label="Thoi gian xac dinh offline"
+        label={t("iot.config.offlineTimeout")}
         onChangeText={(text) => update("offlineTimeoutSec", text)}
-        suffix="giay"
+        suffix={t("iot.config.seconds")}
         value={value.offlineTimeoutSec}
       />
       <View style={styles.switchRow}>
         <View style={styles.switchText}>
-          <Text style={styles.label}>Bat canh bao</Text>
-          <Text style={styles.hint}>Cho phep backend danh gia rule canh bao.</Text>
+          <Text style={styles.label}>{t("iot.config.alertEnabled")}</Text>
+          <Text style={styles.hint}>{t("iot.config.alertEnabledHint")}</Text>
         </View>
         <Switch
           disabled={disabled}
@@ -67,7 +69,7 @@ export function ConfigForm({
         <View style={styles.errorBox}>
           {validation.errors.map((error) => (
             <Text key={error} style={styles.errorText}>
-              {error}
+              {t(error)}
             </Text>
           ))}
         </View>
@@ -78,7 +80,9 @@ export function ConfigForm({
         onPress={onSubmit}
         style={[styles.saveButton, !canSave && styles.saveButtonDisabled]}
       >
-        <Text style={styles.saveButtonText}>{saving ? "Dang luu..." : "Luu cau hinh"}</Text>
+        <Text style={styles.saveButtonText}>
+          {saving ? t("iot.config.saving") : t("iot.config.save")}
+        </Text>
       </Pressable>
     </View>
   );
