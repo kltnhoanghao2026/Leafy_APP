@@ -18,6 +18,7 @@
  * - `iot.metrics.dashboard.*`: IoT dashboard overview, farm selector, zone list, and summary cards.
  * - `iot.metrics.zone.*`: zone metrics summary cards, chart controls, loading, empty, and error states.
  * - `iot.alerts.*`: alert list/detail labels, filters, badges, and acknowledge/resolve actions.
+ * - `iot.alerts.notification*` and `iot.alerts.deepLink*`: push notification and alert deep-link copy.
  * - `iot.alertRules.*`: alert-rule list, create/edit form, enable toggle, validation, and CRUD actions.
  *
  * Pending for future phases:

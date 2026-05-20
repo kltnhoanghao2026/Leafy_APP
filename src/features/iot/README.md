@@ -97,3 +97,28 @@ Covered config areas:
 - config validation messages
 
 When adding future config fields, add keys under `iot.config.*` first, then reference them with `useTranslation()` in the component. Validation utilities should return translation keys instead of rendered text so all callers can localize consistently.
+
+## Phase 7 alert push deep links
+
+IoT alert push payload schema:
+
+```json
+{
+  "title": "string",
+  "body": "string",
+  "alertType": "string",
+  "referenceId": "alertId",
+  "deviceUid": "string",
+  "timestamp": "ISO-8601 string"
+}
+```
+
+Optional `titleKey` and `bodyKey` are resolved with i18n when present. Otherwise the payload title/body are used, with `iot.alerts.notificationTitle` and `iot.alerts.notificationBody` as fallbacks.
+
+Deep-link behavior:
+- foreground notifications invalidate alert and notification caches
+- background/killed-app notification taps navigate to `/(main)/iot/alerts/{referenceId}`
+- notification drawer items with IoT alert types use the same route resolution
+- the IoT tab badge displays the current open-alert count from `useAlertEvents({ status: "OPEN" })`
+
+Supported IoT alert notification types include `IOT_ALERT`, `IOT_ALERT_EVENT`, `ALERT_EVENT`, `ALERT_TRIGGERED`, and `DEVICE_ALERT`. Payloads with a `referenceId` and alert-like type are also treated as IoT alerts.

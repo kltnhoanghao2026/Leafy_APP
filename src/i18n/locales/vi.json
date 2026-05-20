@@ -1330,6 +1330,10 @@
       "resolvedNotice": "Cảnh báo đã được xử lý.",
       "acknowledgeSuccess": "Đã xác nhận cảnh báo.",
       "resolveSuccess": "Đã đánh dấu cảnh báo là đã xử lý.",
+      "notificationTitle": "Cảnh báo IoT",
+      "notificationBody": "Một cảnh báo thiết bị cần được xử lý.",
+      "deepLinkOpening": "Đang mở chi tiết cảnh báo...",
+      "deepLinkMissingAlert": "Cảnh báo này không còn khả dụng.",
       "filters": {
         "title": "Bộ lọc",
         "status": "Trạng thái",

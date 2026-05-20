@@ -1330,6 +1330,10 @@
       "resolvedNotice": "This alert has been resolved.",
       "acknowledgeSuccess": "Alert acknowledged.",
       "resolveSuccess": "Alert marked as resolved.",
+      "notificationTitle": "IoT alert",
+      "notificationBody": "A device alert needs attention.",
+      "deepLinkOpening": "Opening alert detail...",
+      "deepLinkMissingAlert": "This alert is no longer available.",
       "filters": {
         "title": "Filters",
         "status": "Status",

@@ -28,6 +28,7 @@ export const ROUTES = {
     AI_CHAT: "/ai-chat",
     IOT: "/iot",
     IOT_DEVICE_DETAIL: (deviceId: string) => `/iot/devices/${deviceId}`,
+    IOT_ALERT_DETAIL: (alertId: string) => `/iot/alerts/${alertId}`,
     IOT_CAMERA_SCHEDULES: "/iot/camera-schedules",
   },
 

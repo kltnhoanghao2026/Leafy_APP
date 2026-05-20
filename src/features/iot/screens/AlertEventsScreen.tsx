@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, BellRing, RefreshCw } from "lucide-react-native";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  type FlatList as FlatListType,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -37,6 +38,7 @@ export function AlertEventsScreen() {
     severity?: string | string[];
     deviceId?: string | string[];
     zoneId?: string | string[];
+    highlightAlertId?: string | string[];
   }>();
   const [status, setStatus] = useState<AlertStatus | undefined>(
     getParamValue(params.status),
@@ -47,6 +49,8 @@ export function AlertEventsScreen() {
   const [deviceId, setDeviceId] = useState(getParamValue(params.deviceId) ?? "");
   const [zoneId, setZoneId] = useState(getParamValue(params.zoneId) ?? "");
   const [timeRange, setTimeRange] = useState<AlertTimeRange>("D7");
+  const highlightedAlertId = getParamValue(params.highlightAlertId);
+  const listRef = useRef<FlatListType<AlertEventItemResponse>>(null);
 
   const queryParams = useMemo<AlertEventsParams>(() => {
     const time = getAlertTimeRange(timeRange);
@@ -66,6 +70,9 @@ export function AlertEventsScreen() {
 
   const alertsQuery = useAlertEvents(queryParams);
   const alerts = alertsQuery.data?.items ?? [];
+  const highlightedIndex = highlightedAlertId
+    ? alerts.findIndex((alert) => alert.id === highlightedAlertId)
+    : -1;
 
   const openAlert = (alert: AlertEventItemResponse) => {
     router.push({
@@ -76,8 +83,19 @@ export function AlertEventsScreen() {
 
   return (
     <FlatList
+      ref={listRef}
       contentContainerStyle={styles.content}
       data={alerts}
+      onContentSizeChange={() => {
+        if (highlightedIndex >= 0) {
+          listRef.current?.scrollToIndex({
+            index: highlightedIndex,
+            animated: true,
+            viewPosition: 0.35,
+          });
+        }
+      }}
+      onScrollToIndexFailed={() => undefined}
       keyExtractor={(item) => item.id}
       ListEmptyComponent={
         alertsQuery.isLoading ? null : (
@@ -149,7 +167,13 @@ export function AlertEventsScreen() {
           tintColor="#15803d"
         />
       }
-      renderItem={({ item }) => <AlertEventCard alert={item} onPress={openAlert} />}
+      renderItem={({ item }) => (
+        <AlertEventCard
+          alert={item}
+          highlighted={item.id === highlightedAlertId}
+          onPress={openAlert}
+        />
+      )}
       style={styles.screen}
     />
   );

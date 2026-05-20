@@ -11,9 +11,10 @@ import { AlertStatusBadge } from "./AlertStatusBadge";
 type AlertEventCardProps = {
   alert: AlertEventItemResponse;
   onPress: (alert: AlertEventItemResponse) => void;
+  highlighted?: boolean;
 };
 
-export function AlertEventCard({ alert, onPress }: AlertEventCardProps) {
+export function AlertEventCard({ alert, onPress, highlighted }: AlertEventCardProps) {
   const { t } = useTranslation();
   const sensorCode = alert.sensorCode || alert.alertType || undefined;
   const value = alert.triggerValue ?? alert.readingValue;
@@ -23,7 +24,11 @@ export function AlertEventCard({ alert, onPress }: AlertEventCardProps) {
   return (
     <Pressable
       onPress={() => onPress(alert)}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.card,
+        highlighted && styles.highlighted,
+        pressed && styles.pressed,
+      ]}
     >
       <View style={styles.header}>
         <View style={styles.badges}>
@@ -69,6 +74,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
+  },
+  highlighted: {
+    borderColor: "#16a34a",
+    borderWidth: 2,
   },
   message: {
     color: "#0f172a",
