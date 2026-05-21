@@ -1206,7 +1206,8 @@
         "deviceUid": "Device UID là bắt buộc.",
         "recurrence": "Vui lòng chọn tần suất.",
         "resolution": "Vui lòng chọn độ phân giải hợp lệ.",
-        "quality": "Vui lòng chọn chất lượng hợp lệ."
+        "quality": "Vui lòng chọn chất lượng hợp lệ.",
+        "uploadEndpoint": "Upload endpoint phải là URL HTTP hoặc HTTPS hợp lệ."
       },
       "recurrence": {
         "DAILY": "Hằng ngày",

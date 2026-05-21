@@ -17,12 +17,39 @@ type DeviceCaptureScheduleRequest = Omit<
   triggerType?: DeviceCameraScheduleRequest["triggerType"];
 };
 
+const getScheduleId = (schedule: DeviceCameraSchedule) =>
+  schedule.scheduleId ?? schedule.id;
+
+const updateScheduleCache = (
+  current: unknown,
+  updater: (schedules: DeviceCameraSchedule[]) => DeviceCameraSchedule[],
+) => {
+  if (Array.isArray(current)) {
+    return updater(current);
+  }
+
+  if (current && typeof current === "object" && "data" in current) {
+    const response = current as { data?: unknown };
+    if (Array.isArray(response.data)) {
+      return { ...response, data: updater(response.data) };
+    }
+    if (response.data && typeof response.data === "object" && "data" in response.data) {
+      const envelope = response.data as { data?: unknown };
+      if (Array.isArray(envelope.data)) {
+        return { ...response, data: { ...envelope, data: updater(envelope.data) } };
+      }
+    }
+  }
+
+  return current;
+};
+
 const invalidateScheduleSideEffects = (
   queryClient: ReturnType<typeof useQueryClient>,
   deviceUid?: string,
   schedule?: DeviceCameraSchedule,
 ) => {
-  const scheduleId = schedule?.scheduleId ?? schedule?.id;
+  const scheduleId = schedule ? getScheduleId(schedule) : undefined;
   queryClient.invalidateQueries({
     queryKey: iotKeys.deviceCameraSchedules(deviceUid),
   });
@@ -50,9 +77,9 @@ const invalidateScheduleSideEffects = (
  * - GET /iot/devices/{deviceId}/media -> useDeviceMedia
  * - POST /iot/devices/{deviceId}/camera/capture -> useCaptureDeviceImageMutation
  * - POST /iot/devices/{deviceUid}/camera/detect?force=true -> useDetectCameraDiseaseMutation
- * - GET /iot/devices/{deviceUid}/camera/schedules -> useDeviceSchedules
- * - POST /iot/devices/{deviceUid}/camera/schedules -> useCreateDeviceScheduleMutation
- * - PUT/DELETE /iot/devices/{deviceUid}/camera/schedules/{scheduleId}
+ * - GET /iot/devices/{deviceUid}/camera/capture-schedule -> useDeviceSchedules
+ * - POST /iot/devices/{deviceUid}/camera/capture-schedule -> useCreateDeviceScheduleMutation
+ * - PUT/DELETE /iot/devices/{deviceUid}/camera/capture-schedule/{scheduleId}
  * - POST /iot/devices/{deviceUid}/camera/run-scheduled/{scheduleId}
  * - GET /iot/camera-schedules -> useAllDeviceCameraSchedules
  * - POST /admin/camera/run-scheduled/{deviceUid}
@@ -153,31 +180,32 @@ export const useCreateDeviceCameraScheduleMutation = (deviceUid?: string) => {
       await queryClient.cancelQueries({
         queryKey: iotKeys.deviceCameraSchedules(targetDeviceUid),
       });
-      const previous = queryClient.getQueryData<DeviceCameraSchedule[]>(
+      const previous = queryClient.getQueryData(
         iotKeys.deviceCameraSchedules(targetDeviceUid),
       );
-      queryClient.setQueryData<DeviceCameraSchedule[]>(
-        iotKeys.deviceCameraSchedules(targetDeviceUid),
-        [
-          {
-            scheduleId: `optimistic-${Date.now()}`,
-            deviceUid: targetDeviceUid,
-            enabled: schedule.enabled ?? true,
-            triggerType: schedule.triggerType ?? "SCHEDULED",
-            timeOfDay: schedule.timeOfDay,
-            recurrence: schedule.recurrence,
-            resolution: schedule.resolution,
-            quality: schedule.quality,
-            uploadEndpoint: schedule.uploadEndpoint,
-          },
-          ...(previous ?? []),
-        ],
-      );
-      return { previous };
+      queryClient.setQueryData(iotKeys.deviceCameraSchedules(targetDeviceUid), (current) => {
+        const optimisticSchedule: DeviceCameraSchedule = {
+          scheduleId: `optimistic-${Date.now()}`,
+          deviceUid: targetDeviceUid,
+          enabled: schedule.enabled ?? true,
+          triggerType: schedule.triggerType ?? "SCHEDULED",
+          timeOfDay: schedule.timeOfDay,
+          recurrence: schedule.recurrence,
+          resolution: schedule.resolution,
+          quality: schedule.quality,
+          uploadEndpoint: schedule.uploadEndpoint,
+        };
+        const updated = updateScheduleCache(current, (schedules) => [
+          optimisticSchedule,
+          ...schedules,
+        ]);
+        return updated === current ? [optimisticSchedule] : updated;
+      });
+      return { previous, deviceUid: targetDeviceUid };
     },
     onError: (_error, _schedule, context) => {
-      const targetDeviceUid = _schedule.deviceUid ?? deviceUid;
-      if (targetDeviceUid && context?.previous) {
+      const targetDeviceUid = context?.deviceUid ?? _schedule.deviceUid ?? deviceUid;
+      if (targetDeviceUid && context?.previous !== undefined) {
         queryClient.setQueryData(
           iotKeys.deviceCameraSchedules(targetDeviceUid),
           context.previous,
@@ -213,22 +241,24 @@ export const useUpdateDeviceCameraScheduleMutation = (deviceUid?: string) => {
       await queryClient.cancelQueries({
         queryKey: iotKeys.deviceCameraSchedules(deviceUid),
       });
-      const previous = queryClient.getQueryData<DeviceCameraSchedule[]>(
+      const previous = queryClient.getQueryData(
         iotKeys.deviceCameraSchedules(deviceUid),
       );
-      queryClient.setQueryData<DeviceCameraSchedule[]>(
+      queryClient.setQueryData(
         iotKeys.deviceCameraSchedules(deviceUid),
-        (current = []) =>
-          current.map((schedule) =>
-            (schedule.scheduleId ?? schedule.id) === scheduleId
-              ? { ...schedule, ...updates }
-              : schedule,
+        (current) =>
+          updateScheduleCache(current, (schedules) =>
+            schedules.map((schedule) =>
+              getScheduleId(schedule) === scheduleId
+                ? { ...schedule, ...updates }
+                : schedule,
+            ),
           ),
       );
       return { previous };
     },
     onError: (_error, _variables, context) => {
-      if (deviceUid && context?.previous) {
+      if (deviceUid && context?.previous !== undefined) {
         queryClient.setQueryData(
           iotKeys.deviceCameraSchedules(deviceUid),
           context.previous,
@@ -255,18 +285,20 @@ export const useDeleteDeviceCameraScheduleMutation = (deviceUid?: string) => {
       await queryClient.cancelQueries({
         queryKey: iotKeys.deviceCameraSchedules(deviceUid),
       });
-      const previous = queryClient.getQueryData<DeviceCameraSchedule[]>(
+      const previous = queryClient.getQueryData(
         iotKeys.deviceCameraSchedules(deviceUid),
       );
-      queryClient.setQueryData<DeviceCameraSchedule[]>(
+      queryClient.setQueryData(
         iotKeys.deviceCameraSchedules(deviceUid),
-        (current = []) =>
-          current.filter((schedule) => (schedule.scheduleId ?? schedule.id) !== scheduleId),
+        (current) =>
+          updateScheduleCache(current, (schedules) =>
+            schedules.filter((schedule) => getScheduleId(schedule) !== scheduleId),
+          ),
       );
       return { previous };
     },
     onError: (_error, _scheduleId, context) => {
-      if (deviceUid && context?.previous) {
+      if (deviceUid && context?.previous !== undefined) {
         queryClient.setQueryData(
           iotKeys.deviceCameraSchedules(deviceUid),
           context.previous,

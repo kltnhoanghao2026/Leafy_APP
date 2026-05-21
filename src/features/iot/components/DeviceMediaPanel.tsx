@@ -35,6 +35,14 @@ const RECURRENCE_OPTIONS: CameraScheduleRecurrence[] = ["DAILY", "WEEKLY", "MONT
 const RESOLUTION_OPTIONS: CameraCaptureResolution[] = ["QVGA", "VGA", "HD"];
 const QUALITY_OPTIONS: CameraCaptureQuality[] = ["LOW", "MEDIUM", "HIGH"];
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+const isHttpUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
 
 type DeviceMediaPanelProps = {
   deviceId: string;
@@ -63,6 +71,27 @@ const isDiseaseDetected = (media?: DeviceMediaEvent | null) =>
   media?.analysis?.status === "DISEASE_DETECTED" ||
   media?.analysis?.diseaseDetected === true;
 
+const normalizeSchedules = (value: unknown): DeviceCameraSchedule[] => {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (value && typeof value === "object" && "data" in value) {
+    const response = value as { data?: unknown };
+    if (Array.isArray(response.data)) {
+      return response.data as DeviceCameraSchedule[];
+    }
+    if (response.data && typeof response.data === "object" && "data" in response.data) {
+      const envelope = response.data as { data?: unknown };
+      if (Array.isArray(envelope.data)) {
+        return envelope.data as DeviceCameraSchedule[];
+      }
+    }
+  }
+
+  return [];
+};
+
 export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps) {
   const { t } = useTranslation();
   const mediaQuery = useDeviceMedia(deviceId);
@@ -84,7 +113,10 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
   const [formError, setFormError] = useState<string | null>(null);
 
   const mediaEvents = mediaQuery.data ?? [];
-  const schedules = schedulesQuery.data ?? [];
+  const schedules = useMemo(
+    () => normalizeSchedules(schedulesQuery.data),
+    [schedulesQuery.data],
+  );
   const latestUploaded = useMemo(
     () =>
       mediaEvents.find((event) => event.status === "UPLOADED") ??
@@ -112,6 +144,10 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
 
     if (!QUALITY_OPTIONS.includes(quality)) {
       return t("iot.cameraSchedules.validation.quality");
+    }
+
+    if (uploadEndpoint.trim() && !isHttpUrl(uploadEndpoint.trim())) {
+      return t("iot.cameraSchedules.validation.uploadEndpoint");
     }
 
     return null;
@@ -184,7 +220,14 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
     try {
       await updateScheduleMutation.mutateAsync({
         scheduleId,
-        updates: { enabled: !schedule.enabled },
+        updates: {
+          enabled: !schedule.enabled,
+          timeOfDay: schedule.timeOfDay,
+          recurrence: schedule.recurrence,
+          resolution: (schedule.resolution ?? "VGA") as CameraCaptureResolution,
+          quality: (schedule.quality ?? "MEDIUM") as CameraCaptureQuality,
+          uploadEndpoint: schedule.uploadEndpoint ?? undefined,
+        },
       });
     } catch {
       showError(t("iot.cameraSchedules.updateFailed"));

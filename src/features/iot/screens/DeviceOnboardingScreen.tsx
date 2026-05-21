@@ -21,6 +21,7 @@ import { OnboardingProgress } from "../components/OnboardingProgress";
 import { WifiSetupGuide } from "../components/WifiSetupGuide";
 import {
   useClaimDeviceMutation,
+  useConnectDeviceMutation,
   useGenerateClaimCodeMutation,
   useProvisionDeviceMutation,
 } from "../hooks/useDeviceOnboarding";
@@ -75,6 +76,7 @@ export function DeviceOnboardingScreen() {
   const provisionMutation = useProvisionDeviceMutation();
   const claimCodeMutation = useGenerateClaimCodeMutation();
   const claimMutation = useClaimDeviceMutation();
+  const connectMutation = useConnectDeviceMutation();
   const defaultDeviceName = t("iot.devices.defaultName");
   const suggestedSensorName = (zone?: string) =>
     t("iot.devices.onboarding.suggestedSensorName", {
@@ -130,6 +132,7 @@ export function DeviceOnboardingScreen() {
     provisionMutation.isPending ||
     claimCodeMutation.isPending ||
     claimMutation.isPending ||
+    connectMutation.isPending ||
     Boolean(progressStep);
 
   const updateLocation = (nextLocation: FarmZoneSelection) => {
@@ -161,20 +164,11 @@ export function DeviceOnboardingScreen() {
 
     try {
       setProgressStep(t("iot.devices.onboarding.progressProvisioning"));
-      const provisioned = await provisionMutation.mutateAsync({
+      const claimed = await connectMutation.mutateAsync({
         deviceUid: effectivePayload.deviceUid,
         deviceCode: effectivePayload.deviceCode,
         deviceType: effectivePayload.deviceType,
         deviceName: deviceName.trim() || effectivePayload.model || defaultDeviceName,
-      });
-
-      setProgressStep(t("iot.devices.onboarding.progressClaimCode"));
-      const claimCode = await claimCodeMutation.mutateAsync(provisioned.id);
-
-      setProgressStep(t("iot.devices.onboarding.progressClaiming"));
-      const claimed = await claimMutation.mutateAsync({
-        deviceUid: provisioned.deviceUid,
-        claimCode: claimCode.claimCode,
         farmPlotId: location.farmPlotId,
         zoneId: location.zoneId,
       });
@@ -187,11 +181,10 @@ export function DeviceOnboardingScreen() {
         sortDir: "desc",
       });
       const resolved =
-        claimed ||
         refreshedDevices.items.find(
-          (device) => device.deviceUid === provisioned.deviceUid,
+          (device) => device.deviceUid === claimed.deviceUid,
         ) ||
-        provisioned;
+        claimed;
 
       setSuccessDevice(resolved);
       setShowWifiGuide(resolved.status !== "ONLINE");
