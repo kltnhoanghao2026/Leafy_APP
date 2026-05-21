@@ -135,6 +135,13 @@ export type ProvisionDeviceRequest = {
   deviceCode: string;
   deviceName?: string;
   deviceType: string;
+  farmPlotId?: string;
+  zoneId?: string;
+};
+
+export type ConnectDeviceRequest = ProvisionDeviceRequest & {
+  farmPlotId: string;
+  zoneId: string;
 };
 
 export type GenerateClaimCodeResponse = {
@@ -244,6 +251,7 @@ export type DeviceMediaEvent = {
 export type CameraCaptureRequest = {
   quality?: CameraCaptureQuality;
   resolution?: CameraCaptureResolution;
+  uploadEndpoint?: string;
 };
 
 export type CameraCaptureResponse = {
@@ -289,6 +297,8 @@ export type DeviceCameraSchedule = {
   uploadEndpoint?: string | null;
   lastRunAt?: string | null;
   nextRunAt?: string | null;
+  lastMediaThumbnail?: string | null;
+  lastMediaStatus?: DeviceMediaEventStatus | string | null;
   lastMediaEvent?: DeviceMediaEvent | null;
 };
 

@@ -1206,7 +1206,8 @@
         "deviceUid": "Device UID is required.",
         "recurrence": "Choose a recurrence.",
         "resolution": "Choose a supported resolution.",
-        "quality": "Choose a supported quality."
+        "quality": "Choose a supported quality.",
+        "uploadEndpoint": "Upload endpoint must be a valid HTTP or HTTPS URL."
       },
       "recurrence": {
         "DAILY": "Daily",

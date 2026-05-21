@@ -16,6 +16,7 @@ import type {
   GenerateClaimCodeResponse,
   LatestReadingItemResponse,
   ClaimDeviceRequest,
+  ConnectDeviceRequest,
   ChartRange,
   AlertEventDetailResponse,
   AlertEventItemResponse,
@@ -64,6 +65,15 @@ const normalizePagedResponse = <T>(
     size: response.size ?? items.length,
     totalPages: response.totalPages ?? 1,
   };
+};
+
+const isNotFoundError = (error: unknown): boolean => {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+
+  const maybeError = error as { response?: { status?: number }; message?: string };
+  return maybeError.response?.status === 404 || maybeError.message?.includes("404") === true;
 };
 
 export const collectorApi = {
@@ -176,6 +186,30 @@ export const collectorApi = {
     );
 
     return response.data.data;
+  },
+
+  async connectDevice(payload: ConnectDeviceRequest): Promise<DeviceResponse> {
+    try {
+      const response = await apiClient.post<ApiResponse<DeviceResponse>>(
+        API_ENDPOINTS.IOT.DEVICES.CONNECT,
+        payload,
+      );
+
+      return response.data.data;
+    } catch (error) {
+      if (!isNotFoundError(error)) {
+        throw error;
+      }
+
+      const provisioned = await collectorApi.provisionDevice(payload);
+      const claimCode = await collectorApi.generateClaimCode(provisioned.id);
+      return collectorApi.claimDevice({
+        deviceUid: provisioned.deviceUid,
+        claimCode: claimCode.claimCode,
+        farmPlotId: payload.farmPlotId,
+        zoneId: payload.zoneId,
+      });
+    }
   },
 
   async generateClaimCode(

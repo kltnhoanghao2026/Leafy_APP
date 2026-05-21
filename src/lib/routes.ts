@@ -130,6 +130,7 @@ export const API_ENDPOINTS = {
       LATEST_READINGS: (deviceId: string) =>
         `/iot/devices/${deviceId}/latest-readings`,
       PROVISION: "/iot/devices/provision",
+      CONNECT: "/iot/devices/connect",
       CLAIM_CODE: (deviceId: string) => `/iot/devices/${deviceId}/claim-code`,
       CLAIM: "/iot/devices/claim",
       CHARTS: (deviceId: string) => `/iot/devices/${deviceId}/charts`,
@@ -141,9 +142,9 @@ export const API_ENDPOINTS = {
         `/iot/devices/${deviceUid}/camera/detect`,
       MEDIA: (deviceId: string) => `/iot/devices/${deviceId}/media`,
       CAMERA_SCHEDULES: (deviceUid: string) =>
-        `/iot/devices/${deviceUid}/camera/schedules`,
+        `/iot/devices/${deviceUid}/camera/capture-schedule`,
       CAMERA_SCHEDULE: (deviceUid: string, scheduleId: string) =>
-        `/iot/devices/${deviceUid}/camera/schedules/${scheduleId}`,
+        `/iot/devices/${deviceUid}/camera/capture-schedule/${scheduleId}`,
       CAMERA_SCHEDULE_RUN_NOW: (deviceUid: string, scheduleId: string) =>
         `/iot/devices/${deviceUid}/camera/run-scheduled/${scheduleId}`,
       CAMERA_CAPTURE_SCHEDULE: (deviceUid: string) =>
