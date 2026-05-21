@@ -38,6 +38,19 @@ type BackendPagedResponse<T> = PagedResponse<T> & {
   totalElements?: number;
 };
 
+const unwrapResponseData = <T>(response: ApiResponse<T> | T): T => {
+  if (
+    response &&
+    typeof response === "object" &&
+    "data" in response &&
+    (response as ApiResponse<T>).data !== undefined
+  ) {
+    return (response as ApiResponse<T>).data;
+  }
+
+  return response as T;
+};
+
 const cleanParams = <T extends Record<string, unknown>>(params?: T): T | undefined => {
   if (!params) {
     return undefined;
@@ -85,7 +98,7 @@ export const collectorApi = {
       { params: cleanParams(params) },
     );
 
-    return normalizePagedResponse(response.data.data);
+    return normalizePagedResponse(unwrapResponseData(response.data));
   },
 
   async getAlertEvents(
@@ -96,7 +109,7 @@ export const collectorApi = {
       { params: cleanParams(params) },
     );
 
-    return normalizePagedResponse(response.data.data);
+    return normalizePagedResponse(unwrapResponseData(response.data));
   },
 
   async getAlertEventById(alertId: string): Promise<AlertEventDetailResponse> {
@@ -104,7 +117,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.ALERT_EVENT(alertId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async acknowledgeAlert(alertId: string): Promise<AlertEventDetailResponse> {
@@ -112,7 +125,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.ALERT_EVENT_ACKNOWLEDGE(alertId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async resolveAlert(alertId: string): Promise<AlertEventDetailResponse> {
@@ -120,14 +133,14 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.ALERT_EVENT_RESOLVE(alertId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async getAlertRules(): Promise<AlertRuleResponse[]> {
     const response = await apiClient.get<
       ApiResponse<AlertRuleResponse[] | BackendPagedResponse<AlertRuleResponse>>
     >(API_ENDPOINTS.IOT.ALERT_RULES);
-    const data = response.data.data;
+    const data = unwrapResponseData(response.data);
 
     return Array.isArray(data) ? data : normalizePagedResponse(data).items;
   },
@@ -140,7 +153,7 @@ export const collectorApi = {
       payload,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async updateAlertRule(
@@ -152,7 +165,7 @@ export const collectorApi = {
       payload,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async deleteAlertRule(ruleId: string): Promise<void> {
@@ -164,7 +177,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.DEVICES.DETAIL(deviceId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async getDeviceLatestReadings(
@@ -174,7 +187,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.DEVICES.LATEST_READINGS(deviceId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async provisionDevice(
@@ -185,7 +198,7 @@ export const collectorApi = {
       payload,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async connectDevice(payload: ConnectDeviceRequest): Promise<DeviceResponse> {
@@ -195,7 +208,7 @@ export const collectorApi = {
         payload,
       );
 
-      return response.data.data;
+      return unwrapResponseData(response.data);
     } catch (error) {
       if (!isNotFoundError(error)) {
         throw error;
@@ -219,7 +232,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.DEVICES.CLAIM_CODE(deviceId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async claimDevice(payload: ClaimDeviceRequest): Promise<DeviceResponse> {
@@ -228,7 +241,7 @@ export const collectorApi = {
       payload,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async getDeviceChart(
@@ -240,7 +253,7 @@ export const collectorApi = {
       { params },
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async getZoneChart(
@@ -252,7 +265,7 @@ export const collectorApi = {
       { params },
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async getDashboardOverview(
@@ -263,7 +276,7 @@ export const collectorApi = {
       { params: { farmPlotId } },
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async getZoneOverview(zoneId: string): Promise<ZoneOverviewResponse> {
@@ -271,7 +284,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.FARM_ZONE_OVERVIEW(zoneId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async getDeviceConfig(deviceId: string): Promise<DeviceConfigResponse> {
@@ -279,7 +292,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.DEVICES.CONFIG(deviceId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async updateDeviceConfig(
@@ -291,7 +304,7 @@ export const collectorApi = {
       payload,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async pushDeviceConfig(deviceId: string): Promise<DeviceConfigResponse> {
@@ -299,7 +312,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.DEVICES.PUSH_CONFIG(deviceId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async getDeviceMedia(deviceId: string): Promise<DeviceMediaEvent[]> {
@@ -307,7 +320,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.DEVICES.MEDIA(deviceId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async captureDeviceImage(
@@ -319,7 +332,7 @@ export const collectorApi = {
       request,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async detectCameraDisease(
@@ -333,7 +346,7 @@ export const collectorApi = {
       { params: cleanParams({ force }) },
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async getDeviceCameraSchedules(
@@ -344,14 +357,14 @@ export const collectorApi = {
         API_ENDPOINTS.IOT.DEVICES.CAMERA_SCHEDULES(deviceUid),
       );
 
-      return response.data.data;
+      return unwrapResponseData(response.data);
     }
 
     const response = await apiClient.get<ApiResponse<DeviceCameraSchedule[]>>(
       API_ENDPOINTS.IOT.CAMERA_SCHEDULES,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async createDeviceCameraSchedule(
@@ -362,7 +375,7 @@ export const collectorApi = {
       schedule,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async createDeviceCaptureSchedule(
@@ -374,7 +387,7 @@ export const collectorApi = {
       schedule,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async updateDeviceCameraSchedule(
@@ -388,7 +401,7 @@ export const collectorApi = {
         payload,
       );
 
-      return response.data.data;
+      return unwrapResponseData(response.data);
     }
 
     const response = await apiClient.put<ApiResponse<DeviceCameraSchedule>>(
@@ -396,7 +409,7 @@ export const collectorApi = {
       updates,
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async deleteDeviceCameraSchedule(
@@ -424,14 +437,14 @@ export const collectorApi = {
         API_ENDPOINTS.IOT.DEVICES.CAMERA_SCHEDULE_RUN_NOW(deviceUid, scheduleId),
       );
 
-      return response.data.data;
+      return unwrapResponseData(response.data);
     }
 
     const response = await apiClient.post<ApiResponse<DeviceCameraSchedule>>(
       API_ENDPOINTS.IOT.CAMERA_SCHEDULE_RUN_NOW(scheduleId),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 
   async runScheduledCameraForDevice(
@@ -441,6 +454,6 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.ADMIN_CAMERA_RUN_SCHEDULED(deviceUid),
     );
 
-    return response.data.data;
+    return unwrapResponseData(response.data);
   },
 };
