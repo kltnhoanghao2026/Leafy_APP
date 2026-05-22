@@ -1,32 +1,25 @@
 import { Tabs, useRouter } from 'expo-router';
 import {
-  Home,
-  RadioTower,
   Activity,
-  Users,
-  User,
-  Menu,
   Bell,
   ClipboardList,
+  Home,
+  Menu,
+  RadioTower,
+  User,
+  Users,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  ActivityIndicator as RNActivityIndicator,
   Pressable,
-  StyleSheet,
   Text,
   View,
-  ActivityIndicator as RNActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Drawer } from 'react-native-drawer-layout';
-import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { useQueryClient } from '@tanstack/react-query';
-import { Dimensions } from 'react-native';
-import BackButton from '@/src/components/ui/BackButton';
-
-import Colors from '@/src/constants/Colors';
-import { useColorScheme } from '@/src/hooks/useColorScheme';
 import {
   useNotificationState,
   useNotificationHistory,
@@ -35,52 +28,15 @@ import {
   notificationKeys,
 } from '@/src/features/notifications';
 import type { UserNotificationResponse } from '@/src/features/notifications';
-
-// ── Notification deep-link map ────────────────────────────────────────────────
-
-const NOTIFICATION_ROUTES: Record<
-  string,
-  (referenceId: string) => string | null
-> = {
-  POST_COMMENT: (id) => `/(main)/community/post/${id}`,
-  POST_UPVOTE: (id) => `/(main)/community/post/${id}`,
-  COMMENT_REPLY: (id) => `/(main)/community/post/${id}`,
-  COMMENT_UPVOTE: (id) => `/(main)/community/post/${id}`,
-  USER_FOLLOW: (id) => `/(main)/profile/${id}`,
-  CONSULT_REQUEST: (id) => `/(main)/profile/${id}`,
-  PLAN_CONSULTING_CREATED: () => null,
-  PLAN_APPLIED: () => null,
-  SYSTEM: () => null,
-  DIRECT_MESSAGE: (id) => `/(main)/chat/${id}`,
-};
-
-const DRAWER_WIDTH = 280;
-
-// ── Center action tab button ──────────────────────────────────────────────────
-
-type CenterActionButtonProps = BottomTabBarButtonProps & {
-  borderColor: string;
-  labelColor: string;
-  label: string;
-};
-
-function CenterActionButton({
-  onPress,
-  borderColor,
-  labelColor,
-  label,
-}: CenterActionButtonProps) {
-  return (
-    <Pressable onPress={onPress} style={styles.centerButtonWrapper}>
-      <View style={[styles.centerButton, { borderColor }]}>
-        <Activity color="#FFFFFF" size={34} strokeWidth={2.5} />
-      </View>
-      <Text style={[styles.centerButtonLabel, { color: labelColor }]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
+import {
+  CenterActionButton,
+  NOTIFICATION_ROUTES,
+  DRAWER_WIDTH,
+  DRAWER_MENU_ITEMS,
+  useAppColors,
+  styles,
+} from './_shared';
+import { GlobalWebSocketListener } from '@/src/components/GlobalWebSocketListener';
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 
@@ -90,17 +46,17 @@ export default function MainLayout() {
   const insets = useSafeAreaInsets();
   const [moreDrawerVisible, setMoreDrawerVisible] = useState(false);
   const [notiDrawerVisible, setNotiDrawerVisible] = useState(false);
-  const colorScheme = useColorScheme();
+  const { scheme, palette } = useAppColors();
+  const tabIconDefault = palette.tabIconDefault;
+  const drawerBg = scheme === 'dark' ? palette.background : '#FFFFFF';
   const queryClient = useQueryClient();
   const markReadMutation = useMarkNotificationReadMutation();
 
+  const { data: stateData } = useNotificationState();
+  const unreadCount = stateData?.data?.unreadCount ?? 0;
+
   const { data: historyData, isLoading: historyLoading } = useNotificationHistory(false, true);
   const recentNotifications = historyData?.pages?.[0]?.data?.slice(0, 5) ?? [];
-
-  const scheme = colorScheme ?? 'light';
-  const palette = Colors[scheme];
-  const tabIconDefault = palette.tabIconDefault;
-  const drawerBg = scheme === 'dark' ? palette.background : '#FFFFFF';
 
   const openMoreDrawer = () => setMoreDrawerVisible(true);
   const openNotiDrawer = () => setNotiDrawerVisible(true);
@@ -131,33 +87,68 @@ export default function MainLayout() {
     router.push(path as never);
   };
 
-  // ── Drawers ─────────────────────────────────────────────────────────────────
+  // ── Drawer Icon Helper ──────────────────────────────────────────────────────
 
-  const renderLeftDrawer = () => (
-    <View style={{ flex: 1, backgroundColor: drawerBg, paddingTop: insets.top + 16, paddingBottom: Math.max(insets.bottom, 24), paddingHorizontal: 16 }}>
+  const getDrawerIcon = (labelKey: string) => {
+    const iconProps = { size: 20, color: palette.primary };
+    switch (labelKey) {
+      case 'mainNav.drawer.manageFarm':
+        return <Home {...iconProps} />;
+      case 'mainNav.drawer.managePlants':
+        return <Users {...iconProps} />;
+      case 'mainNav.drawer.managePlans':
+        return <ClipboardList {...iconProps} />;
+      case 'mainNav.drawer.manageEvents':
+      case 'mainNav.drawer.eventCalendar':
+        return <Bell {...iconProps} />;
+      case 'offline.sync.title':
+      case 'mainNav.drawer.predict':
+        return <Activity {...iconProps} />;
+      case 'mainNav.drawer.experts':
+        return <Users {...iconProps} />;
+      case 'mainNav.drawer.more':
+        return <Users {...iconProps} />;
+      default:
+        return <Bell {...iconProps} />;
+    }
+  };
+
+  // ── Drawer Content ───────────────────────────────────────────────────────────
+
+  const leftDrawerContent = (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: drawerBg,
+        paddingTop: insets.top + 16,
+        paddingBottom: Math.max(insets.bottom, 24),
+        paddingHorizontal: 16,
+      }}
+    >
       <Text style={[styles.drawerTitle, { color: palette.text }]}>
         {t('mainNav.drawer.options')}
       </Text>
-      {([
-        { label: t('mainNav.drawer.manageFarm'), path: '/(main)/farm', icon: <Home size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.managePlants'), path: '/(main)/plants', icon: <Users size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.managePlans', 'Quản lý kế hoạch'), path: '/(main)/plans', icon: <ClipboardList size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.manageEvents'), path: '/(main)/plant-events', icon: <Bell size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.eventCalendar'), path: '/(main)/plant-events/calendar', icon: <Bell size={20} color={palette.primary} /> },
-        { label: t('offline.sync.title', 'Sync Data'), path: '/(main)/sync', icon: <Activity size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.predict', 'Disease Detection'), path: '/(main)/predict', icon: <Activity size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.more'), path: '/(main)/community', icon: <Users size={20} color={palette.primary} /> },
-      ] as const).map(({ label, path, icon }) => (
-        <Pressable key={path} style={styles.drawerItem} onPress={() => navigate(path)}>
-          {icon}
-          <Text style={[styles.drawerItemText, { color: palette.text }]}>{label}</Text>
+      {DRAWER_MENU_ITEMS.map((item) => (
+        <Pressable key={item.path} style={styles.drawerItem} onPress={() => navigate(item.path)}>
+          {getDrawerIcon(item.labelKey)}
+          <Text style={[styles.drawerItemText, { color: palette.text }]}>
+            {item.label || t(item.labelKey)}
+          </Text>
         </Pressable>
       ))}
     </View>
   );
 
-  const renderRightDrawer = () => (
-    <View style={{ flex: 1, backgroundColor: drawerBg, paddingTop: insets.top + 16, paddingBottom: Math.max(insets.bottom, 24), paddingHorizontal: 16 }}>
+  const rightDrawerContent = (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: drawerBg,
+        paddingTop: insets.top + 16,
+        paddingBottom: Math.max(insets.bottom, 24),
+        paddingHorizontal: 16,
+      }}
+    >
       <Text style={[styles.drawerTitle, { color: palette.text, marginBottom: 12 }]}>
         {t('mainNav.drawer.notifications')}
       </Text>
@@ -174,7 +165,10 @@ export default function MainLayout() {
           ))}
         </View>
       )}
-      <Pressable style={[styles.drawerItem, { marginTop: 12 }]} onPress={() => { closeNotiDrawer(); router.push('/(main)/notifications' as never); }}>
+      <Pressable
+        style={[styles.drawerItem, { marginTop: 12 }]}
+        onPress={() => router.push('/(main)/notifications' as never)}
+      >
         <Bell size={20} color={palette.primary} />
         <Text style={[styles.drawerItemText, { color: palette.text }]}>
           {t('mainNav.drawer.viewAllNotifications')}
@@ -183,33 +177,7 @@ export default function MainLayout() {
     </View>
   );
 
-  // ── Tab shared header options ─────────────────────────────────────────────
-
-  const defaultHeaderLeft = () => (
-    <Pressable style={styles.headerIconButton} onPress={openMoreDrawer}>
-      <Menu size={20} color={palette.primary} />
-    </Pressable>
-  );
-
-  const defaultHeaderRight = () => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data: stateData } = useNotificationState();
-    const unreadCount = stateData?.data?.unreadCount ?? 0;
-    return (
-      <Pressable style={styles.headerRightWrapper} onPress={openNotiDrawer}>
-        <View style={styles.headerIconButton}>
-          <Bell size={20} color={palette.primary} />
-        </View>
-        {unreadCount > 0 && (
-          <View style={styles.notificationBadge}>
-            <Text style={styles.notificationBadgeText}>
-              {unreadCount > 99 ? '99+' : unreadCount}
-            </Text>
-          </View>
-        )}
-      </Pressable>
-    );
-  };
+  // ── Shared Tab Screen Options ─────────────────────────────────────────────────
 
   const sharedTabScreenOptions = {
     tabBarActiveTintColor: palette.tint,
@@ -240,13 +208,90 @@ export default function MainLayout() {
     headerTitleStyle: { fontSize: 18, fontWeight: '700' as const, color: palette.text, textAlign: 'center' as const },
     headerTitleAlign: 'center' as const,
     headerTitleContainerStyle: { alignItems: 'center' as const },
-    headerLeft: defaultHeaderLeft,
+    headerLeft: () => (
+      <Pressable style={styles.headerIconButton} onPress={openMoreDrawer}>
+        <Menu size={20} color={palette.primary} />
+      </Pressable>
+    ),
     headerLeftContainerStyle: { paddingLeft: 16 },
-    headerRight: defaultHeaderRight,
+    headerRight: () => (
+      <Pressable style={styles.headerRightWrapper} onPress={openNotiDrawer}>
+        <View style={styles.headerIconButton}>
+          <Bell size={20} color={palette.primary} />
+        </View>
+        {unreadCount > 0 && (
+          <View style={styles.notificationBadge}>
+            <Text style={styles.notificationBadgeText}>
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </Text>
+          </View>
+        )}
+      </Pressable>
+    ),
     headerRightContainerStyle: { paddingRight: 16 },
     animation: 'shift' as const,
     transitionSpec: { animation: 'timing' as const, config: { duration: 220 } },
   };
+
+  // ── Tab Screens ──────────────────────────────────────────────────────────────
+
+  const visibleTabs = [
+    {
+      name: 'index',
+      title: t('mainNav.tabs.overview'),
+      headerTitle: t('mainNav.headers.overview'),
+      tabBarIcon: ({ color }: { color: string }) => <Home color={color} size={24} />,
+    },
+    {
+      name: 'iot',
+      title: 'IoT',
+      headerTitle: 'IoT Dashboard',
+      tabBarIcon: ({ color }: { color: string }) => <RadioTower color={color} size={24} />,
+    },
+    {
+      name: 'calendar',
+      headerTitle: t('mainNav.headers.calendar'),
+      tabBarButton: (props: unknown) => (
+        <CenterActionButton
+          {...(props as object)}
+          borderColor={palette.background}
+          labelColor={palette.primary}
+          label={t('mainNav.tabs.calendar')}
+        />
+      ),
+    },
+    {
+      name: 'community',
+      title: t('mainNav.tabs.community'),
+      headerTitle: t('mainNav.headers.community'),
+      headerLeft: () => null,
+      headerRight: () => null,
+      tabBarIcon: ({ color }: { color: string }) => <Users color={color} size={24} />,
+    },
+    {
+      name: 'profile',
+      title: t('mainNav.tabs.profile'),
+      headerTitle: t('mainNav.headers.myAccount'),
+      headerLeft: () => null,
+      headerRight: () => null,
+      tabBarIcon: ({ color }: { color: string }) => <User color={color} size={24} />,
+    },
+  ];
+
+  const hiddenTabs = [
+    'farm',
+    'plants',
+    'plans',
+    'plant-events',
+    'sync',
+    'predict',
+    'ai-chat',
+    'notifications',
+    'chat',
+    'experts',
+  ];
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <Drawer
@@ -256,7 +301,7 @@ export default function MainLayout() {
       drawerPosition="left"
       drawerType="front"
       drawerStyle={{ backgroundColor: drawerBg, width: DRAWER_WIDTH }}
-      renderDrawerContent={renderLeftDrawer}
+      renderDrawerContent={() => leftDrawerContent}
       swipeEdgeWidth={40}
     >
       <Drawer
@@ -266,110 +311,44 @@ export default function MainLayout() {
         drawerPosition="right"
         drawerType="front"
         drawerStyle={{ backgroundColor: drawerBg, width: DRAWER_WIDTH }}
-        renderDrawerContent={renderRightDrawer}
+        renderDrawerContent={() => rightDrawerContent}
         swipeEdgeWidth={40}
       >
         <Tabs screenOptions={sharedTabScreenOptions}>
-          {/* ── Visible tabs ─────────────────────────────────────────────── */}
-          <Tabs.Screen
-            name="index"
-            options={{
-              title: t('mainNav.tabs.overview'),
-              headerTitle: t('mainNav.headers.overview'),
-              tabBarIcon: ({ color }) => <Home color={color} size={24} />,
-            }}
-          />
-          <Tabs.Screen
-            name="iot"
-            options={{
-              title: 'IoT',
-              headerTitle: 'IoT Dashboard',
-              tabBarIcon: ({ color }) => <RadioTower color={color} size={24} />,
-            }}
-          />
-          <Tabs.Screen
-            name="diagnosis"
-            options={{
-              title: '',
-              headerTitle: t('mainNav.headers.diagnosis'),
-              tabBarButton: (props) => (
-                <CenterActionButton
-                  {...props}
-                  borderColor={palette.background}
-                  labelColor={palette.primary}
-                  label={t('mainNav.tabs.diagnosis')}
-                />
-              ),
-            }}
-          />
-          <Tabs.Screen
-            name="community"
-            options={{
-              title: t('mainNav.tabs.community'),
-              headerTitle: t('mainNav.headers.community'),
-              headerLeft: () => null,
-              headerRight: () => null,
-              tabBarIcon: ({ color }) => <Users color={color} size={24} />,
-            }}
-          />
-          <Tabs.Screen
-            name="profile"
-            options={{
-              title: t('mainNav.tabs.profile'),
-              headerTitle: t('mainNav.headers.myAccount'),
-              headerLeft: () => null,
-              headerRight: () => null,
-              tabBarIcon: ({ color }) => <User color={color} size={24} />,
-            }}
-          />
+          {/* Visible tabs */}
+          {visibleTabs.map((tab) => (
+            <Tabs.Screen
+              key={tab.name}
+              name={tab.name}
+              options={{
+                title: tab.title,
+                headerTitle: tab.headerTitle,
+                tabBarIcon: tab.tabBarIcon,
+                ...(tab.tabBarButton !== undefined ? { tabBarButton: tab.tabBarButton } : {}),
+                ...(tab.headerLeft !== undefined ? { headerLeft: tab.headerLeft } : {}),
+                ...(tab.headerRight !== undefined ? { headerRight: tab.headerRight } : {}),
+              }}
+            />
+          ))}
 
-          {/* ── Hidden feature stacks (href:null) ────────────────────────── */}
-          <Tabs.Screen name="farm"          options={{ href: null, headerShown: false, tabBarStyle: { display: 'none' } }} />
-          <Tabs.Screen name="plants"        options={{ href: null, headerShown: false, tabBarStyle: { display: 'none' } }} />
-          <Tabs.Screen name="plans"         options={{ href: null, headerShown: false, tabBarStyle: { display: 'none' } }} />
-          <Tabs.Screen name="plant-events"  options={{ href: null, headerShown: false, tabBarStyle: { display: 'none' } }} />
-          <Tabs.Screen name="sync"          options={{ href: null, title: t('offline.sync.title', 'Sync Data'), headerTitle: t('offline.sync.title', 'Sync Data'), headerLeft: () => <BackButton />, tabBarStyle: { display: 'none' } }} />
-          <Tabs.Screen name="predict"       options={{ href: null, headerShown: false, tabBarStyle: { display: 'none' } }} />
-          <Tabs.Screen name="ai-chat"       options={{ href: null, headerShown: false, tabBarStyle: { display: 'none' } }} />
-          <Tabs.Screen name="notifications" options={{ href: null, headerShown: false, tabBarStyle: { display: 'none' } }} />
-          <Tabs.Screen name="chat"          options={{ href: null, headerShown: false, tabBarStyle: { display: 'none' } }} />
+          {/* Hidden feature stacks */}
+          {hiddenTabs.map((name) => (
+            <Tabs.Screen
+              key={name}
+              name={name}
+              options={{
+                href: null,
+                headerShown: false,
+                tabBarStyle: { display: 'none' },
+              }}
+            />
+          ))}
         </Tabs>
+
+        {/* Global WebSocket listeners — must be inside the Drawer so they
+            are part of the main layout and not unmounted on screen navigation */}
+        <GlobalWebSocketListener />
       </Drawer>
     </Drawer>
   );
 }
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-
-const styles = StyleSheet.create({
-  headerIconButton: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: 'rgba(47,127,52,0.1)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  headerRightWrapper: { position: 'relative', width: 36, height: 36 },
-  notificationBadge: {
-    position: 'absolute', top: -4, right: -6,
-    minWidth: 16, height: 16, borderRadius: 8,
-    backgroundColor: '#EF4444',
-    alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 3, borderWidth: 1.5, borderColor: '#FFFFFF',
-  },
-  notificationBadgeText: { fontSize: 9, fontWeight: '800', color: '#FFFFFF', lineHeight: 12 },
-  drawerTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
-  drawerItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 12, paddingHorizontal: 10,
-    borderRadius: 10, backgroundColor: 'rgba(47,127,52,0.08)', marginBottom: 10,
-  },
-  drawerItemText: { fontSize: 15, fontWeight: '600' },
-  centerButtonWrapper: { top: -26, alignItems: 'center', justifyContent: 'center', width: 88 },
-  centerButton: {
-    width: 74, height: 74, borderRadius: 37,
-    backgroundColor: '#2F7F34', justifyContent: 'center', alignItems: 'center',
-    borderWidth: 6, borderColor: '#F6F8F6',
-    shadowColor: '#2F7F34', shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.35, shadowRadius: 12, elevation: 10,
-  },
-  centerButtonLabel: { marginTop: 4, fontWeight: '700', fontSize: 11 },
-});

@@ -159,7 +159,7 @@ export function TargetPickerDropdown({
                       color: selectedApplyId === apply.id ? primaryColor : "#334155",
                     }}
                   >
-                    {apply.treatmentPlanName}
+                    {apply.planName}
                   </Text>
                 </View>
               </TouchableOpacity>

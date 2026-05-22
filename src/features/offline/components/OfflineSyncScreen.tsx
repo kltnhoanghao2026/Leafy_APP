@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,10 @@ import {
   Loader,
   Leaf,
   CloudDownload,
+  CloudUpload,
   WifiOff,
+  List,
+  Database,
 } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { Easing } from 'react-native-reanimated';
@@ -30,6 +33,8 @@ import { useOfflineSync } from '../hooks/useOfflineSync';
 import { useOfflineDataContext } from '../context/OfflineDataContext';
 import type { SyncTableKey, SyncTableStatus } from '../services/offline-sync.service';
 import { formatDistanceToNow } from 'date-fns';
+import { OfflineSyncQueueTab } from './OfflineSyncQueueTab';
+import { OfflineDatabaseSchemaTab } from './OfflineDatabaseSchemaTab';
 
 // ── Table metadata ─────────────────────────────────────────────────────────
 
@@ -85,7 +90,7 @@ export function OfflineSyncScreen() {
   const insets = useSafeAreaInsets();
 
   const { isOffline } = useNetworkContext();
-  const { syncStatus, recordCounts } = useOfflineDataContext();
+  const { syncStatus, recordCounts, pendingCount, isSyncingUp, manualSyncUp } = useOfflineDataContext();
   const {
     isSyncing,
     syncState,
@@ -96,6 +101,8 @@ export function OfflineSyncScreen() {
     triggerSync,
     resetSync,
   } = useOfflineSync();
+
+  const [activeTab, setActiveTab] = useState<'status' | 'queue' | 'schema'>('status');
 
   const tables: TableMeta[] = [
     {
@@ -149,7 +156,48 @@ export function OfflineSyncScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: palette.background }]}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 40 }]} showsVerticalScrollIndicator={false}>
+      {/* ── Tab Switcher ── */}
+      <View style={[styles.tabContainer, { backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: isDark ? '#334155' : '#e2e8f0' }]}>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'status' && [styles.activeTab, { backgroundColor: palette.primary }]]}
+          onPress={() => setActiveTab('status')}
+        >
+          <RefreshCw size={16} color={activeTab === 'status' ? '#fff' : (isDark ? '#94a3b8' : '#64748b')} />
+          <Text style={[styles.tabText, activeTab === 'status' ? styles.activeTabText : { color: isDark ? '#94a3b8' : '#64748b' }]}>
+            {t('offline.sync.statusTab', 'Trạng thái')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'queue' && [styles.activeTab, { backgroundColor: palette.primary }]]}
+          onPress={() => setActiveTab('queue')}
+        >
+          <List size={16} color={activeTab === 'queue' ? '#fff' : (isDark ? '#94a3b8' : '#64748b')} />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[styles.tabText, activeTab === 'queue' ? styles.activeTabText : { color: isDark ? '#94a3b8' : '#64748b' }]}>
+              {t('offline.sync.queueTab', 'Hàng đợi')}
+            </Text>
+            {pendingCount > 0 && (
+              <View style={[styles.badge, { backgroundColor: activeTab === 'queue' ? '#fff' : palette.primary }]}>
+                <Text style={[styles.badgeText, { color: activeTab === 'queue' ? palette.primary : '#fff' }]}>
+                  {pendingCount}
+                </Text>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'schema' && [styles.activeTab, { backgroundColor: palette.primary }]]}
+          onPress={() => setActiveTab('schema')}
+        >
+          <Database size={16} color={activeTab === 'schema' ? '#fff' : (isDark ? '#94a3b8' : '#64748b')} />
+          <Text style={[styles.tabText, activeTab === 'schema' ? styles.activeTabText : { color: isDark ? '#94a3b8' : '#64748b' }]}>
+            {t('offline.sync.schemaTab', 'Cấu trúc')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {activeTab === 'status' ? (
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: 40 }]} showsVerticalScrollIndicator={false}>
 
         {/* ── Hero ── */}
         <MotiView
@@ -328,6 +376,12 @@ export function OfflineSyncScreen() {
         </MotiView>
 
       </ScrollView>
+      ) : activeTab === 'queue' ? (
+        <OfflineSyncQueueTab />
+      ) : (
+        <OfflineDatabaseSchemaTab />
+      )}
+
     </View>
   );
 }
@@ -337,6 +391,52 @@ export function OfflineSyncScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { paddingBottom: 40 },
+
+  // Tabs
+  tabContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  tabButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 8,
+  },
+  activeTab: {
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  activeTabText: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  badge: {
+    marginLeft: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
 
   // Hero
   hero: {

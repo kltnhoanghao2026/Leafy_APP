@@ -21,7 +21,7 @@ export default function PredictLayout() {
         name="index"
         options={{
           headerTitle: t('diseaseDetection.title', 'Disease Detection'),
-          headerLeft: () => <BackButton fallback="/" />,
+          headerLeft: () => <BackButton fallback="/(main)/predict" />,
           headerRight: () => null,
         }}
       />

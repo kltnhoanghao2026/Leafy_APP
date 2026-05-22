@@ -102,7 +102,7 @@ export const cachePlants = async (plants: PlantResponse[]) => {
           plant.batchNumber || null, plant.sourceType || null, plant.motherPlantId || null,
           plant.plantingDate || null, plant.germinationDate || null, plant.actualHarvestDate || null,
           plant.totalYieldKg || null, plant.speciesId, plant.farmPlotId, (plant as any).farmZoneId || null,
-          (plant as any).ownerProfileId || null, plant.createdAt || null, plant.lastModifiedAt || null
+          (plant as any).ownerProfileId || null, (plant as any).createdAt || null, (plant as any).lastModifiedAt || null
         ]
       );
     }
@@ -119,12 +119,12 @@ export const cachePlantEvents = async (events: PlantEventResponse[]) => {
     for (const event of events) {
       await db.runAsync(
         `INSERT OR REPLACE INTO plant_events 
-        (id, plantId, farmPlotId, farmZoneId, targetType, eventType, note, description, daysFromNow, durationDays, planned, calculatedStartDate, calculatedEndDate, phiDays, ppeRequired, mrlNote, estimatedCost, sourcePlanId, planApplyId, parentPlantEventId, completed, trackingGranularity, excludedPlantIds, excludedFarmZoneIds, progressTotal, progressCompleted, tasks, createdAt, lastModifiedAt, _dirty, _deleted) 
+        (id, plantId, farmPlotId, farmZoneId, targetType, eventType, note, description, daysFromStart, durationDays, planned, calculatedStartDate, calculatedEndDate, phiDays, ppeRequired, mrlNote, estimatedCost, sourcePlanId, planApplyId, parentPlantEventId, completed, trackingGranularity, excludedPlantIds, excludedFarmZoneIds, progressTotal, progressCompleted, tasks, createdAt, lastModifiedAt, _dirty, _deleted) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
         [
           event.id, event.plantId || null, event.farmPlotId || null, event.farmZoneId || null,
           event.targetType || null, event.eventType, event.note, event.description || null,
-          event.daysFromNow || null, event.durationDays || null, event.planned ? 1 : 0,
+          event.daysFromStart || null, event.durationDays || null, event.planned ? 1 : 0,
           event.calculatedStartDate || null, event.calculatedEndDate || null,
           event.phiDays || null, event.ppeRequired || null, event.mrlNote || null,
           event.estimatedCost || null, event.sourcePlanId || null, event.planApplyId || null,

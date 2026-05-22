@@ -12,7 +12,7 @@ import { useFarmPlotById } from "@/src/features/farm/queries/queries";
 
 import { formatDate } from "@/src/utils/date";
 import { ApplyPlanSheet } from "@/src/features/plan/components/apply-plan";
-import type { PlanStatus } from "@/src/features/plan/components/plan.types";
+import type { PlanStatus } from "@/src/features/plan/schemas/plan.schema";
 
 const STATUS_STYLE: Record<PlanStatus, string> = {
   PENDING:   "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800",
@@ -49,6 +49,7 @@ export default function SafePlanDetailScreen() {
 
 function PlanDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  console.log(`Id screen: `, id );
   const router = useRouter();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -373,10 +374,10 @@ function PlanDetailScreen() {
                         <Text className="text-sm font-black text-slate-900 dark:text-white">
                           {evt.eventType}
                         </Text>
-                        {evt.daysFromNow != null && (
+                        {evt.daysFromStart != null && (
                           <View className="rounded-full bg-blue-50 px-2 py-0.5 dark:bg-blue-900/30">
                             <Text className="text-[10px] font-black text-blue-600 dark:text-blue-400">
-                              Ngày thứ {evt.daysFromNow}
+                              Ngày thứ {evt.daysFromStart}
                             </Text>
                           </View>
                         )}

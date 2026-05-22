@@ -5,5 +5,3 @@ export { PostCardSkeleton } from "./PostCardSkeleton";
 export { PostVoteListModal } from "./PostVoteListModal";
 export { CommentCard } from "./CommentCard";
 export { HotTopicsCard } from "./HotTopicsCard";
-export { ExpertsCard } from "./ExpertsCard";
-

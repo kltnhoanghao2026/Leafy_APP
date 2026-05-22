@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
+import { useRouter, Stack } from "expo-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -122,14 +122,25 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
 
   return (
     <View className="flex-1 bg-gray-200 dark:bg-slate-900">
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <Pressable className="active:opacity-70">
+              <MoreHorizontal
+                color={scheme === "dark" ? "#F1F5F9" : "#334155"}
+                size={24}
+              />
+            </Pressable>
+          ),
+        }}
+      />
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cover Photo & Profile Info Section (FB Style) */}
-        <View className="bg-white dark:bg-slate-800 pb-4">
+        {/* Cover Photo & Profile Info Section */}
+        <View className="bg-white dark:bg-slate-800 pb-5 rounded-b-3xl shadow-sm z-10">
           {/* Cover Photo */}
-          <View className="h-44 w-full bg-slate-300 dark:bg-slate-700">
+          <View className="h-48 w-full bg-slate-300 dark:bg-slate-700 relative">
             <Image
               source={{
                 uri: "https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=1000&auto=format&fit=crop",
@@ -137,14 +148,16 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
               className="h-full w-full"
               resizeMode="cover"
             />
+            {/* Gradient Overlay for a smoother transition to content (simulated with opacity) */}
+            <View className="absolute inset-0 bg-black/20" />
           </View>
 
-          <View className="px-4">
+          <View className="px-5">
             {/* Avatar Row */}
-            <View className="flex-row justify-between items-end -mt-16 mb-3">
-              <View className="h-32 w-32 overflow-hidden rounded-full border-4 border-white dark:border-slate-800 bg-white dark:bg-slate-800 shadow-sm">
+            <View className="flex-row justify-between items-end -mt-16 mb-4">
+              <View className="h-32 w-32 overflow-hidden rounded-full border-4 border-white dark:border-slate-800 bg-white dark:bg-slate-800 shadow-md">
                 {shouldShowLetterAvatar ? (
-                  <View className="h-full w-full items-center justify-center bg-primary/20">
+                  <View className="h-full w-full items-center justify-center bg-primary/10">
                     <Text className="text-6xl font-extrabold uppercase text-primary">
                       {avatarLetter}
                     </Text>
@@ -161,63 +174,60 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
 
             {/* Name + verified badge */}
             <View className="flex-row items-center justify-start gap-2 mb-1">
-              <Text className="text-3xl font-bold text-slate-900 dark:text-slate-100">
+              <Text className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
                 {displayName}
               </Text>
               {isVerified && (
-                <BadgeCheck color="#3B82F6" fill="#10B981" size={24} />
+                <BadgeCheck color="#3B82F6" fill="#10B981" size={26} />
               )}
             </View>
 
             {/* Role badge */}
             <Text
-              className={`text-base tracking-wide font-medium mb-2 ${isExpert ? "text-emerald-600 dark:text-emerald-400" : "text-primary"}`}
+              className={`text-[15px] font-semibold tracking-wide uppercase mb-3 ${isExpert ? "text-emerald-600 dark:text-emerald-400" : "text-primary"}`}
             >
               {displayRole}
             </Text>
 
             {/* Bio */}
             {!!profile.bio?.trim() && (
-              <Text className="text-base text-slate-800 dark:text-slate-300 mb-4">
+              <Text className="text-[15px] leading-6 text-slate-700 dark:text-slate-300 mb-5">
                 {profile.bio}
               </Text>
             )}
 
             {/* Action Buttons */}
-            <View className="flex-row items-center gap-2 mt-2">
-              <Pressable className="flex-1 bg-blue-600 rounded-lg py-2.5 flex-row items-center justify-center gap-2">
-                <UserPlus color="#FFFFFF" size={18} />
-                <Text className="text-white font-semibold text-[15px]">
-                  Follow
-                </Text>
+            <View className="flex-row items-center gap-3 mt-1">
+              <Pressable
+                className={`flex-1 rounded-xl py-3 flex-row items-center justify-center gap-2 shadow-sm ${isExpert ? "bg-emerald-600" : "bg-primary"}`}
+                style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
+              >
+                <UserPlus color="#FFFFFF" size={20} />
+                <Text className="text-white font-bold text-[15px]">Follow</Text>
               </Pressable>
 
-              <Pressable className="flex-1 bg-gray-200 dark:bg-slate-700/80 rounded-lg py-2.5 flex-row items-center justify-center gap-2">
+              <Pressable
+                className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-xl py-3 flex-row items-center justify-center gap-2"
+                style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+              >
                 <MessageCircle
-                  color={scheme === "dark" ? "#E2E8F0" : "#1E293B"}
-                  size={18}
+                  color={scheme === "dark" ? "#F1F5F9" : "#334155"}
+                  size={20}
                 />
-                <Text className="text-slate-900 dark:text-slate-200 font-semibold text-[15px]">
+                <Text className="text-slate-800 dark:text-slate-200 font-bold text-[15px]">
                   Message
                 </Text>
-              </Pressable>
-
-              <Pressable className="bg-gray-200 dark:bg-slate-700/80 rounded-lg py-2.5 px-4 flex-row items-center justify-center">
-                <MoreHorizontal
-                  color={scheme === "dark" ? "#E2E8F0" : "#1E293B"}
-                  size={18}
-                />
               </Pressable>
             </View>
           </View>
         </View>
 
-        {/* Info section (FB "About" style) */}
-        <View className="mt-2 bg-white dark:bg-slate-800 px-4 py-4">
-          <Text className="mb-4 text-xl flex-row items-center font-bold text-slate-900 dark:text-slate-100">
-            {t("profileDetail.infoSection", { defaultValue: "Details" })}
+        {/* Info section */}
+        <View className="mt-3 bg-white dark:bg-slate-800 px-5 py-5 rounded-3xl shadow-sm mx-0">
+          <Text className="mb-5 text-[18px] font-extrabold text-slate-900 dark:text-slate-100">
+            {t("profileDetail.infoSection", { defaultValue: "About" })}
           </Text>
-          <View className="gap-y-4">
+          <View className="gap-y-5">
             {/* Specialty */}
             {!!profile.specialty?.trim() && (
               <InfoRow
@@ -250,7 +260,7 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
               <InfoRow
                 icon={<Calendar color="#64748B" size={20} />}
                 label="Joined"
-                value={`Joined on ${joinedDate}`}
+                value={joinedDate}
               />
             )}
 
@@ -267,21 +277,23 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
 
         {/* Expert verification */}
         {isExpert && (
-          <View className="mt-2 bg-white dark:bg-slate-800 px-4 py-4">
+          <View className="mt-3 bg-white dark:bg-slate-800 px-5 py-5 rounded-3xl shadow-sm mx-0">
             <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-xl font-bold tracking-wide text-slate-900 dark:text-slate-100">
+              <Text className="text-[18px] font-extrabold text-slate-900 dark:text-slate-100">
                 {t("profile.expertApplication.sectionTitle", {
                   defaultValue: "Expert Verification",
                 })}
               </Text>
             </View>
-            <View className="flex-row items-start gap-3">
-              <ShieldCheck color="#10B981" size={28} />
+            <View className="flex-row items-start gap-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 p-4 border border-emerald-100 dark:border-emerald-800/30">
+              <View className="h-12 w-12 rounded-full bg-emerald-100 dark:bg-emerald-800/50 items-center justify-center">
+                <ShieldCheck color="#10B981" size={24} />
+              </View>
               <View className="flex-1">
-                <Text className="text-[15px] font-semibold text-emerald-700 dark:text-emerald-400">
+                <Text className="text-[15px] font-bold text-emerald-800 dark:text-emerald-400">
                   {t("profile.expertApplication.alreadyExpertTitle")}
                 </Text>
-                <Text className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
+                <Text className="mt-1 text-[13px] text-emerald-600 dark:text-emerald-500 leading-5">
                   {t("profile.expertApplication.alreadyExpertDescription")}
                 </Text>
               </View>
@@ -293,35 +305,40 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
         {isExpert &&
           Array.isArray(profile.certificates) &&
           profile.certificates.length > 0 && (
-            <View className="mt-2 bg-white dark:bg-slate-800 px-4 py-4">
-              <Text className="mb-4 text-xl font-bold tracking-wide text-slate-900 dark:text-slate-100">
-                {t("profile.expertApplication.approvedCertificates", {
-                  defaultValue: "Certificates",
-                })}
-              </Text>
+            <View className="mt-3 bg-white dark:bg-slate-800 py-5 rounded-3xl shadow-sm mx-0">
+              <View className="px-5 mb-4 flex-row items-center justify-between">
+                <Text className="text-[18px] font-extrabold text-slate-900 dark:text-slate-100">
+                  {t("profile.expertApplication.approvedCertificates", {
+                    defaultValue: "Certificates & Awards",
+                  })}
+                </Text>
+              </View>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                className="-mx-4 px-4 overflow-visible pb-2 gap-x-3"
+                contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}
+                className="overflow-visible pb-2"
               >
                 {profile.certificates.map((cert, index) => (
                   <View
                     key={cert.id ?? index}
-                    className="w-64 overflow-hidden rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                    className="w-64 overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-4 shadow-sm dark:border-slate-700/60 dark:bg-slate-800/80"
                   >
-                    <View className="flex-row items-start gap-3 mb-2">
-                      <Award color="#F59E0B" size={24} />
+                    <View className="flex-row items-start gap-3 mb-3">
+                      <View className="h-10 w-10 rounded-full bg-amber-50 dark:bg-amber-900/20 items-center justify-center">
+                        <Award color="#F59E0B" size={20} />
+                      </View>
                       <View className="flex-1">
-                        <Text className="text-base font-bold text-slate-900 dark:text-slate-100 mt-0.5">
+                        <Text className="text-[15px] font-bold text-slate-900 dark:text-slate-100 mt-0.5" numberOfLines={2}>
                           {cert.title}
                         </Text>
                       </View>
                     </View>
-                    <Text className="text-[13px] font-medium text-slate-500 mb-1">
+                    <Text className="text-[13px] font-medium text-slate-600 dark:text-slate-300 mb-1" numberOfLines={1}>
                       {cert.issuedBy}
                     </Text>
                     {!!cert.issueDate && (
-                      <Text className="text-xs text-slate-400">
+                      <Text className="text-xs text-slate-500 dark:text-slate-400">
                         Issued {cert.issueDate}
                       </Text>
                     )}
@@ -332,14 +349,14 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
           )}
 
         {/* Posts Tab */}
-        <View className="mt-2 bg-white dark:bg-slate-800 pt-4 pb-0">
-          <View className="px-4 mb-3">
-            <Text className="text-xl font-bold text-slate-900 dark:text-slate-100">
-              Posts
+        <View className="mt-3 bg-white dark:bg-slate-800 pt-5 pb-2 rounded-t-3xl shadow-sm mx-0">
+          <View className="px-5 mb-4">
+            <Text className="text-[18px] font-extrabold text-slate-900 dark:text-slate-100">
+              Recent Posts
             </Text>
           </View>
 
-          <View className="px-4 pb-4">
+          <View className="px-5 pb-2">
             <ComposerCard
               palette={{
                 background: scheme === "dark" ? "#1E293B" : "#FFFFFF",
@@ -358,7 +375,7 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
           </View>
         </View>
 
-        <View className="bg-gray-200 dark:bg-slate-900">
+        <View className="bg-gray-100 dark:bg-slate-900">
           {isLoadingPosts ? (
             <View className="py-8 items-center justify-center bg-white dark:bg-slate-800">
               <ActivityIndicator color={palette.primary} />
@@ -405,11 +422,18 @@ type InfoRowProps = {
 
 function InfoRow({ icon, label, value }: InfoRowProps) {
   return (
-    <View className="flex-row items-center gap-3">
-      {icon}
-      <Text className="text-[15px] text-slate-900 dark:text-slate-100 font-medium">
-        {value}
-      </Text>
+    <View className="flex-row items-center gap-4">
+      <View className="h-11 w-11 rounded-full bg-slate-100 dark:bg-slate-700/80 items-center justify-center">
+        {icon}
+      </View>
+      <View className="flex-1 justify-center">
+        <Text className="text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-0.5">
+          {label}
+        </Text>
+        <Text className="text-[15px] text-slate-900 dark:text-slate-100 font-semibold">
+          {value}
+        </Text>
+      </View>
     </View>
   );
 }

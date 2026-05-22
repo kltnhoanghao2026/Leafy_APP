@@ -27,19 +27,19 @@ export const resolveScheduleDateRange = (
   event: {
     calculatedStartDate: string;
     calculatedEndDate: string;
-    daysFromNow: string;
+    daysFromStart: string;
     durationDays: string;
   },
   baseDate: Date,
 ): ScheduleDateRange => {
   const explicitStart = parseDateOnly(event.calculatedStartDate);
   const explicitEnd = parseDateOnly(event.calculatedEndDate);
-  const daysFromNow = toNonNegativeInt(event.daysFromNow);
+  const daysFromStart = toNonNegativeInt(event.daysFromStart);
   const durationDays = toNonNegativeInt(event.durationDays);
 
   const start =
     explicitStart ??
-    (daysFromNow !== undefined ? addDays(baseDate, daysFromNow) : undefined);
+    (daysFromStart !== undefined ? addDays(baseDate, daysFromStart) : undefined);
 
   if (!start) {
     return {};

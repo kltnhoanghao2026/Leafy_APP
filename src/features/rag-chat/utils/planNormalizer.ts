@@ -5,7 +5,7 @@ import {
 
 export type NormalizedScheduleEvent = {
   eventType?: EventType;
-  daysFromNow?: number;
+  daysFromStart?: number;
   durationDays?: number;
   note?: string;
   description?: string;
@@ -137,7 +137,7 @@ const normalizeScheduleEvent = (
 
   return {
     eventType: isEventType(rawEventType) ? rawEventType : undefined,
-    daysFromNow: asNumber(getValue(value, ["daysFromNow", "days_from_now"])),
+    daysFromStart: asNumber(getValue(value, ["daysFromStart", "days_from_start"])),
     durationDays: asNumber(getValue(value, ["durationDays", "duration_days"])),
     note: asString(getValue(value, ["note"])),
     description: asString(getValue(value, ["description"])),

@@ -133,7 +133,7 @@ export const initOfflineDatabase = async () => {
         eventType TEXT,
         note TEXT,
         description TEXT,
-        daysFromNow INTEGER,
+        daysFromStart INTEGER,
         durationDays INTEGER,
         planned INTEGER,
         calculatedStartDate TEXT,
@@ -182,13 +182,22 @@ export const initOfflineDatabase = async () => {
     `);
 
     // --- Schema Upgrades ---
-    // If the tables already existed without createdAt/lastModifiedAt, add them.
     // We ignore errors if the column already exists.
     try {
       await db.execAsync(`ALTER TABLE plants ADD COLUMN createdAt TEXT;`);
     } catch {}
     try {
       await db.execAsync(`ALTER TABLE plants ADD COLUMN lastModifiedAt TEXT;`);
+    } catch {}
+    // pending_sync_queue: retry tracking
+    try {
+      await db.execAsync(`ALTER TABLE pending_sync_queue ADD COLUMN retryCount INTEGER DEFAULT 0;`);
+    } catch {}
+    try {
+      await db.execAsync(`ALTER TABLE pending_sync_queue ADD COLUMN lastError TEXT;`);
+    } catch {}
+    try {
+      await db.execAsync(`ALTER TABLE pending_sync_queue ADD COLUMN syncedAt TEXT;`);
     } catch {}
 
     console.log('[OfflineDB] Database initialized successfully');

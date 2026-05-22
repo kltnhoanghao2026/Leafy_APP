@@ -13,11 +13,10 @@ import {
 import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   CalendarDays,
-  Check,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Clock,
-  X,
 } from "lucide-react-native";
 import { Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
@@ -31,8 +30,10 @@ import { EventExclusionModal } from "./EventExclusionModal";
 import type { EventType, TrackingGranularity } from "./plant-event.types";
 import { getEventCategoryColors, getEventTypeIcon } from "./plant-event.types";
 import { usePlantEventFormScreen } from "../hooks/usePlantEventFormScreen";
+import { AttachmentGrid, AttachmentPickerButton } from "./AttachmentGrid";
 
 export function PlantEventFormScreen() {
+  console.info("[PlantEventFormScreen] Component rendering");
   const { t } = useTranslation();
   const [isEventTypePickerVisible, setIsEventTypePickerVisible] =
     useState(false);
@@ -60,10 +61,21 @@ export function PlantEventFormScreen() {
     handleSelectEventType,
     routeTargetType,
     targetLabel,
-    daysFromNowValue,
+    daysFromStartValue,
     watch,
     setValue,
+    // Attachment state
+    existingAttachments,
+    pendingAttachments,
+    handlePickAttachments,
+    handleCaptureAttachment,
+    handleRemovePendingAttachment,
+    handleRemoveExistingAttachment,
+    isUploadingAttachments,
+    hasUploadErrors,
   } = usePlantEventFormScreen();
+
+  console.info("[PlantEventFormScreen] canSubmit:", canSubmit, "isLoading:", isLoading, "isEditMode:", isEditMode, "pendingAttachments:", pendingAttachments?.length, "hasUploadErrors:", hasUploadErrors);
 
   const trackingGranularity = (watch("trackingGranularity") || "NONE") as TrackingGranularity;
   const excludedPlantIds = watch("excludedPlantIds") || [];
@@ -374,32 +386,24 @@ export function PlantEventFormScreen() {
             />
           </FormField>
 
-          {/* Days from now */}
-          <FormField label={t("plantEvent.form.daysFromNow")}>
+          {/* Days from start */}
+          <FormField label={t("plantEvent.form.daysFromStart")} error={errors.daysFromStart?.message}>
             <View className="h-11 border border-slate-200 dark:border-slate-800 rounded-xl px-3 flex-row items-center gap-2 bg-slate-100 dark:bg-slate-800/50">
               <Clock size={15} className="text-slate-400 dark:text-slate-500" />
               <Text
                 className={`flex-1 text-sm font-semibold ${
-                  daysFromNowValue === null
+                  daysFromStartValue === null
                     ? "text-slate-400 dark:text-slate-500 italic"
-                    : daysFromNowValue < 0
+                    : daysFromStartValue < 0
                       ? "text-red-500 dark:text-red-400"
-                      : daysFromNowValue === 0
+                      : daysFromStartValue === 0
                         ? "text-amber-600 dark:text-amber-400"
                         : "text-slate-700 dark:text-slate-300"
                 }`}
               >
-                {daysFromNowValue === null
-                  ? t("plantEvent.form.daysFromNowNotSet")
-                  : daysFromNowValue < 0
-                    ? t("plantEvent.form.daysFromNowPast", {
-                        days: Math.abs(daysFromNowValue),
-                      })
-                    : daysFromNowValue === 0
-                      ? t("plantEvent.form.daysFromNowToday")
-                      : t("plantEvent.form.daysFromNowFuture", {
-                          days: daysFromNowValue,
-                        })}
+                {daysFromStartValue === null
+                  ? "-"
+                  : String(daysFromStartValue)}
               </Text>
               <View className="rounded-full bg-slate-200 dark:bg-slate-700 px-2 py-0.5">
                 <Text className="text-xs font-bold text-slate-500 dark:text-slate-400">
@@ -408,7 +412,7 @@ export function PlantEventFormScreen() {
               </View>
             </View>
             <Text className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-              {t("plantEvent.form.daysFromNowHint")}
+              {t("plantEvent.form.daysFromStartHint")}
             </Text>
           </FormField>
 
@@ -556,11 +560,64 @@ export function PlantEventFormScreen() {
           </View>
         ) : null}
 
+        {/* ── Attachments Section ─────────────────────────────────────── */}
+        <FormSection title={t("plantEvent.attachments.title", {
+          count: (existingAttachments?.length ?? 0) + (pendingAttachments?.length ?? 0)
+        })}>
+          <View className="gap-3">
+            <AttachmentPickerButton
+              onPressGallery={handlePickAttachments}
+              onPressCamera={handleCaptureAttachment}
+            />
+
+            {/* Existing attachments + pending attachments */}
+            {(existingAttachments?.length > 0 || pendingAttachments?.length > 0) && (
+              <AttachmentGrid
+                attachments={existingAttachments}
+                pendingItems={pendingAttachments}
+                editable
+                onRemove={(attachment) => handleRemoveExistingAttachment(attachment.fileId)}
+                onRemovePending={handleRemovePendingAttachment}
+              />
+            )}
+
+            {/* Upload status indicator */}
+            {isUploadingAttachments && (
+              <View className="flex-row items-center gap-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+                <ActivityIndicator size="small" color="#D97706" />
+                <Text className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                  {t("plantEvent.attachments.uploading")}
+                </Text>
+              </View>
+            )}
+
+            {/* Upload error indicator */}
+            {hasUploadErrors && !isUploadingAttachments && (
+              <View className="flex-row items-center gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-2">
+                <Text className="text-xs font-medium text-red-700 dark:text-red-400">
+                  {t("plantEvent.attachments.uploadFailed")}
+                </Text>
+              </View>
+            )}
+          </View>
+        </FormSection>
+
         {/* ── Action Buttons ───────────────────────────────────────────── */}
         <View className="gap-3 pt-2">
           <TouchableOpacity
             className={`h-[46px] items-center justify-center rounded-full ${canSubmit ? "bg-green-600" : "bg-slate-500"}`}
-            onPress={handleSubmit(onSubmit)}
+            onPress={() => {
+              console.info("[PlantEventFormScreen] Button pressed! canSubmit:", canSubmit);
+              handleSubmit(
+                (values) => {
+                  console.info("[PlantEventFormScreen] onSubmit called with values");
+                  onSubmit(values);
+                },
+                (err) => {
+                  console.error("[PlantEventFormScreen] Validation errors:", err);
+                },
+              )();
+            }}
             disabled={!canSubmit}
           >
             {isLoading ? (

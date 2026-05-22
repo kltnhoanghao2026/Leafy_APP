@@ -21,7 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SafeAddFarmRoute() {
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']} className="bg-slate-50 dark:bg-[#020617]">
       <AddFarmRoute />
     </SafeAreaView>
   );

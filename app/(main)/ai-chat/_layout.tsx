@@ -21,7 +21,7 @@ export default function AiChatLayout() {
         name="index"
         options={{
           headerTitle: t('ragChat.title', 'AI Assistant'),
-          headerLeft: () => <BackButton fallback="/" />,
+          headerLeft: () => <BackButton fallback="/(main)/ai-chat" />,
           headerRight: () => null,
         }}
       />

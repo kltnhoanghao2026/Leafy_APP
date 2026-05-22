@@ -7,13 +7,13 @@ import type {
   PredictionResponse,
 } from "../api/disease-detection.api";
 import { YOLO_INPUT_SIZE, MOBILENET_INPUT_SIZE } from "./constants";
-import { parseYoloOutput } from "./yolo-postprocess";
+import { parseYoloRawOutput } from "./yolo-postprocess";
 import { parseMobilenetOutput } from "./mobilenet-postprocess";
 
 // ── Asset requires (bundled .tflite files) ─────────────────────────
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const YOLO_MODEL_SOURCE = require("@/assets/models/yolo_leaf_fp16.tflite");
+const YOLO_MODEL_SOURCE = require("@/assets/models/yolo_int8.tflite");
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const MOBILENET_MODEL_SOURCE = require("@/assets/models/coffee_mobilenetv2.tflite");
 
@@ -30,6 +30,21 @@ export function useTfliteModels() {
 
   // ── Startup diagnostics ─────────────────────────────────────────
   // Log input/output metadata once so mismatches are immediately visible
+  if (yoloPlugin.state === "loaded" && yoloModel) {
+    const inp = yoloModel.inputs[0];
+    console.log(
+      `[YOLO] input  dtype=${inp?.dataType}  shape=${JSON.stringify(inp?.shape)}`,
+    );
+    console.log(
+      `[YOLO] ${yoloModel.outputs.length} output tensor(s):`,
+    );
+    for (let i = 0; i < yoloModel.outputs.length; i++) {
+      const out = yoloModel.outputs[i];
+      console.log(
+        `  [YOLO] output[${i}] dtype=${out?.dataType}  shape=${JSON.stringify(out?.shape)}`,
+      );
+    }
+  }
   if (mobilenetPlugin.state === "loaded" && mobilenetModel) {
     const inp = mobilenetModel.inputs[0];
     const out = mobilenetModel.outputs[0];
@@ -53,32 +68,47 @@ export function useTfliteModels() {
   /**
    * Run YOLO leaf detection on an image represented as an ArrayBuffer.
    * The input must already be resized to 640x640x3 RGB uint8.
+   *
+   * The bundled model uses INT8 weights for size reduction but float32
+   * input/output for full precision (dynamic-range quantization).
+   * The uint8 pixel values are converted to float32 before inference.
    */
   const runYoloOnBuffer = (
     inputBuffer: ArrayBuffer,
     originalWidth: number,
     originalHeight: number,
+    mode: "stretch" | "letterbox" | "center-crop" = "stretch"
   ): LeafDetectionResponse | null => {
     if (!yoloModel) return null;
 
+    // Convert uint8 [0,255] -> float32 [0,1] (YOLO expects normalised input)
+    const uint8 = new Uint8Array(inputBuffer);
+    const float32 = new Float32Array(uint8.length);
+    for (let i = 0; i < uint8.length; i++) {
+      float32[i] = uint8[i] / 255.0;
+    }
+
     const start = performance.now();
-    const outputs = yoloModel.runSync([new Uint8Array(inputBuffer)]);
+    const outputs = yoloModel.runSync([float32]);
     const elapsed = performance.now() - start;
-    
-    console.log(`[Local Inference] YOLO-Leaf-FP16 executed in ${elapsed.toFixed(2)}ms`);
 
+    console.log(`[Local Inference] YOLO executed in ${elapsed.toFixed(2)}ms`);
+
+    // Parse float32 output [1, 5, 8400] with manual NMS
     const outputShape = yoloModel.outputs[0]?.shape ?? [1, 5, 8400];
-
-    const detections = parseYoloOutput(
+    const detections = parseYoloRawOutput(
       outputs[0]!.buffer,
       outputShape,
       originalWidth,
       originalHeight,
+      mode
     );
+
+    console.log(`[Local Inference] YOLO found ${detections.length} detections`);
 
     return {
       detections,
-      modelName: "YOLO-Leaf-FP16 (on-device)",
+      modelName: "YOLO-Leaf (on-device)",
       imageWidth: originalWidth,
       imageHeight: originalHeight,
       processingTimeMs: elapsed,

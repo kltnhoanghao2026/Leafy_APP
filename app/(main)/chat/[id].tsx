@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, KeyboardAvoidingView, Platform, Text, TouchableOpacity, Image } from 'react-native';
 import { Users } from 'lucide-react-native';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
-import { useChatWebSocket } from '../../../src/features/chat/hooks/useChatWebSocket';
+import { useWebSocketClient } from '@/src/providers/WebSocketProvider';
 import { useConversations, useLiveMessages } from '../../../src/features/chat/hooks/useChatQueries';
 import { ChatMessages } from '../../../src/features/chat/components/ChatMessages';
 import { ChatInput } from '../../../src/features/chat/components/ChatInput';
@@ -25,7 +25,7 @@ function ChatScreen() {
   const conversationId = id as string;
   const headerHeight = useHeaderHeight();
 
-  const { connected } = useChatWebSocket(conversationId);
+  const { connected } = useWebSocketClient();
   const { data: conversations } = useConversations();
   const conversation = conversations?.find(c => c.id === conversationId);
 

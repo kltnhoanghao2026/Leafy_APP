@@ -275,6 +275,7 @@
       "managePlans": "Quản lý kế hoạch",
       "manageEvents": "Quản lý sự kiện",
       "eventCalendar": "Lịch sự kiện",
+      "experts": "Danh sách chuyên gia",
       "predict": "Phát hiện bệnh",
       "more": "Tùy chọn khác",
       "notifications": "Thông báo",
@@ -283,21 +284,35 @@
     "tabs": {
       "overview": "Tổng quan",
       "sensors": "Cảm biến",
-      "diagnosis": "Theo dõi",
+      "calendar": "Lịch sự kiện",
       "community": "Cộng đồng",
-      "profile": "Cá nhân"
+      "profile": "Cá nhân",
+      "experts": "Chuyên gia"
     },
     "headers": {
       "overview": "Trang tổng quan",
       "sensors": "Cảm biến",
-      "diagnosis": "Theo dõi",
+      "calendar": "Lịch sự kiện",
       "community": "Cộng đồng",
       "myAccount": "Tài khoản của tôi",
       "manageFarm": "Quản lý nông trại",
       "managePlants": "Quản lý cây trồng",
       "managePlans": "Quản lý kế hoạch",
-      "manageEvents": "Quản lý sự kiện"
+      "manageEvents": "Quản lý sự kiện",
+      "experts": "Danh sách chuyên gia"
     }
+  },
+  "expert": {
+    "title": "Chuyên gia",
+    "searchPlaceholder": "Tìm kiếm chuyên gia...",
+    "requestConsult": "Tư vấn",
+    "pending": "Đang chờ",
+    "following": "Đã theo dõi",
+    "empty": "Chưa có chuyên gia nào.",
+    "noResults": "Không tìm thấy chuyên gia nào.",
+    "bio": "Giới thiệu",
+    "header": "Danh sách chuyên gia được xác minh",
+    "error": "Đã xảy ra lỗi khi tải danh sách chuyên gia."
   },
   "farm": {
     "validation": {
@@ -519,7 +534,25 @@
   },
   "plantManagement": {
     "overview": {
-      "totalPlans": "{{count}} kế hoạch"
+      "welcomeTitle": "Bảng điều khiển",
+      "appTitle": "Tổng quan Leafy",
+      "completionTitle": "Tiến độ công việc",
+      "completedEvents": "Đã xong",
+      "pendingEvents": "Chờ xử lý",
+      "planStatsTitle": "Thống kê kế hoạch",
+      "totalPlans": "{{count}} kế hoạch",
+      "activeApplies": "Đang áp dụng",
+      "completedApplies": "Đã hoàn thành",
+      "todayTasksTitle": "Nhiệm vụ hôm nay",
+      "tasksScheduled": "nhiệm vụ",
+      "noTasks": "Nghỉ ngơi thôi",
+      "viewAll": "Lịch",
+      "todayTasksEmpty": "Không có nhiệm vụ nào được lên lịch hôm nay",
+      "statsPlants": "Cây trồng",
+      "statsFarms": "Nông trại",
+      "statsTodayEvents": "Sự kiện hôm nay",
+      "statsOverdue": "Quá hạn",
+      "zones": "{{count}} khu vực"
     }
   },
   "sensors": {
@@ -601,6 +634,7 @@
       "noteRequired": "Ghi chú là bắt buộc",
       "dateFormatInvalid": "Định dạng ngày không hợp lệ (YYYY-MM-DD)",
       "daysFromNowInvalid": "Phải là số nguyên không âm",
+      "daysFromStartInvalid": "Phải là số hợp lệ",
       "durationDaysInvalid": "Phải là số nguyên không âm",
       "phiDaysInvalid": "Phải là số nguyên không âm",
       "endDateBeforeStart": "Ngày kết thúc phải sau hoặc bằng ngày bắt đầu"
@@ -622,22 +656,26 @@
       "HEALTH_RECOVERY": "Hồi phục sức khỏe",
       "PHENOLOGY": "Vật hậu học",
       "REPOT": "Thay chậu",
-      "HARVEST": "Thu hoạch"
+      "HARVEST": "Thu hoạch",
+      "ALERT_TRIGGERED": "Cảnh báo"
     },
     "eventCategory": {
       "ROUTINE_CARE": "Chăm sóc hàng ngày",
       "HEALTH_MEDICAL": "Sức khỏe & y tế",
-      "GROWTH_LIFECYCLE": "Sinh trưởng & vòng đời"
+      "GROWTH_LIFECYCLE": "Sinh trưởng & vòng đời",
+      "ALERTS": "Cảnh báo"
     },
     "eventCategoryShort": {
       "ROUTINE_CARE": "Chăm sóc",
       "HEALTH_MEDICAL": "Sức khỏe",
-      "GROWTH_LIFECYCLE": "Sinh trưởng"
+      "GROWTH_LIFECYCLE": "Sinh trưởng",
+      "ALERTS": "Cảnh báo"
     },
     "category": {
       "ROUTINE_CARE": "Chăm sóc hàng ngày",
       "HEALTH_MEDICAL": "Sức khỏe & y tế",
-      "GROWTH_LIFECYCLE": "Sinh trưởng & vòng đời"
+      "GROWTH_LIFECYCLE": "Sinh trưởng & vòng đời",
+      "ALERTS": "Cảnh báo"
     },
     "eventTypeModal": {
       "title": "Chọn loại sự kiện",
@@ -717,6 +755,12 @@
       "daysFromNowFuture": "Còn {{days}} ngày",
       "daysFromNowPast": "{{days}} ngày trước",
       "daysFromNowHint": "Tự động tính từ ngày bắt đầu.",
+      "daysFromStart": "Số ngày từ ngày bắt đầu",
+      "daysFromStartNotSet": "Đặt ngày bắt đầu để tính",
+      "daysFromStartToday": "Hôm nay (0 ngày)",
+      "daysFromStartFuture": "Còn {{days}} ngày",
+      "daysFromStartPast": "{{days}} ngày trước",
+      "daysFromStartHint": "Tự động tính từ ngày bắt đầu.",
       "durationDays": "Thời lượng (ngày)",
       "durationDaysPlaceholder": "VD: 14",
       "chemicalSection": "An toàn hóa chất (điều trị)",
@@ -738,7 +782,8 @@
       "loadEditDataFailed": "Không thể tải dữ liệu sự kiện",
       "errors": {
         "notFoundForUpdate": "Không tìm thấy sự kiện để cập nhật",
-        "submitFailed": "Không thể lưu sự kiện. Vui lòng thử lại."
+        "submitFailed": "Không thể lưu sự kiện. Vui lòng thử lại.",
+        "hasFailedUploads": "Một số tệp tải lên thất bại. Vui lòng xóa hoặc thử lại trước khi lưu."
       }
     },
     "card": {
@@ -763,6 +808,8 @@
     "progress": {
       "targetProgress": "Tiến độ mục tiêu",
       "progressDetails": "Chi tiết tiến độ ({{count}})",
+      "progressTracking": "Theo dõi tiến độ ({{count}})",
+      "addNote": "Thêm ghi chú...",
       "markIncomplete": "Đánh dấu chưa hoàn thành",
       "markComplete": "Đánh dấu hoàn thành"
     },
@@ -773,6 +820,7 @@
       "safetySection": "An toàn nông nghiệp",
       "costSection": "Chi phí & tài nguyên",
       "metaSection": "Thông tin bản ghi",
+      "daysFromStart": "Số ngày từ bắt đầu",
       "daysFromNow": "Số ngày từ bây giờ",
       "createdAt": "Ngày tạo",
       "modifiedAt": "Lần sửa cuối",
@@ -784,6 +832,23 @@
     "alerts": {
       "deleteFailedTitle": "Xóa thất bại",
       "deleteFailedMessage": "Không thể xóa sự kiện. Vui lòng thử lại."
+    },
+    "attachments": {
+      "title": "Tệp đính kèm ({{count}})",
+      "add": "Thêm tệp đính kèm",
+      "viewAll": "Xem tất cả",
+      "addFrom": "Thêm từ",
+      "fromGallery": "Thư viện",
+      "fromGalleryDesc": "Chọn ảnh hoặc video từ thư viện",
+      "fromCamera": "Máy ảnh",
+      "fromCameraDesc": "Chụp ảnh hoặc video mới",
+      "uploading": "Đang tải lên...",
+      "uploadFailed": "Tải lên thất bại",
+      "uploadingCount": "Đang tải {{count}}/{{total}}",
+      "pendingCount": "{{count}} đang chờ",
+      "permissionRequired": "Yêu cầu quyền truy cập",
+      "galleryPermissionMessage": "Vui lòng cho phép truy cập thư viện để chọn tệp đính kèm.",
+      "cameraPermissionMessage": "Vui lòng cho phép truy cập máy ảnh để chụp ảnh hoặc video."
     }
   },
   "calendar": {
@@ -915,15 +980,127 @@
       "emptySearchMessage": "Thử thay đổi từ khoá tìm kiếm",
       "emptyMessage": "Dữ liệu của bạn sẽ hiển thị ở đây",
       "itemAppliedLabel": "lượt áp dụng",
-      "itemLabel": "kế hoạch"
+      "itemLabel": "kế hoạch",
+      "plantFilter": "Cây trồng",
+      "allPlants": "Tất cả cây"
+    },
+    "card": {
+      "noDisease": "Không rõ bệnh",
+      "unnamed": "Kế hoạch không tên",
+      "by": "Bởi",
+      "applies": "lượt áp dụng",
+      "aiDisclaimer": "Kế hoạch AI chỉ mang tính hướng dẫn",
+      "expert": "Chuyên gia",
+      "aiGenerated": "AI tạo",
+      "userCreated": "Tự tạo",
+      "consulted": "Tư vấn",
+      "severity": "Mức độ",
+      "cost": "Chi phí",
+      "farm": "Vườn",
+      "zone": "Khu vực",
+      "low": "Nhẹ",
+      "medium": "Trung bình",
+      "high": "Nghiêm trọng",
+      "critical": "Rất nghiêm trọng"
+    },
+    "status": {
+      "PENDING": "Chờ xử lý",
+      "APPLYING": "Đang áp dụng",
+      "ACTIVE": "Đang thực hiện",
+      "COMPLETED": "Hoàn thành",
+      "CANCELLED": "Đã hủy"
+    },
+    "detail": {
+      "error": "Không tải được kế hoạch",
+      "deleteTitle": "Xóa kế hoạch",
+      "deleteConfirm": "Bạn có chắc muốn xóa kế hoạch này?",
+      "disease": "Bệnh lý",
+      "createdAt": "Tạo lúc",
+      "unknownUser": "Người dùng ẩn danh",
+      "member": "Thành viên",
+      "apply": "Áp dụng",
+      "public": "Công khai",
+      "private": "Riêng tư",
+      "keyMetrics": "Thông tin chính",
+      "confidence": "Độ tin cậy",
+      "severity": "Mức độ",
+      "cost": "Chi phí",
+      "eventCount": "Sự kiện (Bản mẫu)",
+      "safetyInputs": "Vật tư & An toàn",
+      "requiredInputs": "Vật tư cần có",
+      "safetyWarnings": "Cảnh báo an toàn",
+      "successIndicators": "Dấu hiệu thành công",
+      "noData": "Chưa cập nhật",
+      "checkBeforeApply": "Kiểm tra thực tế trước khi áp dụng.",
+      "originalQuestion": "Câu hỏi gốc",
+      "unnamed": "Kế hoạch điều trị"
+    },
+    "apply": {
+      "scopePlant": "Cây cụ thể",
+      "scopeZone": "Khu vực",
+      "scopePlot": "Vườn",
+      "scopeUnknown": "Không rõ",
+      "appliedAt": "Áp dụng lúc",
+      "events": "sự kiện",
+      "cancelTitle": "Hủy áp dụng",
+      "cancelConfirm": "Bạn có chắc muốn hủy áp dụng kế hoạch này?",
+      "cancelWarning": "Các sự kiện chưa hoàn thành sẽ bị xóa. Các sự kiện đã hoàn thành sẽ được giữ lại. Hành động này không thể hoàn tác.",
+      "cancelling": "Đang hủy...",
+      "confirmCancel": "Xác nhận hủy",
+      "scope": "Phạm vi",
+      "target": "Đối tượng",
+      "successPrompt": {
+        "title": "Kế hoạch hoàn thành",
+        "message": "Tất cả sự kiện của kế hoạch \"{planName}\" đã hoàn thành. Kế hoạch này có thành công không?",
+        "messageDefault": "Tất cả sự kiện của kế hoạch này đã hoàn thành. Kế hoạch có thành công không?",
+        "failure": "Thất bại",
+        "success": "Thành công"
+      },
+      "startDate": "Ngày bắt đầu",
+      "noScope": "Chưa chọn phạm vi"
+    },
+    "filter": {
+      "sourceAll": "Tất cả nguồn",
+      "sourceUserCreated": "Tự tạo",
+      "sourceRagGen": "AI tạo",
+      "sourceConsulted": "Tư vấn",
+      "statusAll": "Tất cả trạng thái"
+    },
+    "bulk": {
+      "selectedCount": "{{count}} kế hoạch đã chọn",
+      "pageCount": "{{count}} / {{total}} kế hoạch trên trang",
+      "selectPage": "Chọn trang này",
+      "deselectAll": "Bỏ chọn",
+      "bulkStatusChange": "Đổi trạng thái",
+      "applyChanges": "Áp dụng",
+      "applyTogether": "Áp dụng cùng lúc",
+      "applySeparately": "Áp dụng riêng biệt",
+      "deleteSelected": "Xóa đã chọn",
+      "deleteConfirmTitle": "Xóa kế hoạch điều trị",
+      "deleteConfirmMessage": "Bạn có chắc muốn xóa kế hoạch \"{{name}}\"?",
+      "bulkDeleteConfirmTitle": "Xóa kế hoạch đã chọn",
+      "bulkDeleteConfirmMessage": "Bạn có chắc muốn xóa {{count}} kế hoạch đã chọn?"
+    },
+    "empty": {
+      "myTitle": "Chưa có kế hoạch điều trị",
+      "myMessage": "Khi tạo kế hoạch từ AI hoặc chuyên gia tư vấn, danh sách sẽ hiển thị tại đây.",
+      "appliedTitle": "Chưa có kế hoạch đã áp dụng",
+      "appliedMessage": "Khi bạn áp dụng kế hoạch vào vườn hoặc cây trồng, danh sách sẽ hiển thị tại đây.",
+      "publicTitle": "Chưa có kế hoạch cộng đồng phù hợp",
+      "publicMessage": "Các kế hoạch được chia sẻ công khai sẽ xuất hiện tại đây để bạn tham khảo và áp dụng."
+    },
+    "page": {
+      "tag": "Treatment plans",
+      "title": "Kế hoạch điều trị",
+      "subtitle": "Quản lý kế hoạch cá nhân hoặc khám phá kế hoạch cộng đồng từ các nông dân khác."
     }
   },
   "offline": {
     "title": "Chế độ ngoại tuyến",
     "dashboard": "Tổng quan",
-    "plants": "Cây trồng (Ngoại tuyến)",
-    "farm": "Nông trại (Ngoại tuyến)",
-    "events": "Sự kiện (Ngoại tuyến)",
+    "plants": "Cây trồng",
+    "farmTab": "Nông trại",
+    "events": "Sự kiện",
     "lastSynced": "Đồng bộ lần cuối: {{time}}",
     "neverSynced": "Chưa từng đồng bộ",
     "noData": "Không có dữ liệu ngoại tuyến. Vui lòng kết nối internet để đồng bộ.",
@@ -957,6 +1134,37 @@
       "lastSyncDuration": "Hoàn thành trong {{seconds}}s",
       "totalCached": "{{count}} bản ghi tổng cộng",
       "retry": "Thử lại"
-    }
+    },
+    "plant": {
+      "add": "Thêm cây trồng (offline)",
+      "edit": "Sửa cây trồng"
+    },
+    "farm": {
+      "add": "Thêm vườn (offline)",
+      "edit": "Sửa vườn"
+    },
+    "farmZone": {
+      "add": "Thêm vùng canh tác (offline)",
+      "edit": "Sửa vùng canh tác",
+      "delete": "Xóa vùng",
+      "deleteConfirm": "Xóa vùng",
+      "title": "Vùng canh tác",
+      "noZones": "Chưa có vùng canh tác",
+      "hide": "Ẩn vùng canh tác",
+      "show": "Xem vùng canh tác"
+    },
+    "plantEvent": {
+      "add": "Thêm sự kiện (offline)",
+      "edit": "Sửa sự kiện"
+    },
+    "form": {
+      "error": "Lỗi",
+      "offlineNotice": "Dữ liệu sẽ được lưu cục bộ và đồng bộ lên server khi có mạng."
+    },
+    "noPlants": "Nhấn + để thêm cây trồng mới hoặc kết nối mạng để đồng bộ dữ liệu.",
+    "noEventsTitle": "Chưa có sự kiện",
+    "noEvents": "Nhấn + để thêm sự kiện mới hoặc kết nối mạng để đồng bộ.",
+    "pendingTitle": "{{count}} thay đổi chờ đồng bộ",
+    "pendingHint": "Sẽ tự đồng bộ khi có mạng hoặc nhấn Đẩy ngay."
   }
 }

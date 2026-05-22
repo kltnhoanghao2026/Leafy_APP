@@ -5,7 +5,7 @@ import { useResizePlugin } from "vision-camera-resize-plugin";
 
 import type { LeafDetection } from "../api/disease-detection.api";
 import { YOLO_INPUT_SIZE, YOLO_NUM_CLASSES, MOBILENET_INPUT_SIZE } from "./constants";
-import { parseYoloOutput } from "./yolo-postprocess";
+import { parseYoloRawOutput } from "./yolo-postprocess";
 import { parseMobilenetOutput } from "./mobilenet-postprocess";
 
 interface UseLeafDetectionProcessorOptions {
@@ -73,8 +73,8 @@ function scaleFloat01To255(input: Float32Array): Float32Array {
  * on every frame. Detections are passed back to the JS thread via
  * Worklets.createRunOnJS.
  *
- * Throttles inference to avoid overwhelming the device — skips frames
- * if the previous inference is still running.
+ * The bundled model uses INT8 weights for size reduction but float32
+ * input/output (dynamic-range quantization), so no dequantization is needed.
  */
 export function useLeafDetectionProcessor({
   yoloModel,
@@ -114,29 +114,39 @@ export function useLeafDetectionProcessor({
         lastInferenceTime.value = now;
       }
 
-      // Resize frame to YOLO input size, matching the model's expected input type
-      const inputType = yoloModel.inputs[0]?.dataType === "float32" ? "float32" : "uint8";
+      const size = Math.min(frame.width, frame.height);
+      const cropX = (frame.width - size) / 2;
+      const cropY = (frame.height - size) / 2;
+
+      // Resize frame to YOLO input size (float32 for the model)
       const resized = resize(frame, {
+        crop: {
+          x: cropX,
+          y: cropY,
+          width: size,
+          height: size,
+        },
         scale: {
           width: YOLO_INPUT_SIZE,
           height: YOLO_INPUT_SIZE,
         },
         pixelFormat: "rgb",
-        dataType: inputType,
+        dataType: "float32",
       });
 
-      // Pass the resized array directly to avoid memory allocation
+      // Run YOLO inference
       const infStart = performance.now();
       const outputs = yoloModel.runSync([resized]);
       const infElapsed = performance.now() - infStart;
-      console.log(`[Local Inference] YOLO-Leaf-FP16 (Realtime) executed in ${Math.round(infElapsed)}ms`);
+      console.log(`[Local Inference] YOLO (Realtime) executed in ${Math.round(infElapsed)}ms`);
 
-      // Post-process (parseYoloOutput is worklet-compatible)
-      const detections = parseYoloOutput(
+      // Parse float32 output [1, 5, 8400] with manual NMS
+      const detections = parseYoloRawOutput(
         outputs[0]!.buffer,
         outputShape,
         frame.width,
         frame.height,
+        "center-crop"
       );
 
       // If in on-demand mode (taking a photo) and mobilenet is loaded,

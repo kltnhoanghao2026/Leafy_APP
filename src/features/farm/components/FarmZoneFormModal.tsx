@@ -18,6 +18,7 @@ import { BaseBottomSheet } from "@/src/shared/components/BaseBottomSheet";
 import { FormField } from "@/src/components/ui/FormField";
 import { formatDateOnly, toDateInputValue } from "@/src/utils/date";
 import type { FarmZoneResponse } from "./farm.types";
+import { useColorScheme } from "@/src/hooks/useColorScheme";
 
 export type ZonePayload = {
   zoneName: string;
@@ -60,6 +61,8 @@ export function FarmZoneFormModal({
 }: Props) {
   const { t } = useTranslation();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const colorScheme = useColorScheme() ?? "light";
+  const isDark = colorScheme === "dark";
   const [isPlantingDatePickerVisible, setIsPlantingDatePickerVisible] =
     useState(false);
   const zoneSchema = useMemo(
@@ -163,7 +166,7 @@ export function FarmZoneFormModal({
           className="w-8 h-8 rounded-full items-center justify-center bg-slate-400/15"
           onPress={onClose}
         >
-          <X size={18} className="text-slate-500 dark:text-slate-400" />
+          <X size={18} color={isDark ? "#94a3b8" : "#64748b"} />
         </TouchableOpacity>
       </View>
 
@@ -319,7 +322,7 @@ export function FarmZoneFormModal({
                   </Text>
                   <CalendarDays
                     size={18}
-                    className="text-slate-400 dark:text-slate-500"
+                    color={isDark ? "#94a3b8" : "#64748b"}
                   />
                 </TouchableOpacity>
 

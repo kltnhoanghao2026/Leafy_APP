@@ -13,7 +13,6 @@ import {
   useMarkCheckedMutation,
 } from "../queries/mutations";
 import { notificationKeys } from "../queries/keys";
-import { useNotificationWebSocket } from "./useNotificationWebSocket";
 import type { UserNotificationResponse } from "../types";
 
 export type Tab = "all" | "unread";
@@ -39,8 +38,6 @@ export function useNotificationsScreen() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [refreshing, setRefreshing] = useState(false);
-
-  useNotificationWebSocket();
 
   const { data: stateData } = useNotificationState();
   const unreadCount = stateData?.data?.unreadCount ?? 0;

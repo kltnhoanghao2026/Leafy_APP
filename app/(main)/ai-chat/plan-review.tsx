@@ -49,6 +49,7 @@ import {
 import {
   CATEGORY_DOT_COLORS,
   initCalendarLocale,
+  SELECTED_DAY_COLOR,
 } from "@/src/features/plant-event/components/calendarConstants";
 
 import { formatConfidence } from "@/src/features/rag-chat/utils/planNormalizer";

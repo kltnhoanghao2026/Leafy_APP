@@ -1,6 +1,7 @@
 export type PlanStatus = "PENDING" | "APPLYING" | "ACTIVE" | "COMPLETED" | "CANCELLED";
 export type TargetType = "FARM" | "FARM_ZONE" | "PLANT";
 export type TrackingGranularity = "NONE" | "ZONE" | "PLANT";
+export type PlanSourceType = "CONSULTED" | "RAG_GEN" | "USER_CREATED";
 export type PlantEventType =
   | "IRRIGATION"
   | "NUTRITION"
@@ -45,7 +46,7 @@ export interface EmbeddedPlanEventResponse {
   targetType: TargetType | null;
   note: string | null;
   description: string | null;
-  daysFromNow: number | null;
+  daysFromStart: number | null;
   durationDays: number | null;
   phiDays: number | null;
   ppeRequired: string | null;
@@ -68,6 +69,10 @@ export interface PlanApplyResponse {
   trackingGranularity: TrackingGranularity | null;
   plantEventIds: string[] | null;
   status: PlanStatus;
+  /** Outcome — true = succeeded, false = failed, null = unresolved. */
+  success?: boolean | null;
+  /** Whether this apply can be cancelled by the user. */
+  canCancel?: boolean | null;
   createdAt: string | null;
   lastModifiedAt: string | null;
 }
@@ -93,6 +98,7 @@ export interface PlanResponse {
   applies?: PlanApplyResponse[] | null;
   isPublic: boolean;
   isConsulted: boolean;
+  sourceType?: PlanSourceType;
   ownerInfo: AuthorInfo | null;
   creatorInfo: AuthorInfo | null;
   createdAt: string | null;
@@ -109,4 +115,5 @@ export interface PlanListParams {
   sortDir?: "ASC" | "DESC";
   plantId?: string;
   search?: string;
+  sourceType?: PlanSourceType;
 }

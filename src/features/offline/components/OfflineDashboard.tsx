@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { CloudOff, RefreshCw, AlertCircle, Calendar, Map, Sprout } from 'lucide-react-native';
+import { CloudOff, RefreshCw, AlertCircle, Calendar, Map, Sprout, ScanLine, ChevronRight } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOfflineDataContext } from '../context/OfflineDataContext';
@@ -9,6 +10,11 @@ import { useColorScheme } from '@/src/hooks/useColorScheme';
 import Colors from '@/src/constants/Colors';
 import { formatDistanceToNow } from 'date-fns';
 import { MotiView } from 'moti';
+import { Sparkles } from 'lucide-react-native';
+import { StatsGrid } from '../../home/components/StatsGrid';
+import { OverviewCompletionCard } from '../../home/components/OverviewCompletionCard';
+import { OfflineTodayTasksSection } from './OfflineTodayTasksSection';
+import { useOfflineAgricultureStats } from '../hooks/useOfflineQueries';
 
 export function OfflineDashboard() {
   const { t } = useTranslation();
@@ -17,6 +23,18 @@ export function OfflineDashboard() {
   const palette = Colors[colorScheme ?? 'light'];
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { data: stats, isLoading: statsLoading } = useOfflineAgricultureStats();
+  const queryClient = useQueryClient();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['offline'] });
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 500); // small delay for UX
+  }, [queryClient]);
 
   if (!isInitialized) {
     return (
@@ -62,46 +80,74 @@ export function OfflineDashboard() {
 
   return (
     <View className="flex-1 bg-background-light dark:bg-background-dark">
-      <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView 
+        contentContainerStyle={{ paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[palette.primary]}
+            tintColor={palette.primary}
+          />
+        }
+      >
         
-        {/* Premium Hero Section */}
-        <MotiView 
-          from={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: 'spring', damping: 20 }}
-          className="mx-4 mt-6 mb-8 overflow-hidden rounded-3xl bg-primary/10 px-6 py-8 shadow-sm dark:bg-[#1E2923]"
-        >
-          <View className="flex-row items-center justify-between mb-4">
-            <View className="h-12 w-12 items-center justify-center rounded-2xl bg-primary shadow-sm">
-              <CloudOff size={24} color="#FFF" />
-            </View>
-            <View className="rounded-full bg-primary/20 px-3 py-1 dark:bg-primary/30">
-              <Text className="text-[10px] font-bold uppercase tracking-wider text-primary dark:text-primary-light">
-                {t('offline.readOnly', 'Read Only Mode')}
+        {/* Modern Header / Greeting Area */}
+        <View className="px-5 pt-4 pb-6 mt-4">
+          <View className="flex-row items-center justify-between">
+            <View>
+              <Text className="text-sm font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-500 mb-1">
+                {t("plantManagement.overview.welcomeTitle", "Dashboard")}
+              </Text>
+              <Text className="text-2xl font-black text-slate-900 dark:text-white">
+                {t("plantManagement.overview.appTitle", "Leafy Overview")}
               </Text>
             </View>
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+              <Sparkles size={20} color="#059669" />
+            </View>
           </View>
-          
-          <Text className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 mb-2">
-            {t('offline.dashboardTitle', 'Offline Workspace')}
-          </Text>
-          <Text className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            {t('offline.dashboardDesc', 'You are currently disconnected from the main server. Your cached farms, plants, and events are available here for reference.')}
+        </View>
+
+        <StatsGrid stats={stats} isLoading={statsLoading} />
+        
+        {stats && (
+          <View className="px-5 mt-2 flex-col gap-6">
+            <OverviewCompletionCard
+              completed={stats.totalCompletedEvents}
+              pending={stats.totalPendingEvents}
+            />
+          </View>
+        )}
+
+        <View className="mt-6 mb-2">
+          <OfflineTodayTasksSection />
+        </View>
+
+        <View className="px-4 mt-2">
+          <Text className="mb-4 ml-1 text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            {t('offline.aiDiagnosticsTitle', 'AI Diagnostics')}
           </Text>
 
           <TouchableOpacity
-            onPress={() => router.push('/(main)/sync' as any)}
+            onPress={() => router.push('/(offline)/predict')}
             activeOpacity={0.8}
-            className="mt-5 flex-row items-center justify-center rounded-2xl bg-primary px-5 py-3 shadow-sm"
+            className="mb-6 flex-row items-center rounded-2xl bg-emerald-600 p-5 shadow-sm"
           >
-            <RefreshCw size={15} color="#fff" style={{ marginRight: 8 }} />
-            <Text className="text-sm font-bold text-white">
-              {t('offline.sync.syncNow', 'Sync Data')}
-            </Text>
+            <View className="mr-4 h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+              <ScanLine size={24} color="#FFFFFF" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-bold text-white mb-1">
+                {t('offline.aiPredictTitle', 'Scan Plant Disease')}
+              </Text>
+              <Text className="text-xs text-emerald-100 font-medium">
+                {t('offline.aiPredictSubtitle', 'Use local AI to detect issues offline')}
+              </Text>
+            </View>
+            <ChevronRight size={20} color="#FFFFFF" />
           </TouchableOpacity>
-        </MotiView>
 
-        <View className="px-4">
           <Text className="mb-4 ml-1 text-sm font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
             {t('offline.syncStatus', 'Local Data Status')}
           </Text>

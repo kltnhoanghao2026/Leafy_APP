@@ -6,6 +6,7 @@ import type {
   PlantEventUpdateRequest,
   EventProgressUpdateRequest,
 } from "../components/plant-event.types";
+import type { ImagePickerAsset } from "expo-image-picker";
 
 export const useCreatePlantEventMutation = () => {
   const queryClient = useQueryClient();
@@ -123,5 +124,12 @@ export const useGenerateEventProgressMutation = () => {
         queryKey: [...plantEventKeys.all(), "calendar"],
       });
     },
+  });
+};
+
+export const useUploadPlantEventAttachmentsMutation = () => {
+  return useMutation({
+    mutationFn: (assets: ImagePickerAsset[]) =>
+      plantEventApi.uploadAttachments(assets),
   });
 };

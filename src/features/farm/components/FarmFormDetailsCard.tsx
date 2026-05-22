@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { ChevronDown, MapPin } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import { useColorScheme } from "@/src/hooks/useColorScheme";
 
 import type {
   AdministrativeOption,
@@ -72,6 +73,8 @@ export function FarmFormDetailsCard({
   isWardOptionsLoading,
 }: Props) {
   const { t } = useTranslation();
+  const colorScheme = useColorScheme() ?? "light";
+  const isDark = colorScheme === "dark";
 
   return (
     <View className="border rounded-[20px] p-4 bg-white dark:bg-slate-900 border-green-800/10 dark:border-green-400/10">
@@ -162,7 +165,7 @@ export function FarmFormDetailsCard({
               className="text-green-600 dark:text-green-400"
             />
           ) : (
-            <MapPin size={14} className="text-green-600 dark:text-green-400" />
+            <MapPin size={14} color={isDark ? "#4ade80" : "#16a34a"} />
           )}
           <Text className="text-xs font-bold text-green-600 dark:text-green-400">
             {t("farm.form.useMyLocation")}
@@ -217,7 +220,7 @@ export function FarmFormDetailsCard({
           ) : (
             <ChevronDown
               size={18}
-              className="text-slate-500 dark:text-slate-400"
+              color={isDark ? "#94a3b8" : "#64748b"}
             />
           )}
         </TouchableOpacity>
@@ -253,7 +256,7 @@ export function FarmFormDetailsCard({
           ) : (
             <ChevronDown
               size={18}
-              className="text-slate-500 dark:text-slate-400"
+              color={isDark ? "#94a3b8" : "#64748b"}
             />
           )}
         </TouchableOpacity>
@@ -289,7 +292,7 @@ export function FarmFormDetailsCard({
           ) : (
             <ChevronDown
               size={18}
-              className="text-slate-500 dark:text-slate-400"
+              color={isDark ? "#94a3b8" : "#64748b"}
             />
           )}
         </TouchableOpacity>

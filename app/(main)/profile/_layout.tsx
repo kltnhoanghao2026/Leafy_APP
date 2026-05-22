@@ -39,7 +39,7 @@ export default function ProfileLayout() {
         name="[profileId]"
         options={{
           headerTitle: t('profileDetail.infoSection'),
-          headerLeft: () => <BackButton />,
+          headerLeft: () => <BackButton fallback="/(main)/experts" />,
           headerRight: () => null,
         }}
       />

@@ -11,12 +11,12 @@ export const IMAGE_DISPLAY_WIDTH = SCREEN_WIDTH - IMAGE_PADDING;
 export const commonShadow = Platform.select({
   ios: {
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
   },
   android: {
-    elevation: 3,
+    elevation: 6,
   },
   default: {},
 });

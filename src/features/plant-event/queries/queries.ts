@@ -6,7 +6,15 @@ import type {
   PageParams,
 } from "../components/plant-event.types";
 
-export const usePlantEventsByPlant = (plantId: string, params?: PageParams) => {
+export type PlantEventPageParams = PageParams & {
+  eventType?: string;
+  planApplyId?: string;
+};
+
+export const usePlantEventsByPlant = (
+  plantId: string,
+  params?: PlantEventPageParams
+) => {
   const resolvedParams = withPlantEventPageDefaults(params);
 
   return useQuery({
@@ -37,17 +45,19 @@ export const usePlantEventsByPlantAndType = (
   });
 };
 
-export const usePlantEventById = (eventId: string) =>
+export const usePlantEventById = (eventId: string, refetchInterval?: number) =>
   useQuery({
     queryKey: plantEventKeys.detail(eventId),
     queryFn: () => plantEventApi.getEventById(eventId),
     select: (response) => response.data.data,
     enabled: !!eventId,
+    refetchInterval: refetchInterval,
+    refetchIntervalInBackground: false,
   });
 
 export const usePlantEventsByFarmPlot = (
   farmPlotId: string,
-  params?: PageParams,
+  params?: PlantEventPageParams
 ) => {
   const resolvedParams = withPlantEventPageDefaults(params);
 
@@ -62,7 +72,7 @@ export const usePlantEventsByFarmPlot = (
 
 export const usePlantEventsByFarmZone = (
   farmZoneId: string,
-  params?: PageParams,
+  params?: PlantEventPageParams
 ) => {
   const resolvedParams = withPlantEventPageDefaults(params);
 
@@ -125,4 +135,13 @@ export const useEventProgress = (
     queryFn: () => plantEventApi.getEventProgress(eventId, params),
     select: (response) => response.data.data,
     enabled: enabled && !!eventId,
+  });
+
+export const usePlantEventPresignedUrl = (fileId: string, enabled = true) =>
+  useQuery({
+    queryKey: [...plantEventKeys.all(), "presigned", fileId],
+    queryFn: () => plantEventApi.getPresignedUrl(fileId),
+    select: (response) => response.data.data,
+    enabled: enabled && !!fileId,
+    staleTime: 60 * 60 * 1000,
   });

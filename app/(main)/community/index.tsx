@@ -11,9 +11,7 @@ import { useNavigation } from "expo-router";
 import { ChatFAB } from "@/src/features/chat/components/ChatFAB";
 
 import { useCommunityScreen } from "@/src/features/community/community-feed/hooks/useCommunityScreen";
-import { experts } from "@/src/features/community/community-feed/components/community.data";
 import { ComposerCard } from "@/src/features/community/community-feed/components/ComposerCard";
-import { ExpertsCard } from "@/src/features/community/community-feed/components/ExpertsCard";
 import { PostCard } from "@/src/features/community/community-feed/components/PostCard";
 import { PostCardSkeleton } from "@/src/features/community/community-feed/components/PostCardSkeleton";
 
@@ -136,13 +134,7 @@ function CommunityScreen() {
               />
             ))}
         </View>
-        <ExpertsCard
-          experts={experts}
-          palette={palette}
-          cardBg={cardBg}
-          lineColor={lineColor}
-          mutedText={mutedText}
-        />
+    
       </ScrollView>
       <ChatFAB />
     </View>

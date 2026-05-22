@@ -287,6 +287,16 @@ http.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
 
+    // Log error for debugging
+    console.error("[Axios Error]", {
+      url: originalRequest ? buildRequestUrl(originalRequest) : "unknown",
+      method: originalRequest?.method?.toUpperCase() || "UNKNOWN",
+      status: error.response?.status,
+      message: error.message,
+      code: (error.response?.data as any)?.code,
+      data: error.response?.data,
+    });
+
     if (!originalRequest || !isRefreshableAuthError(error)) {
       return Promise.reject(error);
     }

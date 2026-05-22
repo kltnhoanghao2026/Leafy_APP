@@ -21,8 +21,7 @@ function MonitorScreen() {
     <View className="flex-1">
       <PlantEventHubScreen
         defaultView="timeline"
-        hideFilter={true}
-        detailReturnTo="/(main)/diagnosis"
+        detailReturnTo="/(main)/calendar"
       />
       <TouchableOpacity
         className="absolute bottom-[96px] right-5 flex-row items-center justify-center bg-[#00895c] px-4 py-3 rounded-full shadow-lg h-14"

@@ -17,7 +17,6 @@ import {
   MapPin,
   Plus,
   Search,
-  SlidersHorizontal,
 } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -31,11 +30,16 @@ import { useFilteredList } from "@/src/hooks/useFilteredList";
 import type { EventTargetType, PlantEventResponse } from "./plant-event.types";
 import { PlantEventCard } from "./PlantEventCard";
 import {
+  PlantEventHubFilterBar,
+  type FilterState,
+} from "./PlantEventHubFilterBar";
+import {
   useDeletePlantEventMutation,
   usePlantEventsByPlant,
   usePlantEventsByFarmPlot,
   usePlantEventsByFarmZone,
 } from "../queries";
+import type { PlantEventPageParams } from "../queries/queries";
 import { usePlants } from "../../plant/queries";
 import type { PlantResponse } from "../../plant/components/plant.types";
 import { useFarmPlotsByOwner, useFarmZonesByPlot } from "../../farm/queries";
@@ -44,6 +48,9 @@ import type {
   FarmZoneResponse,
 } from "../../farm/components/farm.types";
 import { useAuthContext } from "@/src/features/auth/context/AuthContext";
+import { useMyApplies } from "../../plan/queries/plan.queries";
+import Colors from "@/src/constants/Colors";
+import { useColorScheme } from "@/src/hooks/useColorScheme";
 
 const toSingleParam = (value?: string | string[]) =>
   Array.isArray(value) ? value[0] : value;
@@ -54,6 +61,8 @@ export function PlantEventScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { profileId } = useAuthContext();
+  const scheme = useColorScheme() ?? "light";
+  const palette = Colors[scheme];
 
   const params = useLocalSearchParams<{
     plantId?: string | string[];
@@ -103,14 +112,26 @@ export function PlantEventScreen() {
   const [page, setPage] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const pageParams = useMemo(
+  // ── Filter state ──────────────────────────────────────────────────────
+  const [activeFilter, setActiveFilter] = useState<FilterState>({
+    farmPlotId: "",
+    farmZoneId: "",
+    plantId: "",
+    targetType: "",
+    eventType: "",
+    selectedApplyId: "",
+  });
+
+  const pageParams = useMemo<PlantEventPageParams>(
     () => ({
       page,
       size: PAGE_SIZE,
       sortBy: "calculatedStartDate",
-      sortDir: "ASC" as const,
+      sortDir: "ASC",
+      eventType: activeFilter.eventType || undefined,
+      planApplyId: activeFilter.selectedApplyId || undefined,
     }),
-    [page],
+    [page, activeFilter.eventType, activeFilter.selectedApplyId],
   );
 
   // Query events based on target type
@@ -136,11 +157,6 @@ export function PlantEventScreen() {
 
   const deleteEvent = useDeletePlantEventMutation();
 
-  useEffect(() => {
-    setPage(0);
-    resetCache();
-  }, [selectedId, targetType]);
-
   const {
     items: eventsCache,
     setCache: setEventsCache,
@@ -149,6 +165,12 @@ export function PlantEventScreen() {
     data: eventsQuery.data?.content,
     page,
   });
+
+  // Reset page and cache when filters change
+  useEffect(() => {
+    setPage(0);
+    resetCache();
+  }, [selectedId, targetType, activeFilter.eventType, activeFilter.selectedApplyId, resetCache]);
 
   const eventSearchFields = useCallback(
     () => [
@@ -289,6 +311,10 @@ export function PlantEventScreen() {
       ? selectedPlotIdForZones
       : "",
   );
+
+  // For filter sheet
+  const farmZonesQueryForFilter = useFarmZonesByPlot(activeFilter.farmPlotId || selectedId);
+  const appliesQuery = useMyApplies({ size: 100 });
 
   const filteredPlants = useMemo(() => {
     const plants = plantsQuery.data?.content ?? [];
@@ -783,59 +809,65 @@ export function PlantEventScreen() {
   }
 
   return (
-    <ScrollView
-      className="flex-1 bg-slate-50 dark:bg-slate-950"
-      contentContainerClassName="flex-grow p-4 pb-24"
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={eventsQuery.isRefetching}
-          onRefresh={handleRefresh}
-          tintColor="#10B981"
-          colors={["#10B981"]}
-        />
-      }
-    >
-      <View className="mb-6 mt-2 px-1">
-        <View className="flex-row items-start justify-between">
-          <View className="flex-1 mr-3">
-            <Text className="text-[26px] font-bold text-slate-800 dark:text-slate-100">
-              {title}
-            </Text>
-            <Text className="mt-1 text-[15px] leading-6 text-slate-500 dark:text-slate-400">
-              {subtitle}
-            </Text>
-          </View>
+    <View className="flex-1 bg-slate-50 dark:bg-slate-950">
+      {/* Sticky header with filter */}
+      <View
+        className="flex-row items-center justify-between px-4 py-3"
+        style={{
+          backgroundColor: scheme === "dark" ? palette.background : "#ffffff",
+          borderBottomWidth: 1,
+          borderBottomColor: scheme === "dark" ? "rgba(47,127,52,0.2)" : "rgba(47,127,52,0.12)",
+        }}
+      >
+        <View className="flex-1 flex-row items-center gap-2">
+          <Text
+            className="text-base font-bold text-slate-700 dark:text-slate-200"
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
           <TouchableOpacity
-            className="mt-1 flex-row items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
             onPress={handleChangeTarget}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <ArrowLeftRight
               size={14}
-              className="text-emerald-600 dark:text-emerald-400"
+              color={palette.primary}
             />
-            <Text className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-              {t("plantEvent.list.changeTarget")}
-            </Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      <View className="mb-6 flex-row items-center gap-3">
-        <SearchInput
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder={t("plantEvent.list.searchPlaceholder")}
-        />
-        <TouchableOpacity className="items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <SlidersHorizontal
-            size={20}
-            className="text-emerald-600 dark:text-emerald-500"
+        </View>
+
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="flex-grow p-4 pb-24"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={eventsQuery.isRefetching}
+            onRefresh={handleRefresh}
+            tintColor="#10B981"
+            colors={["#10B981"]}
           />
-        </TouchableOpacity>
-      </View>
+        }
+      >
+        {/* Subtitle below sticky header */}
+        <View className="mb-6 mt-2 px-1">
+          <Text className="text-[15px] leading-6 text-slate-500 dark:text-slate-400">
+            {subtitle}
+          </Text>
+        </View>
 
-      {eventsQuery.isLoading && page === 0 ? <LoadingView /> : null}
+        <View className="mb-6 flex-row items-center gap-3">
+          <SearchInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder={t("plantEvent.list.searchPlaceholder")}
+          />
+        </View>
+
+        {eventsQuery.isLoading && page === 0 ? <LoadingView /> : null}
 
       {eventsQuery.isError && page === 0 ? (
         <EmptyState
@@ -908,6 +940,26 @@ export function PlantEventScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+
+      </ScrollView>
+
+      {/* ── Filter bar ───────────────────────────────────────────────── */}
+      <PlantEventHubFilterBar
+        filter={activeFilter}
+        onApply={(f) => {
+          setActiveFilter(f);
+          setPage(0);
+          setEventsCache([]);
+        }}
+        data={{
+          applies: appliesQuery.data?.content ?? [],
+          farmPlots: farmPlotsQuery.data ?? [],
+          plants: plantsQuery.data?.content ?? [],
+          farmZonesData: farmZonesQueryForFilter.data ?? [],
+          farmZonesLoading: farmZonesQueryForFilter.isLoading,
+          primaryColor: palette.primary,
+        }}
+      />
+    </View>
   );
 }

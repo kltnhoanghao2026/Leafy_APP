@@ -14,20 +14,12 @@ export function OfflineBanner() {
 
   return (
     <View className="flex-row items-center justify-between bg-amber-100 px-4 py-3 dark:bg-amber-900/30">
-      <View className="flex-row items-center flex-1 pr-2">
+      <View className="flex-row items-center flex-1">
         <WifiOff size={18} color="#D97706" />
         <Text className="ml-2 flex-shrink text-sm font-medium text-amber-800 dark:text-amber-500">
           {t('offline.readOnlyNotice', 'You are in offline mode. Data is read-only.')}
         </Text>
       </View>
-      <Pressable 
-        onPress={() => toggleForceOffline()}
-        className="rounded-full bg-amber-200 px-3 py-1.5 dark:bg-amber-800"
-      >
-        <Text className="text-xs font-bold text-amber-800 dark:text-amber-300">
-          {t('offline.goOnline', 'Go Online')}
-        </Text>
-      </Pressable>
     </View>
   );
 }

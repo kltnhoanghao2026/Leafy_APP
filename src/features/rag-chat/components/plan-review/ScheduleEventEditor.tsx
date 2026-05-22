@@ -112,10 +112,10 @@ export function ScheduleEventEditor({
       <View className="flex-row gap-2">
         <View className="flex-1">
           <FieldInput
-            label={t("plantEvent.form.daysFromNow", "Days from now")}
-            value={event.daysFromNow}
+            label={t("plantEvent.form.daysFromStart", "Days from now")}
+            value={event.daysFromStart}
             onChangeText={(value) =>
-              updateScheduleEvent(index, { daysFromNow: value })
+              updateScheduleEvent(index, { daysFromStart: value })
             }
             placeholder="0"
             keyboardType="numeric"

@@ -8,6 +8,7 @@ import {
   cachePlants,
   cachePlantEvents,
 } from './offline-cache.service';
+import { getDbAsync } from './offline-database';
 import type { FarmPlotResponse } from '@/src/features/farm';
 
 export type SyncTableKey = 'farm_plots' | 'farm_zones' | 'species' | 'plants' | 'plant_events';
@@ -93,6 +94,9 @@ export const syncSpeciesData = async (
   const size = 100;
 
   try {
+    const db = await getDbAsync();
+    await db.runAsync('DELETE FROM species');
+
     while (true) {
       const res = await plantApi.getSpecies({ page, size, sortBy: 'commonName', sortDir: 'ASC' });
       const data = res.data.data;

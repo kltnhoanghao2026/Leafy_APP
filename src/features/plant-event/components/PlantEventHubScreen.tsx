@@ -15,12 +15,8 @@ import {
   ChevronUp,
   ChevronDown,
   Clock,
-  Layers,
-  ListFilter,
   MapPin,
   Plus,
-  Sprout,
-  X,
 } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -59,10 +55,9 @@ import Colors from "@/src/constants/Colors";
 
 import { CATEGORY_DOT_COLORS, initCalendarLocale } from "./calendarConstants";
 import { PlantEventHubCategorySection } from "./PlantEventHubCategorySection";
-import {
-  PlantEventHubFilterSheet,
-  type FilterState,
-} from "./PlantEventHubFilterSheet";
+import { EventGroupedList } from "@/src/features/shared/components/EventGroupedList";
+import { PlantEventHubFilterBar, type FilterState } from "./PlantEventHubFilterBar";
+import { SuccessPromptModal } from "./SuccessPromptModal";
 import { useMyApplies } from "../../plan/queries/plan.queries";
 
 const SELECTED_DAY_COLOR = "#2F7F34";
@@ -72,7 +67,7 @@ type ViewType = "month" | "week" | "timeline";
 export type PlantEventHubScreenProps = {
   defaultView?: ViewType;
   hideFilter?: boolean;
-  detailReturnTo?: "/(main)/plant-events" | "/(main)/diagnosis";
+  detailReturnTo?: "/(main)/plant-events" | "/(main)/calendar";
 };
 
 export function PlantEventHubScreen({
@@ -97,13 +92,32 @@ export function PlantEventHubScreen({
   const [headerCollapsed, setHeaderCollapsed] = useState(false);
 
   // ── Filter state ──────────────────────────────────────────────────────
-  const [showFilter, setShowFilter] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterState>({
-    categories: new Set(),
-    types: new Set(),
+    farmPlotId: "",
+    farmZoneId: "",
+    plantId: "",
+    targetType: "",
+    eventType: "",
+    selectedApplyId: "",
   });
-  const isFiltered =
-    activeFilter.categories.size > 0 || activeFilter.types.size > 0;
+
+  const activeFilterCount = [
+    activeFilter.farmPlotId,
+    activeFilter.farmZoneId,
+    activeFilter.plantId,
+    activeFilter.targetType,
+    activeFilter.eventType,
+    activeFilter.selectedApplyId,
+  ].filter(Boolean).length;
+
+  const isFiltered = activeFilterCount > 0;
+
+  // ── ApplyPlan success flow ───────────────────────────────────────────
+  const [pendingCompleteApply, setPendingCompleteApply] = useState<{
+    applyId: string;
+    eventId: string;
+    planName?: string;
+  } | null>(null);
 
   // ── Shared target state ───────────────────────────────────────────────
   const [targetType, setTargetType] = useState<EventTargetType>(
@@ -157,12 +171,11 @@ export function PlantEventHubScreen({
   // ── Single data fetch, range adapts to active view ────────────────────
   const calendarParams: CalendarParams = useMemo(
     () => ({
-      ...(targetType === "FARM_PLOT"
-        ? { farmPlotId: selectedId }
-        : targetType === "FARM_ZONE"
-          ? { farmZoneId: selectedId }
-          : { plantId: selectedId }),
-      ...(selectedApplyId ? { planApplyId: selectedApplyId } : {}),
+      ...(activeFilter.farmPlotId ? { farmPlotId: activeFilter.farmPlotId } : {}),
+      ...(activeFilter.farmZoneId ? { farmZoneId: activeFilter.farmZoneId } : {}),
+      ...(activeFilter.plantId ? { plantId: activeFilter.plantId } : {}),
+      ...(selectedApplyId || activeFilter.selectedApplyId ? { planApplyId: activeFilter.selectedApplyId || selectedApplyId } : {}),
+      ...(activeFilter.eventType ? { eventType: activeFilter.eventType } : {}),
       ...(activeView === "week"
         ? { startDate: weekStartStr, endDate: weekEndStr }
         : activeView === "timeline"
@@ -170,8 +183,7 @@ export function PlantEventHubScreen({
           : { startDate: monthStart, endDate: monthEnd }),
     }),
     [
-      targetType,
-      selectedId,
+      activeFilter,
       activeView,
       weekStartStr,
       weekEndStr,
@@ -195,25 +207,47 @@ export function PlantEventHubScreen({
   const events = eventsQuery.data ?? stableEventsRef.current;
 
   // ── Toggle handlers ───────────────────────────────────────────────────
-  const handleToggleComplete = (event: PlantEventResponse) => {
-    updateEventMutation.mutate({
-      eventId: event.id,
-      body: { completed: !event.completed },
-    });
+  const handleToggleComplete = async (event: PlantEventResponse) => {
+    try {
+      const response = await updateEventMutation.mutateAsync({
+        eventId: event.id,
+        body: { completed: !event.completed },
+      });
+      // plantEventApi.updateEvent returns Axios response; extract the actual event
+      const updated: PlantEventResponse | undefined =
+        response?.data?.data ?? response;
+
+      // ApplyPlan success logic: if this was the last incomplete event,
+      // prompt the user to confirm plan success or failure
+      if (
+        updated?.isLastIncompleteEventForApply &&
+        updated.planApplyId
+      ) {
+        setPendingCompleteApply({
+          applyId: updated.planApplyId,
+          eventId: updated.id,
+          planName: updated.planApply?.planName ?? undefined,
+        });
+      }
+    } catch {
+      // Mutation error is handled by react-query
+    }
   };
 
   const handleToggleTask = (event: PlantEventResponse, taskIndex: number) => {
     toggleTaskMutation.mutate({ eventId: event.id, taskIndex });
   };
 
-  // Apply active filter
-  const filteredEvents = useMemo(() => {
-    if (!isFiltered) return events;
-    return events.filter((e) => {
-      const cat = EVENT_CATEGORY_MAP[e.eventType] ?? "ROUTINE_CARE";
-      return (
-        activeFilter.categories.has(cat) || activeFilter.types.has(e.eventType)
-      );
+  // Apply active filter (client-side fallback for any remaining filtering)
+  // Note: Main filtering is done server-side via calendarParams
+  const filteredEvents: PlantEventResponse[] = useMemo(() => {
+    if (!isFiltered) return Array.isArray(events) ? events : [];
+    return (Array.isArray(events) ? events : []).filter((e) => {
+      // Additional client-side filters if needed
+      if (activeFilter.eventType && e.eventType !== activeFilter.eventType) {
+        return false;
+      }
+      return true;
     });
   }, [events, activeFilter, isFiltered]);
 
@@ -330,7 +364,8 @@ export function PlantEventHubScreen({
   // ── Week: dayEventMap ─────────────────────────────────────────────────
   const dayEventMap = useMemo(() => {
     const map: Record<string, PlantEventResponse[]> = {};
-    for (const event of filteredEvents) {
+    const evts: PlantEventResponse[] = Array.isArray(filteredEvents) ? filteredEvents : [];
+    for (const event of evts) {
       const start = event.calculatedStartDate;
       const end = event.calculatedEndDate ?? start;
       if (!start) continue;
@@ -441,6 +476,7 @@ export function PlantEventHubScreen({
     "ROUTINE_CARE",
     "HEALTH_MEDICAL",
     "GROWTH_LIFECYCLE",
+    "ALERTS",
   ];
 
   const renderGroupedEvents = (evts: PlantEventResponse[]) => {
@@ -448,6 +484,7 @@ export function PlantEventHubScreen({
       ROUTINE_CARE: [],
       HEALTH_MEDICAL: [],
       GROWTH_LIFECYCLE: [],
+      ALERTS: [],
     };
     for (const evt of evts) {
       const cat = EVENT_CATEGORY_MAP[evt.eventType] ?? "ROUTINE_CARE";
@@ -639,7 +676,7 @@ export function PlantEventHubScreen({
         {/* Dot legend */}
         <View className="flex-row items-center justify-center gap-5 border-t border-slate-100 dark:border-slate-800 px-4 py-2.5">
           {(
-            ["ROUTINE_CARE", "HEALTH_MEDICAL", "GROWTH_LIFECYCLE"] as const
+            ["ROUTINE_CARE", "HEALTH_MEDICAL", "GROWTH_LIFECYCLE", "ALERTS"] as const
           ).map((cat) => (
             <View key={cat} className="flex-row items-center gap-1.5">
               <View
@@ -687,7 +724,12 @@ export function PlantEventHubScreen({
               </Text>
             </View>
           ) : (
-            renderGroupedEvents(selectedMonthDateEvents)
+            <EventGroupedList
+              events={selectedMonthDateEvents}
+              onPressEvent={handleNavigateToEvent}
+              onToggleComplete={handleToggleComplete}
+              onToggleTask={handleToggleTask}
+            />
           )}
         </View>
       )}
@@ -709,13 +751,14 @@ export function PlantEventHubScreen({
               </Text>
             </View>
           ) : (
-            renderGroupedEvents(
-              [...filteredEvents].sort((a, b) =>
-                (a.calculatedStartDate ?? "").localeCompare(
-                  b.calculatedStartDate ?? "",
-                ),
-              ),
-            )
+            <EventGroupedList
+              events={[...filteredEvents].sort((a, b) =>
+                (a.calculatedStartDate ?? "").localeCompare(b.calculatedStartDate ?? ""),
+              )}
+              onPressEvent={handleNavigateToEvent}
+              onToggleComplete={handleToggleComplete}
+              onToggleTask={handleToggleTask}
+            />
           )}
         </View>
       )}
@@ -785,7 +828,7 @@ export function PlantEventHubScreen({
       {selectedId && filteredEvents.length > 0 && (
         <View className="mb-3 flex-row items-center justify-center gap-5 rounded-2xl bg-white px-4 py-2.5 shadow-sm dark:bg-slate-900">
           {(
-            ["ROUTINE_CARE", "HEALTH_MEDICAL", "GROWTH_LIFECYCLE"] as const
+            ["ROUTINE_CARE", "HEALTH_MEDICAL", "GROWTH_LIFECYCLE", "ALERTS"] as const
           ).map((cat) => (
             <View key={cat} className="flex-row items-center gap-1.5">
               <View
@@ -838,7 +881,12 @@ export function PlantEventHubScreen({
               </Text>
             </View>
           ) : (
-            renderGroupedEvents(selectedWeekDateEvents)
+            <EventGroupedList
+              events={selectedWeekDateEvents}
+              onPressEvent={handleNavigateToEvent}
+              onToggleComplete={handleToggleComplete}
+              onToggleTask={handleToggleTask}
+            />
           )}
         </View>
       )}
@@ -860,13 +908,14 @@ export function PlantEventHubScreen({
               </Text>
             </View>
           ) : (
-            renderGroupedEvents(
-              [...filteredEvents].sort((a, b) =>
-                (a.calculatedStartDate ?? "").localeCompare(
-                  b.calculatedStartDate ?? "",
-                ),
-              ),
-            )
+            <EventGroupedList
+              events={[...filteredEvents].sort((a, b) =>
+                (a.calculatedStartDate ?? "").localeCompare(b.calculatedStartDate ?? ""),
+              )}
+              onPressEvent={handleNavigateToEvent}
+              onToggleComplete={handleToggleComplete}
+              onToggleTask={handleToggleTask}
+            />
           )}
         </View>
       )}
@@ -875,7 +924,7 @@ export function PlantEventHubScreen({
       {selectedId && (
         <View className="mx-4 mb-3 flex-row items-center justify-center gap-5 rounded-2xl bg-white px-4 py-2.5 shadow-sm dark:bg-slate-900">
           {(
-            ["ROUTINE_CARE", "HEALTH_MEDICAL", "GROWTH_LIFECYCLE"] as const
+            ["ROUTINE_CARE", "HEALTH_MEDICAL", "GROWTH_LIFECYCLE", "ALERTS"] as const
           ).map((cat) => (
             <View key={cat} className="flex-row items-center gap-1.5">
               <View
@@ -925,13 +974,9 @@ export function PlantEventHubScreen({
                 style={{ backgroundColor: palette.primary + "1A" }}
                 className="rounded-lg p-1"
               >
-                {targetType === "FARM_PLOT" ? (
-                  <MapPin size={13} color={palette.primary} />
-                ) : targetType === "FARM_ZONE" ? (
-                  <Layers size={13} color={palette.primary} />
-                ) : (
-                  <Sprout size={13} color={palette.primary} />
-                )}
+                <Text style={{ fontSize: 13, color: palette.primary }}>
+                  {targetType === "FARM_PLOT" ? "📍" : targetType === "FARM_ZONE" ? "🗂️" : "🌱"}
+                </Text>
               </View>
               <Text
                 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex-1"
@@ -1032,74 +1077,6 @@ export function PlantEventHubScreen({
                   );
                 })}
               </View>
-
-              {/* Filter bar */}
-              {!hideFilter && (
-                <TouchableOpacity
-                  className="mt-2 w-full flex-row items-center justify-between rounded-xl px-3 py-2"
-                  style={{
-                    backgroundColor: isFiltered
-                      ? palette.primary + "14"
-                      : scheme === "dark"
-                        ? "#1e293b"
-                        : "#f8fafc",
-                    borderWidth: 1,
-                    borderColor: isFiltered
-                      ? palette.primary + "55"
-                      : scheme === "dark"
-                        ? "#334155"
-                        : "#e2e8f0",
-                  }}
-                  onPress={() => setShowFilter(true)}
-                  activeOpacity={0.7}
-                >
-                  <View className="flex-row items-center gap-2 flex-1">
-                    <ListFilter
-                      size={14}
-                      color={isFiltered ? palette.primary : palette.textGray}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontWeight: "600",
-                        color: isFiltered ? palette.primary : palette.textGray,
-                      }}
-                      numberOfLines={1}
-                    >
-                      {isFiltered
-                        ? t("calendar.filter.active", {
-                            count:
-                              activeFilter.categories.size +
-                              activeFilter.types.size,
-                          })
-                        : t("calendar.filter.button")}
-                    </Text>
-                  </View>
-
-                  <View className="ml-2 flex-row items-center gap-2">
-                    {isFiltered && (
-                      <TouchableOpacity
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          setActiveFilter({
-                            categories: new Set(),
-                            types: new Set(),
-                          });
-                        }}
-                        className="rounded-full p-1"
-                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                        activeOpacity={0.6}
-                      >
-                        <X size={12} color={palette.primary} />
-                      </TouchableOpacity>
-                    )}
-                    <ChevronRight
-                      size={14}
-                      color={isFiltered ? palette.primary : palette.textGray}
-                    />
-                  </View>
-                </TouchableOpacity>
-              )}
 
               {/* Week view: sticky week nav + day strip */}
               {activeView === "week" && (
@@ -1271,7 +1248,7 @@ export function PlantEventHubScreen({
       {/* ── Scrollable content ───────────────────────────────────────── */}
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 100, paddingTop: 12 }}
+        contentContainerStyle={{ paddingBottom: 100, paddingTop: 8 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Loading — subtle background refresh indicator */}
@@ -1279,6 +1256,22 @@ export function PlantEventHubScreen({
           <View className="items-center py-2">
             <ActivityIndicator size="small" color={palette.primary} />
           </View>
+        )}
+
+        {/* Filter bar */}
+        {!hideFilter && selectedId && (
+          <PlantEventHubFilterBar
+            filter={activeFilter}
+            onApply={(f) => setActiveFilter(f)}
+            data={{
+              applies,
+              farmPlots,
+              plants,
+              farmZonesData: farmZonesQuery.data ?? [],
+              farmZonesLoading: farmZonesQuery.isLoading,
+              primaryColor: palette.primary,
+            }}
+          />
         )}
 
         {/* No target */}
@@ -1305,30 +1298,16 @@ export function PlantEventHubScreen({
         </TouchableOpacity>
       )}
 
-      {/* ── Filter sheet ─────────────────────────────────────────────── */}
-      <PlantEventHubFilterSheet
-        visible={showFilter}
-        filter={activeFilter}
-        onApply={(f) => setActiveFilter(f)}
-        onClose={() => setShowFilter(false)}
-        targetProps={{
-          targetType,
-          setTargetType,
-          selectedId,
-          selectedName,
-          selectedApplyId,
-          setSelectedApplyId,
-          applies,
-          farmPlots,
-          plants,
-          farmZonesData: farmZonesQuery.data ?? [],
-          farmZonesLoading: farmZonesQuery.isLoading,
-          selectedPlotIdForZones,
-          setSelectedPlotIdForZones,
-          onSelectTarget: handleSelectTarget,
-          primaryColor: palette.primary,
-        }}
-      />
+      {/* ── ApplyPlan success prompt ────────────────────────────────── */}
+      {pendingCompleteApply && (
+        <SuccessPromptModal
+          visible={true}
+          applyId={pendingCompleteApply.applyId}
+          planName={pendingCompleteApply.planName}
+          onClose={() => setPendingCompleteApply(null)}
+          onComplete={() => setPendingCompleteApply(null)}
+        />
+      )}
     </View>
   );
 }

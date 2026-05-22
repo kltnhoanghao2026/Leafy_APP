@@ -26,7 +26,7 @@ export type EditableScheduleEvent = {
   note: string;
   description: string;
   isPlanned: boolean;
-  daysFromNow: string;
+  daysFromStart: string;
   durationDays: string;
   calculatedStartDate: string;
   calculatedEndDate: string;
@@ -70,7 +70,7 @@ const toEditableEvent = (
     note?: string;
     description?: string;
     isPlanned?: boolean;
-    daysFromNow?: number;
+    daysFromStart?: number;
     durationDays?: number;
     calculatedStartDate?: string;
     calculatedEndDate?: string;
@@ -85,8 +85,8 @@ const toEditableEvent = (
   eventType: event.eventType ?? "",
   note: event.note ?? "",
   description: event.description ?? "",
-  isPlanned: event.isPlanned ?? (event.daysFromNow ?? 0) > 0,
-  daysFromNow: toString(event.daysFromNow),
+  isPlanned: event.isPlanned ?? (event.daysFromStart ?? 0) > 0,
+  daysFromStart: toString(event.daysFromStart),
   durationDays: toString(event.durationDays),
   calculatedStartDate: event.calculatedStartDate ?? "",
   calculatedEndDate: event.calculatedEndDate ?? "",
@@ -381,10 +381,10 @@ export function usePlanReviewerScreen() {
       }
 
       if (
-        event.daysFromNow.trim() &&
-        toOptionalInt(event.daysFromNow) === undefined
+        event.daysFromStart.trim() &&
+        toOptionalInt(event.daysFromStart) === undefined
       ) {
-        errors.push(t("plantEvent.validation.daysFromNowInvalid"));
+        errors.push(t("plantEvent.validation.daysFromStartInvalid"));
       }
 
       if (
@@ -430,7 +430,7 @@ export function usePlanReviewerScreen() {
         note: event.note.trim(),
         description: toOptionalText(event.description),
         isPlanned: event.isPlanned,
-        daysFromNow: toOptionalInt(event.daysFromNow),
+        daysFromStart: toOptionalInt(event.daysFromStart),
         durationDays: toOptionalInt(event.durationDays),
         calculatedStartDate: toOptionalText(event.calculatedStartDate),
         calculatedEndDate: toOptionalText(event.calculatedEndDate),
