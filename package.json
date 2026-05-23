@@ -7,6 +7,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "test:iot": "jest --runInBand src/features/iot",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
     "validate": "npm run typecheck && npm run doctor"
@@ -73,8 +74,13 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^13.3.3",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.10",
     "@types/sockjs-client": "^1.5.4",
+    "jest": "^29.7.0",
+    "jest-expo": "~54.0.0",
+    "react-test-renderer": "^19.1.0",
     "typescript": "~5.9.2"
   },
   "private": true

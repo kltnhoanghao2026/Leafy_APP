@@ -20,9 +20,8 @@ import {
   useAlertEventDetail,
   useResolveAlertMutation,
 } from "../hooks/useAlerts";
-import { formatDateTime } from "../utils/deviceLabels";
+import type { DisplayAlertEvent } from "../utils/iotDisplay";
 import { getOnboardingErrorMessage } from "../utils/onboardingErrors";
-import { getSensorLabel, getSensorUnit } from "../utils/sensorLabels";
 
 const getParamValue = (value?: string | string[]): string | undefined => {
   if (Array.isArray(value)) {
@@ -41,10 +40,7 @@ export function AlertEventDetailScreen() {
   const acknowledgeMutation = useAcknowledgeAlertMutation();
   const resolveMutation = useResolveAlertMutation();
   const [message, setMessage] = useState<string | null>(null);
-  const alert = alertQuery.data;
-  const sensorCode = alert?.sensorCode || alert?.alertType || undefined;
-  const value = alert?.triggerValue ?? alert?.readingValue;
-  const unit = getSensorUnit(sensorCode, alert?.unit);
+  const alert = alertQuery.data as (typeof alertQuery.data & Partial<DisplayAlertEvent>) | undefined;
 
   const acknowledge = async () => {
     if (!alertId) return;
@@ -129,32 +125,28 @@ export function AlertEventDetailScreen() {
       ) : (
         <>
           <View style={styles.card}>
-            <Text style={styles.message}>{alert.message}</Text>
+            <Text style={styles.message}>{alert.display?.title ?? alert.display?.message ?? t("iot.alerts.notificationBody")}</Text>
             <InfoLine
               label={t("iot.metrics.zone.sensor")}
-              value={getSensorLabel(sensorCode, alert.sensorName)}
+              value={alert.display?.sensorLabel ?? t("iot.common.unknown")}
             />
             <InfoLine
               label={t("iot.alerts.readingValue")}
-              value={
-                typeof value === "number"
-                  ? `${value.toFixed(1)}${unit ? ` ${unit}` : ""}`
-                  : t("iot.common.none")
-              }
+              value={alert.display?.valueLabel ?? t("iot.common.unknownValue")}
             />
             <InfoLine
               label={t("iot.alerts.thresholdMinMax")}
-              value={`${alert.thresholdMin ?? "-"} / ${alert.thresholdMax ?? "-"}`}
+              value={alert.display?.thresholdLabel ?? t("iot.common.unknownValue")}
             />
-            <InfoLine label={t("iot.common.device")} value={alert.deviceName || alert.deviceId || "-"} />
-            <InfoLine label={t("iot.common.zone")} value={alert.zoneId || "-"} />
-            <InfoLine label={t("iot.common.farm")} value={alert.farmPlotId || "-"} />
+            <InfoLine label={t("iot.common.device")} value={alert.display?.deviceLabel ?? t("iot.common.unknownDevice")} />
+            <InfoLine label={t("iot.common.zone")} value={alert.display?.zoneLabel ?? t("iot.common.unknownZone")} />
+            <InfoLine label={t("iot.common.farm")} value={alert.display?.farmLabel ?? t("iot.common.unknownFarm")} />
             <InfoLine
               label={t("iot.alerts.openedAt")}
-              value={formatDateTime(alert.openedAt || alert.triggeredAt || alert.createdAt)}
+              value={alert.display?.openedAtLabel ?? t("iot.common.noData")}
             />
-            <InfoLine label={t("iot.alerts.acknowledgedAt")} value={formatDateTime(alert.acknowledgedAt)} />
-            <InfoLine label={t("iot.alerts.resolvedAt")} value={formatDateTime(alert.resolvedAt)} />
+            <InfoLine label={t("iot.alerts.acknowledgedAt")} value={alert.display?.acknowledgedAtLabel ?? t("iot.common.noData")} />
+            <InfoLine label={t("iot.alerts.resolvedAt")} value={alert.display?.resolvedAtLabel ?? t("iot.common.noData")} />
           </View>
 
           {message ? (

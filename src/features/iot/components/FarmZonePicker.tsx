@@ -16,9 +16,10 @@ export type FarmZoneSelection = {
 type FarmZonePickerProps = {
   value: FarmZoneSelection;
   onChange: (value: FarmZoneSelection) => void;
+  title?: string;
 };
 
-export function FarmZonePicker({ value, onChange }: FarmZonePickerProps) {
+export function FarmZonePicker({ value, onChange, title }: FarmZonePickerProps) {
   const { t } = useTranslation();
   const profileQuery = useQuery(getMyProfileQueryOptions());
   const plotsQuery = useFarmPlots(profileQuery.data?.id);
@@ -43,7 +44,7 @@ export function FarmZonePicker({ value, onChange }: FarmZonePickerProps) {
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{t("iot.devices.onboarding.locationTitle")}</Text>
+      <Text style={styles.title}>{title ?? t("iot.devices.onboarding.locationTitle")}</Text>
 
       <View style={styles.section}>
         <Text style={styles.label}>{t("iot.devices.onboarding.selectFarm")}</Text>
@@ -62,7 +63,7 @@ export function FarmZonePicker({ value, onChange }: FarmZonePickerProps) {
               key={plot.id}
               active={value.farmPlotId === plot.id}
               label={plot.name}
-              meta={plot.addressLine || plot.code || plot.id}
+              meta={plot.addressLine || t("iot.common.noFarmMetadata")}
               onPress={() => selectPlot(plot)}
             />
           ))}
@@ -89,7 +90,7 @@ export function FarmZonePicker({ value, onChange }: FarmZonePickerProps) {
               key={zone.id}
               active={value.zoneId === zone.id}
               label={zone.zoneName}
-              meta={zone.cropType || zone.soilType || zone.id}
+              meta={zone.cropType || zone.soilType || t("iot.common.noZoneMetadata")}
               onPress={() => selectZone(zone)}
             />
           ))}

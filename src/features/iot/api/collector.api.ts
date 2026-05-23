@@ -30,6 +30,7 @@ import type {
   SensorChartResponse,
   SensorCode,
   UpdateDeviceConfigRequest,
+  UpdateDeviceRequest,
   ZoneOverviewResponse,
 } from "../types";
 
@@ -175,6 +176,26 @@ export const collectorApi = {
   async getDeviceDetail(deviceId: string): Promise<DeviceDetailResponse> {
     const response = await apiClient.get<ApiResponse<DeviceDetailResponse>>(
       API_ENDPOINTS.IOT.DEVICES.DETAIL(deviceId),
+    );
+
+    return unwrapResponseData(response.data);
+  },
+
+  async updateDevice(
+    deviceId: string,
+    payload: UpdateDeviceRequest,
+  ): Promise<DeviceResponse> {
+    const response = await apiClient.patch<ApiResponse<DeviceResponse>>(
+      API_ENDPOINTS.IOT.DEVICES.ITEM(deviceId),
+      payload,
+    );
+
+    return unwrapResponseData(response.data);
+  },
+
+  async releaseDevice(deviceId: string): Promise<DeviceResponse> {
+    const response = await apiClient.post<ApiResponse<DeviceResponse>>(
+      API_ENDPOINTS.IOT.DEVICES.RELEASE(deviceId),
     );
 
     return unwrapResponseData(response.data);

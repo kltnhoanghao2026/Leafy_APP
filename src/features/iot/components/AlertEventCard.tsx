@@ -3,23 +3,21 @@ import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react-native";
 
 import type { AlertEventItemResponse } from "../types";
-import { formatDateTime } from "../utils/deviceLabels";
-import { getSensorLabel, getSensorUnit } from "../utils/sensorLabels";
 import { AlertSeverityBadge } from "./AlertSeverityBadge";
 import { AlertStatusBadge } from "./AlertStatusBadge";
+import type { DisplayAlertEvent } from "../utils/iotDisplay";
 
 type AlertEventCardProps = {
-  alert: AlertEventItemResponse;
-  onPress: (alert: AlertEventItemResponse) => void;
+  alert: AlertEventItemResponse & Partial<DisplayAlertEvent>;
+  onPress: (alert: AlertEventItemResponse & Partial<DisplayAlertEvent>) => void;
   highlighted?: boolean;
 };
 
 export function AlertEventCard({ alert, onPress, highlighted }: AlertEventCardProps) {
   const { t } = useTranslation();
-  const sensorCode = alert.sensorCode || alert.alertType || undefined;
-  const value = alert.triggerValue ?? alert.readingValue;
-  const unit = getSensorUnit(sensorCode, alert.unit);
-  const unknown = t("iot.common.unknown");
+  const unknownDevice = t("iot.common.unknownDevice");
+  const unknownZone = t("iot.common.unknownZone");
+  const unknownValue = t("iot.common.unknownValue");
 
   return (
     <Pressable
@@ -39,18 +37,19 @@ export function AlertEventCard({ alert, onPress, highlighted }: AlertEventCardPr
       </View>
 
       <Text style={styles.message} numberOfLines={2}>
-        {alert.message}
+        {alert.display?.title ?? alert.display?.message ?? t("iot.alerts.notificationBody")}
       </Text>
       <Text style={styles.meta}>
-        {getSensorLabel(sensorCode, alert.sensorName)}
-        {typeof value === "number" ? ` - ${value.toFixed(1)}${unit ? ` ${unit}` : ""}` : ""}
+        {alert.display?.sensorLabel ?? t("iot.common.unknown")}
+        {" - "}
+        {alert.display?.valueLabel ?? unknownValue}
       </Text>
       <Text style={styles.meta}>
-        {t("iot.common.device")}: {alert.deviceName || alert.deviceId || unknown} - {t("iot.common.zone")}:{" "}
-        {alert.zoneId || unknown}
+        {t("iot.common.device")}: {alert.display?.deviceLabel ?? unknownDevice} - {t("iot.common.zone")}:{" "}
+        {alert.display?.zoneLabel ?? unknownZone}
       </Text>
       <Text style={styles.time}>
-        {formatDateTime(alert.openedAt || alert.triggeredAt || alert.createdAt)}
+        {alert.display?.openedAtLabel ?? t("iot.common.noData")}
       </Text>
     </Pressable>
   );

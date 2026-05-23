@@ -18,28 +18,29 @@ export function DeviceQrPayloadForm({ value, onChange }: DeviceQrPayloadFormProp
   return (
     <View style={styles.card}>
       <Text style={styles.title}>{t("iot.devices.onboarding.manualInfoTitle")}</Text>
+      <Text style={styles.hint}>{t("iot.devices.onboarding.technicalDeviceInfo")}</Text>
       <Field
-        label={t("iot.devices.onboarding.deviceUid")}
+        label={t("iot.devices.onboarding.deviceIdentifier")}
         onChangeText={(text) => update("deviceUid", text)}
-        placeholder="LEAFY-ESP32-001"
+        placeholder={t("iot.devices.onboarding.deviceIdentifierPlaceholder")}
         value={value.deviceUid ?? ""}
       />
       <Field
         label={t("iot.devices.onboarding.deviceCode")}
         onChangeText={(text) => update("deviceCode", text)}
-        placeholder="ESP32-001"
+        placeholder={t("iot.devices.onboarding.deviceCodePlaceholder")}
         value={value.deviceCode ?? ""}
       />
       <Field
         label={t("iot.devices.onboarding.deviceType")}
         onChangeText={(text) => update("deviceType", text)}
-        placeholder="ESP32_CAM_SENSOR"
+        placeholder={t("iot.devices.onboarding.deviceTypePlaceholder")}
         value={value.deviceType ?? ""}
       />
       <Field
         label={t("iot.devices.onboarding.model")}
         onChangeText={(text) => update("model", text)}
-        placeholder="Leafy IoT Module V1"
+        placeholder={t("iot.devices.onboarding.modelPlaceholder")}
         value={value.model ?? ""}
       />
     </View>
@@ -93,6 +94,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  hint: {
+    color: "#64748b",
+    fontSize: 13,
+    lineHeight: 19,
   },
   label: {
     color: "#334155",

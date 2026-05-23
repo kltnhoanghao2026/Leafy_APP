@@ -32,7 +32,7 @@ export function ConfigPushProgress({ state, error }: ConfigPushProgressProps) {
       {isLoading ? <ActivityIndicator color="#15803d" /> : null}
       <View style={styles.textWrap}>
         <Text style={[styles.title, isError && styles.errorTitle]}>{t(messageKeys[state])}</Text>
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <Text style={styles.errorText}>{t("iot.config.updateFailedFriendly")}</Text> : null}
       </View>
     </View>
   );

@@ -118,8 +118,8 @@ export function DeviceOnboardingScreen() {
       return;
     }
 
-    if (location.zoneName || location.zoneId) {
-      setDeviceName(suggestedSensorName(location.zoneName || location.zoneId));
+    if (location.zoneName) {
+      setDeviceName(suggestedSensorName(location.zoneName));
       return;
     }
 
@@ -144,8 +144,8 @@ export function DeviceOnboardingScreen() {
         deviceName === defaultDeviceName ||
         deviceName.startsWith(t("iot.devices.onboarding.suggestedSensorPrefix")));
 
-    if (canUseZoneSuggestion && (nextLocation.zoneName || nextLocation.zoneId)) {
-      setDeviceName(suggestedSensorName(nextLocation.zoneName || nextLocation.zoneId));
+    if (canUseZoneSuggestion && nextLocation.zoneName) {
+      setDeviceName(suggestedSensorName(nextLocation.zoneName));
     }
   };
 
@@ -258,8 +258,7 @@ export function DeviceOnboardingScreen() {
           </View>
           <InfoLine label={t("iot.devices.onboarding.model")} value={effectivePayload.model || t("iot.common.none")} />
           <InfoLine label={t("iot.devices.onboarding.deviceCode")} value={effectivePayload.deviceCode} />
-          <InfoLine label={t("iot.devices.onboarding.deviceUid")} value={effectivePayload.deviceUid} />
-          <InfoLine label={t("iot.devices.onboarding.deviceType")} value={effectivePayload.deviceType} />
+          <InfoLine label={t("iot.devices.onboarding.deviceType")} value={t(`iot.devices.type.${effectivePayload.deviceType}`, { defaultValue: t("iot.devices.defaultName") })} />
         </View>
       ) : null}
 
@@ -290,8 +289,8 @@ export function DeviceOnboardingScreen() {
           <Text style={styles.successText}>
             {t("iot.devices.onboarding.successDescription", {
               device: successDevice.deviceName || successDevice.deviceCode,
-              farm: location.farmPlotName || location.farmPlotId || t("iot.common.unknown"),
-              zone: location.zoneName || location.zoneId || t("iot.common.unknown"),
+              farm: location.farmPlotName || t("iot.common.unknownFarm"),
+              zone: location.zoneName || t("iot.common.unknownZone"),
             })}
           </Text>
           {showWifiGuide ? <WifiSetupGuide /> : null}

@@ -20,9 +20,11 @@ import {
   useAllDeviceCameraSchedules,
   useRunCameraScheduleNowMutation,
 } from "../hooks/useDeviceMedia";
+import { useMyDevices } from "../hooks/useDevices";
 import { useMediaImageUrl } from "../hooks/useMediaImageUrl";
+import { DevicePicker } from "../components/DevicePicker";
 import type { DeviceCameraSchedule } from "../types";
-import { formatDateTime } from "../utils/deviceLabels";
+import type { DisplayDeviceCameraSchedule } from "../utils/iotDisplay";
 
 type EnabledFilter = "all" | "enabled" | "disabled";
 type RecurrenceOption = "DAILY" | "WEEKLY" | "MONTHLY";
@@ -38,6 +40,7 @@ export function AdminCameraSchedulesPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const schedulesQuery = useAllDeviceCameraSchedules();
+  const devicesQuery = useMyDevices({ page: 0, size: 100 });
   const createScheduleMutation = useCreateDeviceCameraScheduleMutation();
   const runScheduledMutation = useRunCameraScheduleNowMutation();
   const [deviceUidFilter, setDeviceUidFilter] = useState("");
@@ -50,19 +53,26 @@ export function AdminCameraSchedulesPage() {
   const [uploadEndpoint, setUploadEndpoint] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  const schedules = schedulesQuery.data ?? [];
+  const schedules = (schedulesQuery.data ?? []) as Array<DeviceCameraSchedule & Partial<DisplayDeviceCameraSchedule>>;
   const filteredSchedules = useMemo(() => {
-    const normalizedDeviceUid = deviceUidFilter.trim().toLowerCase();
+    const normalizedDeviceQuery = deviceUidFilter.trim().toLowerCase();
     return schedules.filter((schedule) => {
-      const matchesDeviceUid =
-        !normalizedDeviceUid ||
-        schedule.deviceUid.toLowerCase().includes(normalizedDeviceUid);
+      const deviceSearchValue = [
+        schedule.display?.deviceLabel,
+        schedule.display?.technical?.deviceUid,
+        schedule.deviceUid,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      const matchesDevice =
+        !normalizedDeviceQuery || deviceSearchValue.includes(normalizedDeviceQuery);
       const matchesEnabled =
         enabledFilter === "all" ||
         (enabledFilter === "enabled" && schedule.enabled) ||
         (enabledFilter === "disabled" && !schedule.enabled);
 
-      return matchesDeviceUid && matchesEnabled;
+      return matchesDevice && matchesEnabled;
     });
   }, [deviceUidFilter, enabledFilter, schedules]);
 
@@ -92,6 +102,7 @@ export function AdminCameraSchedulesPage() {
       setResolution("VGA");
       setQuality("MEDIUM");
       setUploadEndpoint("");
+      setDeviceUid("");
       Alert.alert(
         t("iot.cameraSchedules.createdTitle"),
         t("iot.cameraSchedules.created"),
@@ -163,7 +174,7 @@ export function AdminCameraSchedulesPage() {
         <Text style={styles.sectionTitle}>{t("iot.cameraSchedules.filters")}</Text>
         <TextInput
           autoCapitalize="none"
-          placeholder={t("iot.cameraSchedules.filterDeviceUid")}
+          placeholder={t("iot.cameraSchedules.filterByDevice")}
           placeholderTextColor="#94a3b8"
           style={styles.input}
           value={deviceUidFilter}
@@ -189,17 +200,20 @@ export function AdminCameraSchedulesPage() {
 
       <View style={styles.form}>
         <Text style={styles.sectionTitle}>{t("iot.cameraSchedules.createSchedule")}</Text>
-        <TextInput
-          autoCapitalize="none"
-          placeholder={t("iot.cameraSchedules.deviceUid")}
-          placeholderTextColor="#94a3b8"
-          style={styles.input}
+        <DevicePicker
+          devices={devicesQuery.data?.items ?? []}
+          label={t("iot.cameraSchedules.selectDeviceForSchedule")}
+          manualValue={deviceUid}
+          mode="deviceUid"
+          placeholder={t("iot.common.searchDevice")}
+          showAdvancedManualInput
           value={deviceUid}
-          onChangeText={setDeviceUid}
+          onChange={(device) => setDeviceUid(device?.deviceUid ?? "")}
+          onManualChange={setDeviceUid}
         />
         <TextInput
           autoCapitalize="none"
-          placeholder="08:00:00"
+          placeholder={t("iot.cameraSchedules.timePlaceholder")}
           placeholderTextColor="#94a3b8"
           style={styles.input}
           value={timeOfDay}
@@ -234,6 +248,7 @@ export function AdminCameraSchedulesPage() {
           value={uploadEndpoint}
           onChangeText={setUploadEndpoint}
         />
+        <Text style={styles.helperText}>{t("iot.cameraSchedules.customUploadHelp")}</Text>
         {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
         <Pressable
           disabled={createScheduleMutation.isPending}
@@ -346,7 +361,7 @@ function ScheduleCard({
   pendingDeviceUid,
   onRunNow,
 }: {
-  schedule: DeviceCameraSchedule;
+  schedule: DeviceCameraSchedule & Partial<DisplayDeviceCameraSchedule>;
   pendingDeviceUid?: string;
   onRunNow: (schedule: DeviceCameraSchedule) => void;
 }) {
@@ -356,7 +371,7 @@ function ScheduleCard({
   const imageUrlQuery = useMediaImageUrl(directUrl ? undefined : media?.fileId);
   const uri = directUrl ?? imageUrlQuery.data;
   const isRunning = pendingDeviceUid === schedule.deviceUid;
-  const mediaStatus = media?.analysis?.analysisStatus ?? media?.status;
+  const mediaStatus = schedule.display?.lastMediaStatusLabel ?? media?.display?.analysis.statusLabel ?? media?.display?.statusLabel;
 
   return (
     <View style={styles.card}>
@@ -373,7 +388,7 @@ function ScheduleCard({
       )}
       <View style={styles.cardBody}>
         <View style={styles.rowBetween}>
-          <Text style={styles.deviceUid}>{schedule.deviceUid}</Text>
+          <Text style={styles.deviceUid}>{schedule.display?.deviceLabel ?? t("iot.common.unknownDevice")}</Text>
           <Text
             style={[
               styles.badge,
@@ -386,22 +401,24 @@ function ScheduleCard({
           </Text>
         </View>
         <Text style={styles.metaText}>
-          {schedule.timeOfDay} | {schedule.recurrence} | {schedule.resolution} |{" "}
-          {schedule.quality}
+          {schedule.display?.timeLabel ?? t("iot.common.noData")} |{" "}
+          {schedule.display?.recurrenceLabel ?? t("iot.common.unknown")} |{" "}
+          {schedule.display?.resolutionLabel ?? t("iot.common.unknown")} |{" "}
+          {schedule.display?.qualityLabel ?? t("iot.common.unknown")}
         </Text>
         <Text style={styles.metaText}>
-          {t("iot.cameraSchedules.nextRunAt")}: {formatDateTime(schedule.nextRunAt)}
+          {t("iot.cameraSchedules.nextRunAt")}: {schedule.display?.nextRunLabel ?? t("iot.common.noData")}
         </Text>
         <Text style={styles.metaText}>
-          {t("iot.cameraSchedules.lastRunAt")}: {formatDateTime(schedule.lastRunAt)}
+          {t("iot.cameraSchedules.lastRunAt")}: {schedule.display?.lastRunLabel ?? t("iot.common.noData")}
         </Text>
         <Text style={styles.metaText}>
           {t("iot.cameraSchedules.uploadEndpoint")}:{" "}
-          {schedule.uploadEndpoint || t("iot.common.none")}
+          {schedule.display?.endpointLabel ?? t("iot.cameraSchedules.defaultUpload")}
         </Text>
         <Text style={styles.metaText}>
           {t("iot.devices.media.analysisStatus")}:{" "}
-          {mediaStatus || t("iot.common.unknown")}
+          {mediaStatus ?? t("iot.common.unknownStatus")}
         </Text>
         <Pressable
           disabled={isRunning}
@@ -586,6 +603,11 @@ const styles = StyleSheet.create({
   },
   heroText: {
     flex: 1,
+  },
+  helperText: {
+    color: "#64748b",
+    fontSize: 12,
+    lineHeight: 18,
   },
   input: {
     backgroundColor: "#f8fafc",

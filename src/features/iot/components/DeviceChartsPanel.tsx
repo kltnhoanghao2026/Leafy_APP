@@ -23,13 +23,14 @@ import type {
   SensorChartResponse,
   SensorCode,
 } from "../types";
-import { getAlertTimeRange } from "../utils/alertLabels";
+import { getAlertSeverityLabel, getAlertTimeRange } from "../utils/alertLabels";
 import {
   formatChartTimestamp,
   getPointTimestamp,
   getPointValue,
 } from "../utils/chartFormat";
 import { formatDateTime } from "../utils/deviceLabels";
+import type { DisplayAlertEvent, DisplayDeviceMediaEvent } from "../utils/iotDisplay";
 import { getSensorLabel } from "../utils/sensorLabels";
 import { RangeSelector } from "./RangeSelector";
 
@@ -63,8 +64,10 @@ type ChartPoint = {
 type Marker = {
   id: string;
   timestamp: string;
+  timestampLabel?: string;
   label: string;
   severity?: string | null;
+  severityLabel?: string;
   source: "alert" | "media";
   x: number;
 };
@@ -232,8 +235,8 @@ function ChartBody({
   onSelectMarker,
 }: {
   charts: SensorChartResponse[];
-  alerts: AlertEventItemResponse[];
-  mediaEvents: DeviceMediaEvent[];
+  alerts: Array<AlertEventItemResponse & Partial<DisplayAlertEvent>>;
+  mediaEvents: Array<DeviceMediaEvent & Partial<DisplayDeviceMediaEvent>>;
   compareMode: boolean;
   range: ChartRange;
   loading?: boolean;
@@ -257,7 +260,7 @@ function ChartBody({
     })),
   }));
 
-  const markers = buildMarkers(alerts, mediaEvents, allPoints);
+  const markers = buildMarkers(alerts, mediaEvents, allPoints, t("iot.charts.mediaAnalysisMarker"));
 
   if (loading) {
     return (
@@ -372,10 +375,10 @@ function ChartBody({
         <View style={styles.markerBox}>
           <Text style={styles.markerTitle}>{selectedMarker.label}</Text>
           <Text style={styles.markerText}>
-            {t("iot.charts.markerTimestamp")}: {formatDateTime(selectedMarker.timestamp)}
+            {t("iot.charts.markerTimestamp")}: {selectedMarker.timestampLabel ?? formatDateTime(selectedMarker.timestamp)}
           </Text>
           <Text style={styles.markerText}>
-            {t("iot.charts.markerSeverity")}: {selectedMarker.severity ?? t("iot.common.unknown")}
+            {t("iot.charts.markerSeverity")}: {selectedMarker.severityLabel ?? getAlertSeverityLabel(selectedMarker.severity)}
           </Text>
           <Pressable onPress={() => onSelectMarker(null)}>
             <Text style={styles.markerDismiss}>{t("iot.charts.dismissMarker")}</Text>
@@ -416,9 +419,10 @@ const buildSeries = (charts: SensorChartResponse[], range: ChartRange) =>
   }));
 
 const buildMarkers = (
-  alerts: AlertEventItemResponse[],
-  mediaEvents: DeviceMediaEvent[],
+  alerts: Array<AlertEventItemResponse & Partial<DisplayAlertEvent>>,
+  mediaEvents: Array<DeviceMediaEvent & Partial<DisplayDeviceMediaEvent>>,
   points: ChartPoint[],
+  mediaAnalysisLabel: string,
 ): Marker[] => {
   const timestamps = points.map((point) => new Date(point.timestamp).getTime());
   const minTime = Math.min(...timestamps);
@@ -435,8 +439,10 @@ const buildMarkers = (
       acc.push({
         id: alert.id,
         timestamp,
-        label: alert.message,
+        timestampLabel: alert.display?.openedAtLabel,
+        label: alert.display?.title ?? alert.display?.message ?? mediaAnalysisLabel,
         severity: alert.severity,
+        severityLabel: alert.display?.severityLabel,
         source: "alert" as const,
         x: resolveMarkerX(timestamp),
       });
@@ -456,8 +462,10 @@ const buildMarkers = (
       acc.push({
         id: media.analysis?.alertEventId ?? media.id,
         timestamp,
-        label: media.analysis?.diseaseType ?? media.analysis?.diseaseName ?? "Media analysis",
+        timestampLabel: media.display?.analysis.analyzedAt ?? media.display?.timestampLabel,
+        label: media.display?.analysis.summary ?? mediaAnalysisLabel,
         severity: media.analysis?.severity,
+        severityLabel: media.display?.analysis.severityLabel,
         source: "media" as const,
         x: resolveMarkerX(timestamp),
       });
