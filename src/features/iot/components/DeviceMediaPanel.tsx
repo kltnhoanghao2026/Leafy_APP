@@ -29,7 +29,7 @@ import type {
   DeviceCameraSchedule,
   DeviceMediaEvent,
 } from "../types";
-import { formatDateTime } from "../utils/deviceLabels";
+import type { DisplayDeviceCameraSchedule, DisplayDeviceMediaEvent } from "../utils/iotDisplay";
 
 const RECURRENCE_OPTIONS: CameraScheduleRecurrence[] = ["DAILY", "WEEKLY", "MONTHLY"];
 const RESOLUTION_OPTIONS: CameraCaptureResolution[] = ["QVGA", "VGA", "HD"];
@@ -63,28 +63,28 @@ const translateEnum = (
   return label === key ? value : label;
 };
 
-const getMediaTimestamp = (media: DeviceMediaEvent) =>
-  media.uploadedAt ?? media.capturedAt ?? media.timestamp ?? media.requestedAt;
+type DisplayableSchedule = DeviceCameraSchedule & Partial<DisplayDeviceCameraSchedule>;
+type DisplayableMedia = DeviceMediaEvent & Partial<DisplayDeviceMediaEvent>;
 
 const isDiseaseDetected = (media?: DeviceMediaEvent | null) =>
   media?.analysis?.analysisStatus === "DISEASE_DETECTED" ||
   media?.analysis?.status === "DISEASE_DETECTED" ||
   media?.analysis?.diseaseDetected === true;
 
-const normalizeSchedules = (value: unknown): DeviceCameraSchedule[] => {
+const normalizeSchedules = (value: unknown): DisplayableSchedule[] => {
   if (Array.isArray(value)) {
-    return value;
+    return value as DisplayableSchedule[];
   }
 
   if (value && typeof value === "object" && "data" in value) {
     const response = value as { data?: unknown };
     if (Array.isArray(response.data)) {
-      return response.data as DeviceCameraSchedule[];
+      return response.data as DisplayableSchedule[];
     }
     if (response.data && typeof response.data === "object" && "data" in response.data) {
       const envelope = response.data as { data?: unknown };
       if (Array.isArray(envelope.data)) {
-        return envelope.data as DeviceCameraSchedule[];
+        return envelope.data as DisplayableSchedule[];
       }
     }
   }
@@ -112,7 +112,7 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const mediaEvents = mediaQuery.data ?? [];
+  const mediaEvents = (mediaQuery.data ?? []) as DisplayableMedia[];
   const schedules = useMemo(
     () => normalizeSchedules(schedulesQuery.data),
     [schedulesQuery.data],
@@ -346,7 +346,7 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
             {schedules.map((schedule) => (
               <View key={schedule.scheduleId ?? schedule.id} style={styles.scheduleItem}>
                 <View style={styles.rowBetween}>
-                  <Text style={styles.scheduleTime}>{schedule.timeOfDay}</Text>
+                  <Text style={styles.scheduleTime}>{schedule.display?.timeLabel ?? t("iot.common.noData")}</Text>
                   <Pressable
                     onPress={() => toggleSchedule(schedule)}
                     style={[
@@ -355,9 +355,7 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
                     ]}
                   >
                     <Text style={schedule.enabled ? styles.badgeSuccessText : styles.badgeMutedText}>
-                      {schedule.enabled
-                        ? t("iot.cameraSchedules.enabled")
-                        : t("iot.cameraSchedules.disabled")}
+                      {schedule.display?.enabledLabel ?? t("iot.common.unknownStatus")}
                     </Text>
                   </Pressable>
                 </View>
@@ -366,33 +364,32 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
                   <View style={styles.scheduleMediaText}>
                     <Text style={styles.metaText}>
                       {t("iot.cameraSchedules.status")}:{" "}
-                      {schedule.status ?? schedule.lastMediaEvent?.status ?? t("iot.common.unknown")}
+                      {schedule.display?.lastMediaStatusLabel ??
+                        schedule.lastMediaEvent?.display?.statusLabel ??
+                        t("iot.common.unknownStatus")}
                     </Text>
                     <Text style={styles.metaText}>
                       {t("iot.devices.media.analysisStatus")}:{" "}
-                      {schedule.lastMediaEvent?.analysis?.analysisStatus ??
-                        t("iot.common.unknown")}
+                      {schedule.lastMediaEvent?.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")}
                     </Text>
                   </View>
                 </View>
                 <Text style={styles.metaText}>
-                  {translateEnum(t, "iot.cameraSchedules.recurrence", schedule.recurrence)}
+                  {schedule.display?.recurrenceLabel ?? t("iot.common.unknown")}
                   {" | "}
-                  {translateEnum(t, "iot.cameraSchedules.resolutionOptions", schedule.resolution)}
+                  {schedule.display?.resolutionLabel ?? t("iot.common.unknown")}
                   {" | "}
-                  {translateEnum(t, "iot.cameraSchedules.qualityOptions", schedule.quality)}
+                  {schedule.display?.qualityLabel ?? t("iot.common.unknown")}
                 </Text>
                 <Text style={styles.metaText}>
-                  {t("iot.cameraSchedules.nextRunAt")}: {formatDateTime(schedule.nextRunAt)}
+                  {t("iot.cameraSchedules.nextRunAt")}: {schedule.display?.nextRunLabel ?? t("iot.common.noData")}
                 </Text>
                 <Text style={styles.metaText}>
-                  {t("iot.cameraSchedules.lastRunAt")}: {formatDateTime(schedule.lastRunAt)}
+                  {t("iot.cameraSchedules.lastRunAt")}: {schedule.display?.lastRunLabel ?? t("iot.common.noData")}
                 </Text>
-                {schedule.uploadEndpoint ? (
-                  <Text style={styles.metaText}>
-                    {t("iot.cameraSchedules.uploadEndpoint")}: {schedule.uploadEndpoint}
-                  </Text>
-                ) : null}
+                <Text style={styles.metaText}>
+                  {t("iot.cameraSchedules.uploadEndpoint")}: {schedule.display?.endpointLabel ?? t("iot.cameraSchedules.defaultUpload")}
+                </Text>
                 <View style={styles.actionRow}>
                   <Pressable style={styles.inlineAction} onPress={() => runScheduleNow(schedule)}>
                     <Play color="#166534" size={14} />
@@ -427,7 +424,7 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
         </Text>
         <TextInput
           autoCapitalize="none"
-          placeholder="08:00:00"
+          placeholder={t("iot.cameraSchedules.timePlaceholder")}
           placeholderTextColor="#94a3b8"
           style={styles.input}
           value={timeOfDay}
@@ -464,6 +461,7 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
           value={uploadEndpoint}
           onChangeText={setUploadEndpoint}
         />
+        <Text style={styles.helperText}>{t("iot.cameraSchedules.customUploadHelp")}</Text>
 
         {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
 
@@ -505,13 +503,13 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
               <View key={media.id} style={styles.historyItem}>
                 <View style={styles.rowBetween}>
                   <Text style={styles.historyTitle}>
-                    {translateEnum(t, "iot.devices.media.triggerType", media.triggerType)}
+                    {media.display?.triggerTypeLabel ?? t("iot.common.unknown")}
                   </Text>
                   <Text style={styles.badge}>
-                    {translateEnum(t, "iot.devices.media.status", media.status)}
+                    {media.display?.statusLabel ?? t("iot.common.unknownStatus")}
                   </Text>
                 </View>
-                <Text style={styles.metaText}>{formatDateTime(getMediaTimestamp(media))}</Text>
+                <Text style={styles.metaText}>{media.display?.timestampLabel ?? t("iot.common.noData")}</Text>
                 <MediaAnalysis media={media} />
                 <Pressable
                   disabled={detectMutation.isPending || (!media.fileId && !media.fileUrl)}
@@ -539,7 +537,7 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
   );
 }
 
-function LatestMediaCard({ media }: { media?: DeviceMediaEvent | null }) {
+function LatestMediaCard({ media }: { media?: DisplayableMedia | null }) {
   const { t } = useTranslation();
 
   return (
@@ -561,7 +559,7 @@ function LatestMediaCard({ media }: { media?: DeviceMediaEvent | null }) {
           <>
             <Text style={styles.metaText}>
               {t("iot.cameraSchedules.status")}:{" "}
-              {translateEnum(t, "iot.devices.media.status", media.status)}
+              {media.display?.statusLabel ?? t("iot.common.unknownStatus")}
             </Text>
             <MediaAnalysis media={media} />
           </>
@@ -577,7 +575,7 @@ function MediaThumbnail({
   media,
   compact = false,
 }: {
-  media?: DeviceMediaEvent | null;
+  media?: DisplayableMedia | null;
   compact?: boolean;
 }) {
   const { t } = useTranslation();
@@ -601,7 +599,7 @@ function MediaThumbnail({
   return <Image source={{ uri }} style={compact ? styles.thumbnailSmall : styles.thumbnail} />;
 }
 
-function MediaAnalysis({ media }: { media: DeviceMediaEvent }) {
+function MediaAnalysis({ media }: { media: DisplayableMedia }) {
   const { t } = useTranslation();
   const analysis = media.analysis;
   const status = analysis?.analysisStatus ?? analysis?.status;
@@ -614,18 +612,18 @@ function MediaAnalysis({ media }: { media: DeviceMediaEvent }) {
     <View style={styles.analysisBox}>
       <Text style={styles.metaText}>
         {t("iot.devices.media.analysisStatus")}:{" "}
-        {translateEnum(t, "iot.devices.media.analysisStatusOptions", status)}
+        {media.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")}
       </Text>
       {analysis?.diseaseType || analysis?.diseaseName ? (
         <Text style={styles.metaText}>
           {t("iot.devices.media.diseaseType")}:{" "}
-          {analysis.diseaseType ?? analysis.diseaseName}
+          {media.display?.analysis.diseaseLabel ?? t("iot.common.unknownValue")}
         </Text>
       ) : null}
       {analysis?.severity ? (
         <Text style={styles.metaText}>
           {t("iot.devices.media.severity")}:{" "}
-          {translateEnum(t, "iot.alerts.severity", analysis.severity)}
+          {media.display?.analysis.severityLabel ?? t("iot.common.unknownStatus")}
         </Text>
       ) : null}
     </View>
@@ -796,6 +794,11 @@ const styles = StyleSheet.create({
   },
   headerText: {
     flex: 1,
+  },
+  helperText: {
+    color: "#64748b",
+    fontSize: 12,
+    lineHeight: 18,
   },
   historyItem: {
     backgroundColor: "#ffffff",

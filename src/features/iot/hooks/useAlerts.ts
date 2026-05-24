@@ -6,7 +6,9 @@ import type {
   AlertEventItemResponse,
   AlertRuleRequest,
   AlertRuleResponse,
+  DisplayAlertRule,
 } from "../types";
+import { withAlertDisplay, withPagedAlertDisplay, withRuleDisplay } from "../utils/iotDisplay";
 import { iotKeys } from "./useDevices";
 
 export const alertEventsQueryOptions = (params?: AlertEventsParams) =>
@@ -50,15 +52,24 @@ const invalidateAlertSideEffects = (
 };
 
 export const useAlertEvents = (params?: AlertEventsParams) => {
-  return useQuery(alertEventsQueryOptions(params));
+  return useQuery({
+    ...alertEventsQueryOptions(params),
+    select: withPagedAlertDisplay,
+  });
 };
 
 export const useAlertEventDetail = (alertId?: string) => {
-  return useQuery(alertEventDetailQueryOptions(alertId));
+  return useQuery({
+    ...alertEventDetailQueryOptions(alertId),
+    select: withAlertDisplay,
+  });
 };
 
 export const useAlertRules = () => {
-  return useQuery(alertRulesQueryOptions());
+  return useQuery({
+    ...alertRulesQueryOptions(),
+    select: (rules): DisplayAlertRule[] => rules.map(withRuleDisplay),
+  });
 };
 
 const getRuleId = (rule: AlertRuleResponse) => rule.ruleId ?? rule.id;
@@ -85,7 +96,7 @@ export const useCreateAlertRuleMutation = () => {
       queryClient.setQueryData<AlertRuleResponse[]>(
         iotKeys.alertRules(),
         [
-          {
+          withRuleDisplay({
             ruleId: `optimistic-${Date.now()}`,
             name: payload.name,
             sensorType: payload.sensorType ?? payload.sensorTypeId ?? "",
@@ -96,7 +107,7 @@ export const useCreateAlertRuleMutation = () => {
             maxThreshold: payload.maxThreshold ?? payload.thresholdMax ?? null,
             severity: payload.severity,
             enabled: payload.enabled ?? true,
-          },
+          }),
           ...(previous ?? []),
         ],
       );
@@ -132,7 +143,7 @@ export const useUpdateAlertRuleMutation = () => {
         (current = []) =>
           current.map((rule) =>
             getRuleId(rule) === ruleId
-              ? {
+              ? withRuleDisplay({
                   ...rule,
                   ...payload,
                   sensorType: payload.sensorType ?? payload.sensorTypeId ?? rule.sensorType,
@@ -140,7 +151,7 @@ export const useUpdateAlertRuleMutation = () => {
                   thresholdMax: payload.thresholdMax ?? payload.maxThreshold ?? rule.thresholdMax,
                   minThreshold: payload.minThreshold ?? payload.thresholdMin ?? rule.minThreshold,
                   maxThreshold: payload.maxThreshold ?? payload.thresholdMax ?? rule.maxThreshold,
-                }
+                })
               : rule,
           ),
       );

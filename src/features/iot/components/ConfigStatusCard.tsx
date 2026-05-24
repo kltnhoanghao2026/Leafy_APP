@@ -37,7 +37,7 @@ export function ConfigStatusCard({ config }: ConfigStatusCardProps) {
       {config?.lastPushError ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorLabel}>{t("iot.config.deviceError")}</Text>
-          <Text style={styles.errorText}>{config.lastPushError}</Text>
+          <Text style={styles.errorText}>{t("iot.config.updateFailedFriendly")}</Text>
         </View>
       ) : null}
     </View>

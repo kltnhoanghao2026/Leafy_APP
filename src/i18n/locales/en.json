@@ -464,7 +464,7 @@
       "speciesPlaceholder": "Select species",
       "speciesLoading": "Loading species...",
       "speciesLoadFailed": "Failed to load species. Tap to retry.",
-      "farmPlotId": "Farm plot ID *",
+      "farmPlotId": "Farm plot *",
       "farmPlotIdPlaceholder": "Select farm plot",
       "farmPlotLoading": "Loading farm plots...",
       "farmPlotLoadFailed": "Failed to load farm plots. Tap to retry.",
@@ -924,11 +924,41 @@
       "all": "All",
       "back": "Back",
       "device": "Device",
+      "deviceWithId": "Device {{id}}",
       "farm": "Farm",
       "noData": "No data",
       "none": "None",
+      "notAvailable": "Not available",
+      "never": "Never",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
       "retry": "Retry",
       "unknown": "Unknown",
+      "unknownDevice": "Unknown device",
+      "unknownZone": "Unknown zone",
+      "unknownFarm": "Unknown farm",
+      "unknownStatus": "Unknown status",
+      "unknownValue": "Unknown value",
+      "technicalDetails": "Technical details",
+      "showTechnicalDetails": "Show technical details",
+      "hideTechnicalDetails": "Hide technical details",
+      "noFarmMetadata": "No farm metadata",
+      "noZoneMetadata": "No zone metadata",
+      "selectedDevice": "Selected device",
+      "selectDevice": "Select device",
+      "selectZone": "Select zone",
+      "selectFarm": "Select farm",
+      "searchDevice": "Search device",
+      "searchZone": "Search zone",
+      "searchFarm": "Search farm",
+      "clearSelection": "Clear selection",
+      "noDevicesFound": "No devices found",
+      "noZonesFound": "No zones found",
+      "noFarmsFound": "No farms found",
+      "advancedFilters": "Advanced filters",
+      "advancedManualInput": "Advanced manual input",
+      "technicalIdentifier": "Technical identifier",
+      "assigned": "Assigned",
       "unassigned": "Unassigned",
       "zone": "Zone"
     },
@@ -936,8 +966,8 @@
       "kicker": "Device config",
       "title": "Device configuration",
       "loading": "Loading device configuration...",
-      "missingDeviceId": "Missing device ID",
-      "missingDeviceIdDescription": "Cannot open configuration because this route is missing deviceId.",
+      "missingDeviceId": "Missing device",
+      "missingDeviceIdDescription": "Cannot open configuration because no device was selected.",
       "notReadyTitle": "Device is not ready for configuration",
       "offlineWarningTitle": "Device is offline",
       "offlineWarningDescription": "You can still save configuration, but MQTT push may time out while the device is offline.",
@@ -947,6 +977,7 @@
       "pushToDevice": "Send to device",
       "updateSuccess": "Configuration saved. Send it to the device to apply via MQTT.",
       "updateFailed": "Unable to save configuration.",
+      "updateFailedFriendly": "Configuration update failed. Please try again.",
       "ackTimeoutMessage": "No ACK received after 45 seconds. Check the device connection.",
       "formTitle": "Configuration parameters",
       "deviceName": "Device name",
@@ -954,7 +985,7 @@
       "publishInterval": "Data publish interval",
       "offlineTimeout": "Offline timeout",
       "alertEnabled": "Enable alerts",
-      "alertEnabledHint": "Allow backend alert rules to evaluate this device.",
+      "alertEnabledHint": "Allow alert rules to evaluate this device.",
       "seconds": "sec",
       "save": "Save configuration",
       "saving": "Saving...",
@@ -1000,6 +1031,47 @@
     "devices": {
       "defaultName": "IoT device",
       "noCode": "No code",
+      "actions": {
+        "more": "More actions",
+        "edit": "Edit device",
+        "release": "Release device",
+        "changeLocation": "Change farm/zone"
+      },
+      "edit": {
+        "title": "Edit device",
+        "description": "Update the display name and assigned location.",
+        "deviceName": "Device name",
+        "deviceNamePlaceholder": "Enter device name",
+        "farm": "Farm",
+        "zone": "Zone",
+        "active": "Active device",
+        "activeDescription": "Turn this off to pause the device in the system.",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "success": "Device updated successfully.",
+        "error": "Could not update device.",
+        "nameRequired": "Device name is required.",
+        "nameTooLong": "Device name must be {{max}} characters or fewer.",
+        "zoneRequiresFarm": "Choose a farm before choosing a zone.",
+        "noChanges": "No changes to save.",
+        "notFound": "Device not found."
+      },
+      "release": {
+        "title": "Release device?",
+        "message": "This device will no longer belong to your account. Automatic camera schedules will be disabled. Another account can connect this device again. Historical data will not be deleted.",
+        "shortDescription": "Remove from this account",
+        "confirm": "Release device",
+        "cancel": "Cancel",
+        "releasing": "Releasing...",
+        "success": "Device released from your account.",
+        "error": "Could not release device.",
+        "forbidden": "You do not have permission to manage this device."
+      },
+      "type": {
+        "ESP32_CAM_SENSOR": "ESP32 camera sensor",
+        "ESP32_SENSOR": "ESP32 sensor",
+        "CAMERA_SENSOR": "Camera sensor"
+      },
       "status": {
         "ONLINE": "Online",
         "OFFLINE": "Offline",
@@ -1035,8 +1107,8 @@
         "kicker": "Device detail",
         "loading": "Loading device detail...",
         "loadFailed": "Unable to load device",
-        "missingDeviceId": "Missing device ID",
-        "missingDeviceIdDescription": "Cannot open detail because this route is missing deviceId.",
+        "missingDeviceId": "Missing device",
+        "missingDeviceIdDescription": "Cannot open detail because no device was selected.",
         "errorAuth": "Your session has expired. Please sign in again.",
         "errorForbidden": "You do not have permission to view this device.",
         "errorNotFound": "Device not found.",
@@ -1055,7 +1127,7 @@
         "chartAction": "Charts",
         "chartActionDescription": "More chart controls will be added later",
         "alertAction": "Device alerts",
-        "alertActionDescription": "View alerts filtered by deviceId"
+        "alertActionDescription": "View alerts for this device"
       },
       "onboarding": {
         "kicker": "Connect device",
@@ -1064,7 +1136,7 @@
         "scanQr": "Scan QR",
         "manual": "Manual entry",
         "scanQrTitle": "Scan device QR",
-        "scanQrDescription": "The QR code must include deviceUid, deviceCode, deviceType, and may include model.",
+        "scanQrDescription": "The QR code must include the device identifier, device code, device type, and may include model.",
         "qrScannerKicker": "QR scanner",
         "qrScannerDescription": "Place the QR code inside the camera frame. After a valid scan, the app returns to location selection.",
         "checkingCameraPermission": "Checking camera permission...",
@@ -1072,14 +1144,22 @@
         "cameraPermissionDescription": "Allow camera access to scan QR codes. If permission was denied, reopen system settings to grant it.",
         "requestCameraPermission": "Grant camera permission",
         "pasteJsonTitle": "Paste JSON for testing",
+        "manualJsonPlaceholder": "{\"deviceUid\":\"LEAFY-ESP32-001\",\"deviceCode\":\"ESP32-001\",\"deviceType\":\"ESP32_CAM_SENSOR\",\"model\":\"Leafy IoT Module V1\"}",
+        "advancedManualSetup": "Advanced manual setup",
+        "technicalDeviceInfo": "These technical values come from the device label or QR data.",
         "useThisContent": "Use this content",
         "openQrCamera": "Open QR camera",
         "manualInfoTitle": "Enter device information manually",
         "readDeviceInfo": "Device information read",
-        "deviceUid": "Device UID",
+        "deviceUid": "Device identifier",
+        "deviceIdentifier": "Device identifier",
+        "deviceIdentifierPlaceholder": "Device identifier from QR",
         "deviceCode": "Device code",
+        "deviceCodePlaceholder": "Device code from QR",
         "deviceType": "Device type",
+        "deviceTypePlaceholder": "Device type from QR",
         "model": "Model",
+        "modelPlaceholder": "Device model",
         "displayName": "Display name",
         "locationTitle": "Choose installation location",
         "selectFarm": "Select farm",
@@ -1091,7 +1171,7 @@
         "loadingZones": "Loading zones...",
         "zonesLoadFailed": "Unable to load zones.",
         "noZones": "This farm has no zones yet.",
-        "missingDeviceInfo": "Please scan QR or enter deviceUid, deviceCode, and deviceType.",
+        "missingDeviceInfo": "Please scan QR or enter device identifier, device code, and device type.",
         "missingLocation": "Please select the farm and installation zone.",
         "progressProvisioning": "Registering device...",
         "progressClaimCode": "Generating claim code...",
@@ -1121,7 +1201,13 @@
         "placeholderImage": "No image",
         "mediaHistory": "Media history",
         "noEvents": "No media events yet.",
-        "requiresDeviceUid": "This action requires a device UID.",
+        "requiresDeviceUid": "This action requires a device identifier.",
+        "captureNow": "Capture now",
+        "captureRequested": "Capture requested",
+        "noMedia": "No images yet",
+        "captureTime": "Capture time",
+        "fileSize": "File size",
+        "uploadStatus": "Upload status",
         "analysisStatus": "Analysis status",
         "diseaseType": "Disease",
         "severity": "Severity",
@@ -1133,23 +1219,26 @@
         "analysisSuccess": "The image analysis request was sent.",
         "analysisFailed": "Unable to trigger image analysis.",
         "status": {
-          "REQUESTED": "Requested",
+          "REQUESTED": "Capture requested",
           "COMMAND_SENT": "Command sent",
-          "UPLOADING": "Uploading",
+          "UPLOADING": "Uploading image",
           "UPLOADED": "Uploaded",
-          "FAILED": "Failed",
-          "TIMEOUT": "Timed out"
+          "FAILED": "Upload failed",
+          "TIMEOUT": "Timed out",
+          "UNKNOWN": "Unknown upload status"
         },
         "analysisStatusOptions": {
-          "PENDING": "Pending",
-          "PROCESSING": "Processing",
-          "PROCESSED": "Processed",
+          "PENDING": "Waiting for analysis",
+          "PROCESSING": "Processing analysis",
+          "PROCESSED": "Analysis complete",
           "DISEASE_DETECTED": "Disease detected",
-          "FAILED": "Failed"
+          "FAILED": "Analysis failed",
+          "UNKNOWN": "Unknown analysis status"
         },
         "triggerType": {
           "MANUAL": "Manual",
-          "SCHEDULED": "Scheduled"
+          "SCHEDULED": "Scheduled",
+          "UNKNOWN": "Unknown trigger"
         }
       }
     },
@@ -1179,19 +1268,30 @@
       "captureOptions": "Capture options",
       "resolution": "Resolution",
       "quality": "Quality",
-      "uploadEndpoint": "Upload endpoint",
-      "uploadEndpointPlaceholder": "Optional upload endpoint",
+      "uploadEndpoint": "Upload destination",
+      "uploadEndpointPlaceholder": "Optional upload destination",
+      "uploadDestination": "Upload destination",
+      "defaultUpload": "Default upload destination",
+      "customEndpoint": "Custom upload destination configured",
       "status": "Status",
       "alertBadge": "Alert",
-      "deviceUid": "Device UID",
+      "deviceUid": "Device",
       "enabled": "Enabled",
       "disabled": "Disabled",
       "timeOfDay": "Time of day",
+      "timePlaceholder": "08:00",
       "recurrenceLabel": "Recurrence",
       "lastRunAt": "Last run",
       "nextRunAt": "Next run",
       "filters": "Filters",
-      "filterDeviceUid": "Filter by device UID",
+      "filterDeviceUid": "Filter by device",
+      "filterByDevice": "Filter by device",
+      "device": "Device",
+      "selectDeviceForSchedule": "Select device for schedule",
+      "manualDeviceIdentifier": "Enter device identifier manually",
+      "customUploadHelp": "Leave empty to use the default upload destination.",
+      "defaultUploadDestination": "Default upload destination",
+      "customUploadDestination": "Custom upload destination configured",
       "loading": "Loading camera schedules...",
       "loadFailed": "Unable to load camera schedules.",
       "empty": "No camera schedules found.",
@@ -1201,28 +1301,54 @@
         "enabled": "Enabled",
         "disabled": "Disabled"
       },
+      "statusOptions": {
+        "ENABLED": "Enabled",
+        "DISABLED": "Disabled",
+        "RUNNING": "Running",
+        "SUCCEEDED": "Succeeded",
+        "FAILED": "Failed"
+      },
       "validation": {
-        "timeOfDay": "Time must use HH:mm:ss format.",
-        "deviceUid": "Device UID is required.",
+        "timeRequired": "Capture time is required.",
+        "invalidTime": "Use HH:mm format.",
+        "recurrenceRequired": "Please choose a repeat option.",
+        "invalidUploadDestination": "Upload destination must be a valid HTTP or HTTPS URL.",
+        "deviceRequired": "Please select a device.",
+        "timeOfDay": "Time must use HH:mm format.",
+        "deviceUid": "Please select a device.",
         "recurrence": "Choose a recurrence.",
         "resolution": "Choose a supported resolution.",
         "quality": "Choose a supported quality.",
-        "uploadEndpoint": "Upload endpoint must be a valid HTTP or HTTPS URL."
+        "uploadEndpoint": "Upload destination must be a valid HTTP or HTTPS URL."
       },
       "recurrence": {
         "DAILY": "Daily",
         "WEEKLY": "Weekly",
-        "MONTHLY": "Monthly"
+        "MONTHLY": "Monthly",
+        "UNKNOWN": "Unknown repeat option"
+      },
+      "recurrenceOptions": {
+        "DAILY": "Daily",
+        "WEEKLY": "Weekly",
+        "MONTHLY": "Monthly",
+        "UNKNOWN": "Unknown repeat option"
       },
       "qualityOptions": {
         "LOW": "Low",
         "MEDIUM": "Medium",
-        "HIGH": "High"
+        "HIGH": "High",
+        "UNKNOWN": "Unknown image quality"
       },
       "resolutionOptions": {
-        "QVGA": "QVGA",
-        "VGA": "VGA",
-        "HD": "HD"
+        "QVGA": "Compact",
+        "VGA": "Standard",
+        "HD": "HD",
+        "UNKNOWN": "Unknown image size"
+      },
+      "triggerType": {
+        "MANUAL": "Manual",
+        "SCHEDULED": "Scheduled",
+        "UNKNOWN": "Unknown trigger"
       }
     },
     "charts": {
@@ -1241,7 +1367,8 @@
       "dismissMarker": "Hide marker",
       "legend": "Legend",
       "liveRefresh": "Live refresh",
-      "tooltipAlert": "{{name}} · {{severity}} · {{time}}"
+      "tooltipAlert": "{{name}} · {{severity}} · {{time}}",
+      "mediaAnalysisMarker": "Image analysis marker"
     },
     "metrics": {
       "ranges": {
@@ -1285,8 +1412,8 @@
         "title": "Zone metrics",
         "overviewTitle": "Zone overview",
         "devices": "Devices",
-        "missingZoneId": "Missing zone ID",
-        "missingZoneIdDescription": "Cannot open metrics because this route is missing zoneId.",
+        "missingZoneId": "Missing zone",
+        "missingZoneIdDescription": "Cannot open metrics because no zone was selected.",
         "loadingOverview": "Loading zone overview...",
         "overviewLoadFailed": "Unable to load zone overview.",
         "viewZoneAlerts": "View zone alerts",
@@ -1301,7 +1428,7 @@
         "highest": "Highest",
         "chartLoadFailed": "Unable to load chart. Pull down to retry.",
         "noChartData": "No chart data yet",
-        "noChartDataDescription": "Try another time range or wait for the backend to aggregate sensor data."
+        "noChartDataDescription": "Try another time range or wait for the system to aggregate sensor data."
       }
     },
     "alerts": {
@@ -1333,6 +1460,11 @@
       "resolveSuccess": "Alert marked as resolved.",
       "notificationTitle": "IoT alert",
       "notificationBody": "A device alert needs attention.",
+      "messageFallback": "An alert was triggered.",
+      "noAlerts": "No alerts",
+      "unknownDevice": "Unknown device",
+      "unknownZone": "Unknown zone",
+      "unknownFarm": "Unknown farm",
       "deepLinkOpening": "Opening alert detail...",
       "deepLinkMissingAlert": "This alert is no longer available.",
       "filters": {
@@ -1340,20 +1472,43 @@
         "status": "Status",
         "severity": "Severity",
         "time": "Time",
-        "deviceId": "deviceId",
-        "zoneId": "zoneId"
+        "timeRange": "Time range",
+        "farm": "Farm",
+        "advanced": "Advanced filters",
+        "device": "Search or enter device",
+        "zone": "Search or enter zone",
+        "devicePlaceholder": "Choose or search a device",
+        "zonePlaceholder": "Choose or search a zone",
+        "farmPlaceholder": "Choose or search a farm",
+        "manualDeviceIdentifier": "Enter device identifier manually",
+        "manualZoneIdentifier": "Enter zone identifier manually",
+        "deviceId": "Device",
+        "zoneId": "Zone"
       },
       "status": {
         "OPEN": "Open",
         "ACKNOWLEDGED": "Acknowledged",
         "RESOLVED": "Resolved",
-        "CLOSED": "Closed"
+        "CLOSED": "Closed",
+        "UNKNOWN": "Unknown status"
       },
       "severity": {
         "LOW": "Low",
         "MEDIUM": "Medium",
         "HIGH": "High",
-        "CRITICAL": "Critical"
+        "CRITICAL": "Critical",
+        "UNKNOWN": "Unknown severity"
+      },
+      "detail": {
+        "device": "Device",
+        "zone": "Zone",
+        "farm": "Farm",
+        "sensor": "Sensor",
+        "readingValue": "Reading value",
+        "threshold": "Threshold",
+        "openedAt": "Opened at",
+        "acknowledgedAt": "Acknowledged at",
+        "resolvedAt": "Resolved at"
       },
       "time": {
         "H24": "24h",
@@ -1396,6 +1551,25 @@
         "severityInvalid": "Choose a valid severity.",
         "thresholdNumber": "Threshold values must be valid numbers.",
         "minLessThanMax": "Min threshold must be less than or equal to max threshold."
+      }
+    },
+    "rules": {
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "threshold": "Threshold",
+      "lastTriggered": "Last triggered",
+      "maxThreshold": "Max {{value}}",
+      "minThreshold": "Min {{value}}",
+      "unknownRule": "Alert rule",
+      "sensor": "Sensor",
+      "selectSensor": "Select sensor",
+      "sensorRequired": "Please select a sensor.",
+      "unknownSensor": "Unknown sensor",
+      "sensorOptions": {
+        "AIR_TEMP": "Air temperature",
+        "AIR_HUMIDITY": "Air humidity",
+        "SOIL_MOISTURE": "Soil moisture",
+        "LIGHT_INTENSITY": "Light intensity"
       }
     }
   },

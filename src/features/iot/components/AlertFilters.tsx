@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import type { AlertEventsParams, AlertSeverity, AlertStatus } from "../types";
+import { DevicePicker, type DevicePickerOption } from "./DevicePicker";
+import { FarmPicker, type FarmPickerOption } from "./FarmPicker";
+import { ZonePicker, type ZonePickerOption } from "./ZonePicker";
 
 export type AlertTimeRange = "H24" | "D7" | "D30" | "ALL";
 
@@ -10,9 +14,14 @@ type AlertFiltersProps = {
   severity?: AlertSeverity;
   deviceId?: string;
   zoneId?: string;
+  farmPlotId?: string;
   timeRange: AlertTimeRange;
+  devices?: DevicePickerOption[];
+  farms?: FarmPickerOption[];
+  zones?: ZonePickerOption[];
   onChange: (
     next: Pick<AlertEventsParams, "status" | "severity" | "deviceId" | "zoneId"> & {
+      farmPlotId?: string;
       timeRange: AlertTimeRange;
     },
   ) => void;
@@ -45,10 +54,15 @@ export function AlertFilters({
   severity,
   deviceId,
   zoneId,
+  farmPlotId,
   timeRange,
+  devices = [],
+  farms = [],
+  zones = [],
   onChange,
 }: AlertFiltersProps) {
   const { t } = useTranslation();
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const update = (
     patch: Partial<{
@@ -56,6 +70,7 @@ export function AlertFilters({
       severity?: AlertSeverity;
       deviceId?: string;
       zoneId?: string;
+      farmPlotId?: string;
       timeRange: AlertTimeRange;
     }>,
   ) => {
@@ -64,6 +79,7 @@ export function AlertFilters({
       severity,
       deviceId,
       zoneId,
+      farmPlotId,
       timeRange,
       ...patch,
     });
@@ -106,24 +122,67 @@ export function AlertFilters({
           ))}
         </View>
       </View>
-      <View style={styles.inputRow}>
-        <TextInput
-          autoCapitalize="none"
-          onChangeText={(text) => update({ deviceId: text })}
-          placeholder={t("iot.alerts.filters.deviceId")}
-          placeholderTextColor="#94a3b8"
-          style={styles.input}
-          value={deviceId}
-        />
-        <TextInput
-          autoCapitalize="none"
-          onChangeText={(text) => update({ zoneId: text })}
-          placeholder={t("iot.alerts.filters.zoneId")}
-          placeholderTextColor="#94a3b8"
-          style={styles.input}
-          value={zoneId}
-        />
-      </View>
+      <FarmPicker
+        farms={farms}
+        label={t("iot.alerts.filters.farm")}
+        placeholder={t("iot.alerts.filters.farmPlaceholder")}
+        value={farmPlotId}
+        onChange={(farm) =>
+          update({
+            farmPlotId: farm?.id ?? "",
+            zoneId: "",
+          })
+        }
+      />
+      <DevicePicker
+        devices={devices}
+        label={t("iot.alerts.filters.deviceId")}
+        mode="deviceId"
+        placeholder={t("iot.alerts.filters.devicePlaceholder")}
+        value={deviceId}
+        onChange={(device) =>
+          update({
+            deviceId: device?.deviceId ?? device?.id ?? "",
+          })
+        }
+      />
+      <ZonePicker
+        label={t("iot.alerts.filters.zoneId")}
+        placeholder={t("iot.alerts.filters.zonePlaceholder")}
+        value={zoneId}
+        zones={zones}
+        onChange={(zone) => update({ zoneId: zone?.id ?? "" })}
+      />
+      <Pressable
+        style={styles.advancedButton}
+        onPress={() => setShowAdvancedFilters((visible) => !visible)}
+      >
+        <Text style={styles.advancedButtonText}>
+          {showAdvancedFilters
+            ? t("iot.common.hideTechnicalDetails")
+            : t("iot.common.advancedFilters")}
+        </Text>
+      </Pressable>
+      {showAdvancedFilters ? (
+        <View style={styles.inputRow}>
+          <TextInput
+            autoCapitalize="none"
+            onChangeText={(text) => update({ deviceId: text })}
+            placeholder={t("iot.alerts.filters.manualDeviceIdentifier")}
+            placeholderTextColor="#94a3b8"
+            style={styles.input}
+            value={deviceId}
+          />
+          <TextInput
+            autoCapitalize="none"
+            onChangeText={(text) => update({ zoneId: text })}
+            placeholder={t("iot.alerts.filters.manualZoneIdentifier")}
+            placeholderTextColor="#94a3b8"
+            style={styles.input}
+            value={zoneId}
+          />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -160,6 +219,18 @@ function ChipGroup<T extends string>({
 }
 
 const styles = StyleSheet.create({
+  advancedButton: {
+    alignSelf: "flex-start",
+    backgroundColor: "#f1f5f9",
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  advancedButtonText: {
+    color: "#334155",
+    fontSize: 12,
+    fontWeight: "900",
+  },
   card: {
     backgroundColor: "#ffffff",
     borderColor: "#e2e8f0",

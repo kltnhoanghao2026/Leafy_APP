@@ -21,8 +21,10 @@ import {
   useDeleteAlertRuleMutation,
   useUpdateAlertRuleMutation,
 } from "../hooks/useAlerts";
+import { SensorTypePicker } from "../components/SensorTypePicker";
 import type { AlertRuleResponse, AlertRuleRequest, AlertSeverity } from "../types";
 import { formatDateTime } from "../utils/deviceLabels";
+import type { DisplayAlertRule } from "../utils/iotDisplay";
 
 const SEVERITY_OPTIONS: AlertSeverity[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
 
@@ -80,7 +82,7 @@ export function AlertRulesScreen() {
     const keyword = search.trim().toLowerCase();
     return rules.filter((rule) => {
       const name = rule.name ?? "";
-      const sensor = rule.sensorType ?? rule.sensorTypeId ?? "";
+      const sensor = rule.display?.sensorLabel ?? "";
       const matchesKeyword =
         !keyword ||
         name.toLowerCase().includes(keyword) ||
@@ -106,7 +108,7 @@ export function AlertRulesScreen() {
     }
 
     if (!form.sensorType.trim()) {
-      return t("iot.alertRules.validation.sensorTypeRequired");
+      return t("iot.rules.sensorRequired");
     }
 
     if (!SEVERITY_OPTIONS.includes(form.severity)) {
@@ -384,13 +386,10 @@ function AlertRuleForm({
         value={form.name}
         onChangeText={(name) => setForm({ ...form, name })}
       />
-      <TextInput
-        autoCapitalize="characters"
-        placeholder={t("iot.alertRules.sensorType")}
-        placeholderTextColor="#94a3b8"
-        style={styles.input}
+      <SensorTypePicker
+        label={t("iot.rules.selectSensor")}
         value={form.sensorType}
-        onChangeText={(sensorType) => setForm({ ...form, sensorType })}
+        onChange={(sensorType) => setForm({ ...form, sensorType: sensorType ?? "" })}
       />
       <View style={styles.formGrid}>
         <TextInput
@@ -462,22 +461,20 @@ function AlertRuleItem({
   onEdit,
   onDelete,
 }: {
-  rule: AlertRuleResponse;
+  rule: AlertRuleResponse & Partial<DisplayAlertRule>;
   pending: boolean;
   onToggle: (rule: AlertRuleResponse) => void;
   onEdit: (rule: AlertRuleResponse) => void;
   onDelete: (rule: AlertRuleResponse) => void;
 }) {
   const { t } = useTranslation();
-  const min = getThresholdMin(rule);
-  const max = getThresholdMax(rule);
-  const sensor = rule.sensorType ?? rule.sensorTypeId ?? t("iot.common.unknown");
+  const sensor = rule.display?.sensorLabel ?? t("iot.common.unknown");
 
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.cardTitleWrap}>
-          <Text style={styles.ruleName}>{rule.name || sensor}</Text>
+          <Text style={styles.ruleName}>{rule.display?.name ?? sensor}</Text>
           <Text style={styles.ruleSensor}>{sensor}</Text>
         </View>
         <Switch
@@ -487,14 +484,13 @@ function AlertRuleItem({
         />
       </View>
       <Text style={styles.metaText}>
-        {t("iot.alertRules.thresholdMin")}: {min ?? t("iot.common.none")} |{" "}
-        {t("iot.alertRules.thresholdMax")}: {max ?? t("iot.common.none")}
+        {t("iot.rules.threshold")}: {rule.display?.thresholdLabel ?? t("iot.common.unknownValue")}
       </Text>
       <Text style={styles.metaText}>
-        {t("iot.alertRules.severity")}: {t(`iot.alerts.severity.${rule.severity}`)}
+        {t("iot.alertRules.severity")}: {rule.display?.severityLabel ?? t("iot.common.unknownStatus")}
       </Text>
       <Text style={styles.metaText}>
-        {t("iot.alertRules.lastTriggered")}: {formatDateTime(rule.lastTriggeredAt)}
+        {t("iot.alertRules.lastTriggered")}: {rule.display?.lastTriggeredLabel ?? t("iot.common.noData")}
       </Text>
       <View style={styles.actionRow}>
         <Pressable style={styles.inlineAction} onPress={() => onEdit(rule)}>

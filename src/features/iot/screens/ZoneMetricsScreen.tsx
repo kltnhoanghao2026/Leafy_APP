@@ -88,7 +88,7 @@ export function ZoneMetricsScreen() {
       <View style={styles.header}>
         <Text style={styles.kicker}>{t("iot.metrics.zone.kicker")}</Text>
         <Text style={styles.title}>{t("iot.metrics.zone.title")}</Text>
-        <Text style={styles.subtitle}>{zoneName || zoneId}</Text>
+        <Text style={styles.subtitle}>{zoneName || t("iot.common.noZoneMetadata")}</Text>
       </View>
 
       {overviewQuery.isLoading ? (

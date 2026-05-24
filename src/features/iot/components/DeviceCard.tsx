@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronRight, MoreHorizontal } from "lucide-react-native";
 
 import type { DeviceResponse } from "../types";
 import {
@@ -13,11 +13,13 @@ import { DeviceStatusBadge } from "./DeviceStatusBadge";
 type DeviceCardProps = {
   device: DeviceResponse;
   onPress: (device: DeviceResponse) => void;
+  onMorePress?: (device: DeviceResponse) => void;
 };
 
-export function DeviceCard({ device, onPress }: DeviceCardProps) {
+export function DeviceCard({ device, onPress, onMorePress }: DeviceCardProps) {
   const { t } = useTranslation();
-  const unassigned = t("iot.common.unassigned");
+  const farmLabel = device.farmPlotId ? t("iot.common.assigned") : t("iot.common.noFarmMetadata");
+  const zoneLabel = device.zoneId ? t("iot.common.assigned") : t("iot.common.noZoneMetadata");
 
   return (
     <Pressable
@@ -31,10 +33,22 @@ export function DeviceCard({ device, onPress }: DeviceCardProps) {
             {device.deviceName || t("iot.devices.defaultName")}
           </Text>
           <Text style={styles.code} numberOfLines={1}>
-            {formatDeviceCode(device.deviceCode || device.deviceUid)}
+            {device.deviceCode ? formatDeviceCode(device.deviceCode) : t("iot.devices.noCode")}
           </Text>
         </View>
-        <ChevronRight color="#94a3b8" size={20} />
+        <View style={styles.headerActions}>
+          {onMorePress ? (
+            <Pressable
+              accessibilityLabel={t("iot.devices.actions.more")}
+              hitSlop={8}
+              onPress={() => onMorePress(device)}
+              style={styles.moreButton}
+            >
+              <MoreHorizontal color="#64748b" size={20} />
+            </Pressable>
+          ) : null}
+          <ChevronRight color="#94a3b8" size={20} />
+        </View>
       </View>
 
       <View style={styles.metaRow}>
@@ -46,10 +60,10 @@ export function DeviceCard({ device, onPress }: DeviceCardProps) {
 
       <View style={styles.details}>
         <Text style={styles.detailText}>
-          {t("iot.common.farm")}: {device.farmPlotId || unassigned}
+          {t("iot.common.farm")}: {farmLabel}
         </Text>
         <Text style={styles.detailText}>
-          {t("iot.common.zone")}: {device.zoneId || unassigned}
+          {t("iot.common.zone")}: {zoneLabel}
         </Text>
         <Text style={styles.detailText}>
           {t("iot.devices.detail.lastSeenAt")}: {formatDateTime(device.lastSeenAt)}
@@ -91,6 +105,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
   },
+  headerActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
   metaRow: {
     alignItems: "center",
     flexDirection: "row",
@@ -102,6 +121,14 @@ const styles = StyleSheet.create({
     color: "#0f172a",
     fontSize: 17,
     fontWeight: "800",
+  },
+  moreButton: {
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    borderRadius: 999,
+    height: 34,
+    justifyContent: "center",
+    width: 34,
   },
   pressed: {
     opacity: 0.78,

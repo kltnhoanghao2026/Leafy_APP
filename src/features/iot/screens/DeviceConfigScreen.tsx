@@ -251,7 +251,7 @@ export function DeviceConfigScreen() {
         <Text style={styles.kicker}>{t("iot.config.kicker")}</Text>
         <Text style={styles.title}>{t("iot.config.title")}</Text>
         <Text style={styles.subtitle}>
-          {device?.deviceName || device?.deviceCode || deviceId}
+          {device?.deviceName || device?.deviceCode || t("iot.devices.defaultName")}
         </Text>
       </View>
 

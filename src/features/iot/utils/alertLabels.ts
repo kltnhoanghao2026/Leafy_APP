@@ -16,7 +16,7 @@ export const getAlertStatusLabel = (status?: AlertStatus | null): string => {
     case "CLOSED":
       return label("iot.alerts.status.CLOSED", "Closed");
     default:
-      return status ? String(status) : label("iot.common.unknown", "Unknown");
+      return label("iot.alerts.status.UNKNOWN", "Unknown status");
   }
 };
 
@@ -46,7 +46,7 @@ export const getAlertSeverityLabel = (severity?: AlertSeverity | null): string =
     case "CRITICAL":
       return label("iot.alerts.severity.CRITICAL", "Critical");
     default:
-      return severity ? String(severity) : label("iot.common.unknown", "Unknown");
+      return label("iot.alerts.severity.UNKNOWN", "Unknown severity");
   }
 };
 

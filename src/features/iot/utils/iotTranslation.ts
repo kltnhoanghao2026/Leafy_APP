@@ -24,7 +24,8 @@
  * Pending for future phases:
  * - Any future admin/demo tooling if it is intentionally exposed on mobile.
  *
- * Use `iot.common.unknown`, `iot.common.noData`, and `iot.common.unassigned`
- * as readable placeholders instead of leaking missing/null values into the UI.
+ * Use `iot.common.unknown*`, `iot.common.noData`, `iot.common.noFarmMetadata`,
+ * and `iot.common.noZoneMetadata` as readable placeholders instead of leaking
+ * missing/null values or technical identifiers into the UI.
  */
 export const IOT_TRANSLATION_NAMESPACE = "iot";

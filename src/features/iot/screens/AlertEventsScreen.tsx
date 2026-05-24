@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, BellRing, RefreshCw } from "lucide-react-native";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,12 +14,15 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { useFarmPlots, useFarmZones } from "@/src/features/farm";
+import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
 import { AlertEventCard } from "../components/AlertEventCard";
 import {
   AlertFilters,
   type AlertTimeRange,
 } from "../components/AlertFilters";
 import { useAlertEvents } from "../hooks/useAlerts";
+import { useMyDevices } from "../hooks/useDevices";
 import type { AlertEventsParams, AlertEventItemResponse, AlertSeverity, AlertStatus } from "../types";
 import { getAlertTimeRange } from "../utils/alertLabels";
 
@@ -48,9 +52,14 @@ export function AlertEventsScreen() {
   );
   const [deviceId, setDeviceId] = useState(getParamValue(params.deviceId) ?? "");
   const [zoneId, setZoneId] = useState(getParamValue(params.zoneId) ?? "");
+  const [farmPlotId, setFarmPlotId] = useState("");
   const [timeRange, setTimeRange] = useState<AlertTimeRange>("D7");
   const highlightedAlertId = getParamValue(params.highlightAlertId);
   const listRef = useRef<FlatListType<AlertEventItemResponse>>(null);
+  const profileQuery = useQuery(getMyProfileQueryOptions());
+  const devicesQuery = useMyDevices({ page: 0, size: 100 });
+  const farmsQuery = useFarmPlots(profileQuery.data?.id);
+  const zonesQuery = useFarmZones(farmPlotId || undefined);
 
   const queryParams = useMemo<AlertEventsParams>(() => {
     const time = getAlertTimeRange(timeRange);
@@ -131,15 +140,20 @@ export function AlertEventsScreen() {
           </Pressable>
           <AlertFilters
             deviceId={deviceId}
+            devices={devicesQuery.data?.items ?? []}
+            farmPlotId={farmPlotId}
+            farms={farmsQuery.data ?? []}
             severity={severity}
             status={status}
             timeRange={timeRange}
             zoneId={zoneId}
+            zones={zonesQuery.data ?? []}
             onChange={(next) => {
               setStatus(next.status);
               setSeverity(next.severity);
               setDeviceId(next.deviceId ?? "");
               setZoneId(next.zoneId ?? "");
+              setFarmPlotId(next.farmPlotId ?? "");
               setTimeRange(next.timeRange);
             }}
           />
