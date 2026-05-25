@@ -18,7 +18,11 @@ describe("DevicePicker", () => {
   });
 
   it("shows friendly device labels without exposing raw IDs as primary text", () => {
-    render(<DevicePicker devices={devices} value={null} onChange={jest.fn()} />);
+    render(
+      <DevicePicker devices={devices} value={null} onChange={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByText("Search device"));
 
     expect(screen.getByText("Greenhouse 1")).toBeTruthy();
     expect(screen.getByText("ESP32-001")).toBeTruthy();
@@ -37,6 +41,7 @@ describe("DevicePicker", () => {
       />,
     );
 
+    fireEvent.press(screen.getByText("Search device"));
     fireEvent.press(screen.getByText("Greenhouse 1"));
 
     expect(onChange).toHaveBeenCalledWith(
@@ -58,6 +63,7 @@ describe("DevicePicker", () => {
       />,
     );
 
+    fireEvent.press(screen.getByText("Search device"));
     fireEvent.press(screen.getByText("Greenhouse 1"));
 
     expect(onChange).toHaveBeenCalledWith(

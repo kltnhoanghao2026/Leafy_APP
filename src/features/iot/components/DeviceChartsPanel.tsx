@@ -1,4 +1,11 @@
-import { BarChart3, Bell, Check, ChevronDown, Maximize2, X } from "lucide-react-native";
+import {
+  BarChart3,
+  Bell,
+  Check,
+  ChevronDown,
+  Maximize2,
+  X,
+} from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -30,7 +37,10 @@ import {
   getPointValue,
 } from "../utils/chartFormat";
 import { formatDateTime } from "../utils/deviceLabels";
-import type { DisplayAlertEvent, DisplayDeviceMediaEvent } from "../utils/iotDisplay";
+import type {
+  DisplayAlertEvent,
+  DisplayDeviceMediaEvent,
+} from "../utils/iotDisplay";
 import { getSensorLabel } from "../utils/sensorLabels";
 import { PickerModal } from "@/src/components/ui/PickerModal";
 import { RangeSelector } from "./RangeSelector";
@@ -85,7 +95,9 @@ export function DeviceChartsPanel({ deviceId }: DeviceChartsPanelProps) {
   const [metricPickerOpen, setMetricPickerOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState<Marker | null>(null);
-  const metrics = compareMode ? selectedMetrics : [selectedMetrics[0] ?? "AIR_TEMP"];
+  const metrics = compareMode
+    ? selectedMetrics
+    : [selectedMetrics[0] ?? "AIR_TEMP"];
   const chartsQuery = useDeviceMetricsComparison(deviceId, metrics, range);
   const mediaQuery = useDeviceMedia(deviceId);
   const alertRange = resolveChartAlertRange(range);
@@ -100,7 +112,9 @@ export function DeviceChartsPanel({ deviceId }: DeviceChartsPanelProps) {
 
   const charts = chartsQuery.data ?? [];
   const refreshing =
-    chartsQuery.isRefetching || alertsQuery.isRefetching || mediaQuery.isRefetching;
+    chartsQuery.isRefetching ||
+    alertsQuery.isRefetching ||
+    mediaQuery.isRefetching;
 
   const toggleMetric = (metric: SensorCode) => {
     setSelectedMetrics((current) => {
@@ -164,7 +178,10 @@ export function DeviceChartsPanel({ deviceId }: DeviceChartsPanelProps) {
         <View style={styles.controlRow}>
           <Pressable
             onPress={() => setCompareMode((value) => !value)}
-            style={[styles.toggleButton, compareMode && styles.toggleButtonActive]}
+            style={[
+              styles.toggleButton,
+              compareMode && styles.toggleButtonActive,
+            ]}
           >
             <Text
               style={[
@@ -175,16 +192,25 @@ export function DeviceChartsPanel({ deviceId }: DeviceChartsPanelProps) {
               {t("iot.charts.compareMode")}
             </Text>
           </Pressable>
-          <Pressable style={styles.expandButton} onPress={() => setExpanded(true)}>
+          <Pressable
+            style={styles.expandButton}
+            onPress={() => setExpanded(true)}
+          >
             <Maximize2 color="#166534" size={16} />
-            <Text style={styles.expandButtonText}>{t("iot.charts.expand")}</Text>
+            <Text style={styles.expandButtonText}>
+              {t("iot.charts.expand")}
+            </Text>
           </Pressable>
         </View>
       </View>
 
       <ScrollView
         refreshControl={
-          <RefreshControl refreshing={refreshing} tintColor="#15803d" onRefresh={refresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            tintColor="#15803d"
+            onRefresh={refresh}
+          />
         }
       >
         {chartsQuery.isError && !charts.length ? (
@@ -196,11 +222,18 @@ export function DeviceChartsPanel({ deviceId }: DeviceChartsPanelProps) {
         )}
       </ScrollView>
 
-      <Modal animationType="slide" visible={expanded} onRequestClose={() => setExpanded(false)}>
+      <Modal
+        animationType="slide"
+        visible={expanded}
+        onRequestClose={() => setExpanded(false)}
+      >
         <View style={styles.modalScreen}>
           <View style={styles.modalHeader}>
             <Text style={styles.title}>{t("iot.charts.expandedTitle")}</Text>
-            <Pressable style={styles.closeButton} onPress={() => setExpanded(false)}>
+            <Pressable
+              style={styles.closeButton}
+              onPress={() => setExpanded(false)}
+            >
               <X color="#0f172a" size={20} />
             </Pressable>
           </View>
@@ -229,7 +262,9 @@ function MetricDropdown({
   onToggleMetric: (metric: SensorCode) => void;
 }) {
   const { t } = useTranslation();
-  const activeMetrics = compareMode ? selectedMetrics : [selectedMetrics[0] ?? METRICS[0]];
+  const activeMetrics = compareMode
+    ? selectedMetrics
+    : [selectedMetrics[0] ?? METRICS[0]];
   const label = compareMode
     ? t("iot.charts.selectedMetrics", { count: selectedMetrics.length })
     : getSensorLabel(activeMetrics[0]);
@@ -239,23 +274,36 @@ function MetricDropdown({
     <View style={styles.metricDropdownWrap}>
       <Pressable
         onPress={onOpen}
-        style={({ pressed }) => [styles.metricDropdown, pressed && styles.metricDropdownPressed]}
+        style={({ pressed }) => [
+          styles.metricDropdown,
+          pressed && styles.metricDropdownPressed,
+        ]}
       >
         <View style={styles.metricDropdownTextWrap}>
           <Text style={styles.metricDropdownTitle}>
-            {compareMode ? t("iot.charts.metricCompareLabel") : t("iot.charts.metricLabel")}
+            {compareMode
+              ? t("iot.charts.metricCompareLabel")
+              : t("iot.charts.metricLabel")}
           </Text>
-          <Text style={styles.metricDropdownLabel}>{label}</Text>
+          <Text numberOfLines={1} style={styles.metricDropdownLabel}>
+            {label}
+          </Text>
           <Text numberOfLines={1} style={styles.metricDropdownMeta}>
             {meta}
           </Text>
         </View>
-        <ChevronDown color="#16a34a" size={18} />
+        <View style={styles.metricDropdownIcon}>
+          <ChevronDown color="#ffffff" size={20} />
+        </View>
       </Pressable>
 
       <PickerModal
         visible={visible}
-        title={compareMode ? t("iot.charts.metricCompareLabel") : t("iot.charts.metricLabel")}
+        title={
+          compareMode
+            ? t("iot.charts.metricCompareLabel")
+            : t("iot.charts.metricLabel")
+        }
         items={METRICS}
         selectedId={activeMetrics[0]}
         searchPlaceholder={t("iot.charts.searchMetric")}
@@ -287,11 +335,24 @@ function MetricDropdown({
                 onSelectPrimaryMetric(sensorCode);
                 onClose();
               }}
-              style={[styles.metricOption, checked && styles.metricOptionSelected]}
+              style={[
+                styles.metricOption,
+                checked && styles.metricOptionSelected,
+              ]}
             >
-              <View style={[styles.legendDot, { backgroundColor: COLORS[sensorCode] ?? "#64748b" }]} />
+              <View
+                style={[
+                  styles.legendDot,
+                  { backgroundColor: COLORS[sensorCode] ?? "#64748b" },
+                ]}
+              />
               <View style={styles.metricDropdownTextWrap}>
-                <Text style={[styles.metricOptionLabel, checked && styles.metricOptionLabelSelected]}>
+                <Text
+                  style={[
+                    styles.metricOptionLabel,
+                    checked && styles.metricOptionLabelSelected,
+                  ]}
+                >
                   {getSensorLabel(sensorCode)}
                 </Text>
                 <Text style={styles.metricOptionMeta}>{sensorCode}</Text>
@@ -345,7 +406,12 @@ function ChartBody({
     })),
   }));
 
-  const markers = buildMarkers(alerts, mediaEvents, allPoints, t("iot.charts.mediaAnalysisMarker"));
+  const markers = buildMarkers(
+    alerts,
+    mediaEvents,
+    allPoints,
+    t("iot.charts.mediaAnalysisMarker"),
+  );
 
   if (loading) {
     return (
@@ -376,7 +442,9 @@ function ChartBody({
                 { backgroundColor: COLORS[item.sensorCode] ?? "#64748b" },
               ]}
             />
-            <Text style={styles.legendText}>{getSensorLabel(item.sensorCode)}</Text>
+            <Text style={styles.legendText}>
+              {getSensorLabel(item.sensorCode)}
+            </Text>
           </View>
         ))}
         <View style={styles.legendItem}>
@@ -385,7 +453,11 @@ function ChartBody({
         </View>
       </View>
       <View style={styles.chartBox}>
-        <Svg height={chartHeight} width="100%" viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+        <Svg
+          height={chartHeight}
+          width="100%"
+          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+        >
           <Line
             stroke="#e2e8f0"
             strokeWidth="1"
@@ -406,7 +478,9 @@ function ChartBody({
             <Polyline
               key={item.sensorCode}
               fill="none"
-              points={item.points.map((point) => `${point.x},${point.y}`).join(" ")}
+              points={item.points
+                .map((point) => `${point.x},${point.y}`)
+                .join(" ")}
               stroke={COLORS[item.sensorCode] ?? "#64748b"}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -415,7 +489,10 @@ function ChartBody({
           ))}
           {normalizedSeries.flatMap((item) =>
             item.points
-              .filter((_point, index) => index === 0 || index === item.points.length - 1)
+              .filter(
+                (_point, index) =>
+                  index === 0 || index === item.points.length - 1,
+              )
               .map((point) => (
                 <Circle
                   cx={point.x}
@@ -439,7 +516,12 @@ function ChartBody({
             />
           ))}
           {allPoints[0]?.label ? (
-            <SvgText fill="#64748b" fontSize="10" x={padding} y={chartHeight - 8}>
+            <SvgText
+              fill="#64748b"
+              fontSize="10"
+              x={padding}
+              y={chartHeight - 8}
+            >
               {allPoints[0].label}
             </SvgText>
           ) : null}
@@ -460,13 +542,19 @@ function ChartBody({
         <View style={styles.markerBox}>
           <Text style={styles.markerTitle}>{selectedMarker.label}</Text>
           <Text style={styles.markerText}>
-            {t("iot.charts.markerTimestamp")}: {selectedMarker.timestampLabel ?? formatDateTime(selectedMarker.timestamp)}
+            {t("iot.charts.markerTimestamp")}:{" "}
+            {selectedMarker.timestampLabel ??
+              formatDateTime(selectedMarker.timestamp)}
           </Text>
           <Text style={styles.markerText}>
-            {t("iot.charts.markerSeverity")}: {selectedMarker.severityLabel ?? getAlertSeverityLabel(selectedMarker.severity)}
+            {t("iot.charts.markerSeverity")}:{" "}
+            {selectedMarker.severityLabel ??
+              getAlertSeverityLabel(selectedMarker.severity)}
           </Text>
           <Pressable onPress={() => onSelectMarker(null)}>
-            <Text style={styles.markerDismiss}>{t("iot.charts.dismissMarker")}</Text>
+            <Text style={styles.markerDismiss}>
+              {t("iot.charts.dismissMarker")}
+            </Text>
           </Pressable>
         </View>
       ) : null}
@@ -519,23 +607,27 @@ const buildMarkers = (
   };
 
   const alertMarkers = alerts.reduce<Marker[]>((acc, alert) => {
-      const timestamp = alert.triggeredAt ?? alert.openedAt ?? alert.createdAt;
-      if (!timestamp) return acc;
-      acc.push({
-        id: alert.id,
-        timestamp,
-        timestampLabel: alert.display?.openedAtLabel,
-        label: alert.display?.title ?? alert.display?.message ?? mediaAnalysisLabel,
-        severity: alert.severity,
-        severityLabel: alert.display?.severityLabel,
-        source: "alert" as const,
-        x: resolveMarkerX(timestamp),
-      });
-      return acc;
-    }, []);
+    const timestamp = alert.triggeredAt ?? alert.openedAt ?? alert.createdAt;
+    if (!timestamp) return acc;
+    acc.push({
+      id: alert.id,
+      timestamp,
+      timestampLabel: alert.display?.openedAtLabel,
+      label:
+        alert.display?.title ?? alert.display?.message ?? mediaAnalysisLabel,
+      severity: alert.severity,
+      severityLabel: alert.display?.severityLabel,
+      source: "alert" as const,
+      x: resolveMarkerX(timestamp),
+    });
+    return acc;
+  }, []);
 
   const mediaMarkers = mediaEvents
-    .filter((media) => media.analysis?.alertEventId || media.analysis?.diseaseDetected)
+    .filter(
+      (media) =>
+        media.analysis?.alertEventId || media.analysis?.diseaseDetected,
+    )
     .reduce<Marker[]>((acc, media) => {
       const timestamp =
         media.analysis?.timestamp ??
@@ -547,7 +639,8 @@ const buildMarkers = (
       acc.push({
         id: media.analysis?.alertEventId ?? media.id,
         timestamp,
-        timestampLabel: media.display?.analysis.analyzedAt ?? media.display?.timestampLabel,
+        timestampLabel:
+          media.display?.analysis.analyzedAt ?? media.display?.timestampLabel,
         label: media.display?.analysis.summary ?? mediaAnalysisLabel,
         severity: media.analysis?.severity,
         severityLabel: media.display?.analysis.severityLabel,
@@ -558,7 +651,10 @@ const buildMarkers = (
     }, []);
 
   return [...alertMarkers, ...mediaMarkers].filter(
-    (marker) => Number.isFinite(marker.x) && marker.x >= padding && marker.x <= chartWidth - padding,
+    (marker) =>
+      Number.isFinite(marker.x) &&
+      marker.x >= padding &&
+      marker.x <= chartWidth - padding,
   );
 };
 
@@ -728,18 +824,33 @@ const styles = StyleSheet.create({
   },
   metricDropdown: {
     alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderColor: "#bbf7d0",
+    backgroundColor: "#dcfce7",
+    borderColor: "#16a34a",
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     flexDirection: "row",
-    gap: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
+    gap: 12,
+    minHeight: 64,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: "#14532d",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  metricDropdownIcon: {
+    alignItems: "center",
+    backgroundColor: "#16a34a",
+    borderRadius: 999,
+    height: 34,
+    justifyContent: "center",
+    width: 34,
   },
   metricDropdownLabel: {
     color: "#0f172a",
-    fontSize: 14,
+    flexShrink: 1,
+    fontSize: 16,
     fontWeight: "900",
     marginTop: 2,
   },
@@ -754,6 +865,7 @@ const styles = StyleSheet.create({
   },
   metricDropdownTextWrap: {
     flex: 1,
+    minWidth: 0,
   },
   metricDropdownTitle: {
     color: "#15803d",

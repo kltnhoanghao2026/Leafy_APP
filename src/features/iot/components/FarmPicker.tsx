@@ -1,6 +1,9 @@
-import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Check, ChevronDown, X } from "lucide-react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
+
+import { PickerModal } from "@/src/components/ui/PickerModal";
 
 export type FarmPickerOption = {
   id?: string;
@@ -35,101 +38,176 @@ export function FarmPicker({
   allowClear = true,
 }: FarmPickerProps) {
   const { t } = useTranslation();
-  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
   const fallbackLabel = t("iot.common.unknownFarm");
   const metaFallback = t("iot.common.noFarmMetadata");
-  const normalizedQuery = query.trim().toLowerCase();
   const selectedFarm = farms.find((farm) => farm.id === value);
-  const filteredFarms = useMemo(() => {
-    if (!normalizedQuery) return farms;
+  const selectedLabel = selectedFarm
+    ? getFarmLabel(selectedFarm, fallbackLabel)
+    : (placeholder ?? t("iot.common.searchFarm"));
+  const selectedMeta = selectedFarm
+    ? getFarmMeta(selectedFarm, metaFallback)
+    : undefined;
 
-    return farms.filter((farm) =>
-      [getFarmLabel(farm, fallbackLabel), getFarmMeta(farm, metaFallback)]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery),
-    );
-  }, [fallbackLabel, farms, metaFallback, normalizedQuery]);
+  const selectFarm = (farm: FarmPickerOption) => {
+    onChange({ id: farm.id, label: getFarmLabel(farm, fallbackLabel) });
+    setOpen(false);
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label ?? t("iot.common.selectFarm")}</Text>
-      <TextInput
-        autoCapitalize="none"
-        onChangeText={setQuery}
-        placeholder={placeholder ?? t("iot.common.searchFarm")}
-        placeholderTextColor="#94a3b8"
-        style={styles.input}
-        value={query}
-      />
-      {selectedFarm ? (
-        <View style={styles.selectedRow}>
-          <View style={styles.selectedTextWrap}>
-            <Text style={styles.selectedLabel}>{getFarmLabel(selectedFarm, fallbackLabel)}</Text>
-            <Text style={styles.secondaryText}>{getFarmMeta(selectedFarm, metaFallback)}</Text>
-          </View>
-          {allowClear ? (
-            <Pressable style={styles.clearButton} onPress={() => onChange(null)}>
-              <Text style={styles.clearText}>{t("iot.common.clearSelection")}</Text>
-            </Pressable>
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [
+          styles.dropdown,
+          pressed && styles.dropdownPressed,
+        ]}
+      >
+        <View style={styles.textWrap}>
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.dropdownLabel,
+              !selectedFarm && styles.dropdownPlaceholder,
+            ]}
+          >
+            {selectedLabel}
+          </Text>
+          {selectedMeta ? (
+            <Text style={styles.dropdownMeta}>{selectedMeta}</Text>
           ) : null}
         </View>
-      ) : null}
-      <View style={styles.optionList}>
-        {filteredFarms.length === 0 ? (
-          <Text style={styles.emptyText}>{t("iot.common.noFarmsFound")}</Text>
-        ) : (
-          filteredFarms.slice(0, 8).map((farm) => {
-            const farmLabel = getFarmLabel(farm, fallbackLabel);
-            const selected = farm.id === value;
-
-            return (
-              <Pressable
-                key={farm.id ?? farmLabel}
-                onPress={() => onChange({ id: farm.id, label: farmLabel })}
-                style={[styles.option, selected && styles.optionSelected]}
+        {selectedFarm && allowClear ? (
+          <Pressable
+            hitSlop={8}
+            onPress={(event) => {
+              event.stopPropagation();
+              onChange(null);
+            }}
+            style={styles.clearIconButton}
+          >
+            <X color="#166534" size={16} />
+          </Pressable>
+        ) : null}
+        <View style={styles.dropdownIcon}>
+          <ChevronDown color="#ffffff" size={20} />
+        </View>
+      </Pressable>
+      <PickerModal
+        visible={open}
+        title={label ?? t("iot.common.selectFarm")}
+        items={farms}
+        selectedId={value ?? undefined}
+        searchPlaceholder={placeholder ?? t("iot.common.searchFarm")}
+        emptyText={t("iot.common.noFarmsFound")}
+        keyExtractor={(farm) => farm.id ?? getFarmLabel(farm, fallbackLabel)}
+        labelExtractor={(farm) => getFarmLabel(farm, fallbackLabel)}
+        subtitleExtractor={(farm) => getFarmMeta(farm, metaFallback)}
+        searchFields={[
+          (farm) => getFarmLabel(farm, fallbackLabel),
+          (farm) => getFarmMeta(farm, metaFallback),
+        ]}
+        onClose={() => setOpen(false)}
+        onSelect={(id) => {
+          const farm = farms.find(
+            (item) => (item.id ?? getFarmLabel(item, fallbackLabel)) === id,
+          );
+          if (farm) selectFarm(farm);
+        }}
+        renderItem={(farm, selected) => (
+          <Pressable
+            onPress={() => selectFarm(farm)}
+            style={[styles.option, selected && styles.optionSelected]}
+          >
+            <View style={styles.textWrap}>
+              <Text
+                style={[
+                  styles.optionLabel,
+                  selected && styles.optionLabelSelected,
+                ]}
               >
-                <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
-                  {farmLabel}
-                </Text>
-                <Text style={styles.secondaryText}>{getFarmMeta(farm, metaFallback)}</Text>
-              </Pressable>
-            );
-          })
+                {getFarmLabel(farm, fallbackLabel)}
+              </Text>
+              <Text style={styles.secondaryText}>
+                {getFarmMeta(farm, metaFallback)}
+              </Text>
+            </View>
+            {selected ? (
+              <View style={styles.checkBadge}>
+                <Check color="#ffffff" size={14} />
+              </View>
+            ) : null}
+          </Pressable>
         )}
-      </View>
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  clearButton: {
-    backgroundColor: "#f1f5f9",
+  checkBadge: {
+    alignItems: "center",
+    backgroundColor: "#16a34a",
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    height: 24,
+    justifyContent: "center",
+    width: 24,
   },
-  clearText: {
-    color: "#334155",
-    fontSize: 12,
-    fontWeight: "900",
+  clearIconButton: {
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    borderRadius: 999,
+    height: 28,
+    justifyContent: "center",
+    width: 28,
   },
   container: {
     gap: 8,
   },
-  emptyText: {
-    color: "#64748b",
-    fontSize: 13,
+  dropdown: {
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    borderColor: "#16a34a",
+    borderRadius: 16,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 64,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: "#14532d",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  input: {
-    backgroundColor: "#f8fafc",
-    borderColor: "#cbd5e1",
-    borderRadius: 14,
-    borderWidth: 1,
+  dropdownIcon: {
+    alignItems: "center",
+    backgroundColor: "#16a34a",
+    borderRadius: 999,
+    height: 34,
+    justifyContent: "center",
+    width: 34,
+  },
+  dropdownLabel: {
     color: "#0f172a",
-    fontSize: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    flexShrink: 1,
+    fontSize: 16,
+    fontWeight: "900",
+  },
+  dropdownMeta: {
+    color: "#64748b",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 3,
+  },
+  dropdownPlaceholder: {
+    color: "#64748b",
+  },
+  dropdownPressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }],
   },
   label: {
     color: "#334155",
@@ -137,49 +215,32 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   option: {
-    backgroundColor: "#ffffff",
-    borderColor: "#e2e8f0",
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 10,
+    alignItems: "center",
+    borderBottomColor: "rgba(148, 163, 184, 0.18)",
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 12,
   },
   optionLabel: {
     color: "#0f172a",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "900",
   },
   optionLabelSelected: {
     color: "#166534",
   },
-  optionList: {
-    gap: 8,
-  },
   optionSelected: {
-    backgroundColor: "#dcfce7",
-    borderColor: "#86efac",
+    backgroundColor: "#f0fdf4",
   },
   secondaryText: {
     color: "#64748b",
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 3,
   },
-  selectedLabel: {
-    color: "#166534",
-    fontSize: 13,
-    fontWeight: "900",
-  },
-  selectedRow: {
-    alignItems: "center",
-    backgroundColor: "#f0fdf4",
-    borderColor: "#bbf7d0",
-    borderRadius: 14,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "space-between",
-    padding: 10,
-  },
-  selectedTextWrap: {
+  textWrap: {
     flex: 1,
+    minWidth: 0,
   },
 });

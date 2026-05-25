@@ -8,6 +8,7 @@ import {
   Menu,
   Bell,
   ClipboardList,
+  ShieldAlert,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -97,12 +98,13 @@ export default function MainLayout() {
   const insets = useSafeAreaInsets();
   const [moreDrawerVisible, setMoreDrawerVisible] = useState(false);
   const [notiDrawerVisible, setNotiDrawerVisible] = useState(false);
+  const [notiDrawerTab, setNotiDrawerTab] = useState<'notifications' | 'alerts'>('notifications');
   const colorScheme = useColorScheme();
   const queryClient = useQueryClient();
   const markReadMutation = useMarkNotificationReadMutation();
   const openAlertsQuery = useAlertEvents({
     page: 0,
-    size: 1,
+    size: 5,
     status: "OPEN",
     sortBy: "openedAt",
     sortDir: "desc",
@@ -152,6 +154,11 @@ export default function MainLayout() {
     }
   };
 
+  const handleAlertPress = (alertId: string) => {
+    closeNotiDrawer();
+    router.push(`/(main)/iot/alerts/${alertId}` as never);
+  };
+
   const navigate = (path: string) => {
     closeMoreDrawer();
     router.push(path as never);
@@ -165,18 +172,29 @@ export default function MainLayout() {
         {t('mainNav.drawer.options')}
       </Text>
       {([
-        { label: t('mainNav.drawer.manageFarm'), path: '/(main)/farm', icon: <Home size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.managePlants'), path: '/(main)/plants', icon: <Users size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.managePlans', 'Quản lý kế hoạch'), path: '/(main)/plans', icon: <ClipboardList size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.manageEvents'), path: '/(main)/plant-events', icon: <Bell size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.eventCalendar'), path: '/(main)/plant-events/calendar', icon: <Bell size={20} color={palette.primary} /> },
-        { label: t('offline.sync.title', 'Sync Data'), path: '/(main)/sync', icon: <Activity size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.predict', 'Disease Detection'), path: '/(main)/predict', icon: <Activity size={20} color={palette.primary} /> },
-        { label: t('mainNav.drawer.more'), path: '/(main)/community', icon: <Users size={20} color={palette.primary} /> },
-      ] as const).map(({ label, path, icon }) => (
+        { label: t('mainNav.drawer.manageFarm'), path: '/(main)/farm', icon: <Home size={20} color={palette.primary} />, badge: undefined },
+        { label: t('mainNav.drawer.managePlants'), path: '/(main)/plants', icon: <Users size={20} color={palette.primary} />, badge: undefined },
+        { label: t('mainNav.drawer.managePlans', 'Quản lý kế hoạch'), path: '/(main)/plans', icon: <ClipboardList size={20} color={palette.primary} />, badge: undefined },
+        { label: t('mainNav.drawer.manageEvents'), path: '/(main)/plant-events', icon: <Bell size={20} color={palette.primary} />, badge: undefined },
+        { label: t('mainNav.drawer.eventCalendar'), path: '/(main)/plant-events/calendar', icon: <Bell size={20} color={palette.primary} />, badge: undefined },
+        {
+          label: t('mainNav.drawer.systemAlerts', 'System alerts'),
+          path: '/(main)/iot/alerts',
+          icon: <ShieldAlert size={20} color={palette.primary} />,
+          badge: openAlertCount > 0 ? (openAlertCount > 99 ? '99+' : String(openAlertCount)) : undefined,
+        },
+        { label: t('offline.sync.title', 'Sync Data'), path: '/(main)/sync', icon: <Activity size={20} color={palette.primary} />, badge: undefined },
+        { label: t('mainNav.drawer.predict', 'Disease Detection'), path: '/(main)/predict', icon: <Activity size={20} color={palette.primary} />, badge: undefined },
+        { label: t('mainNav.drawer.more'), path: '/(main)/community', icon: <Users size={20} color={palette.primary} />, badge: undefined },
+      ] as const).map(({ label, path, icon, badge }) => (
         <Pressable key={path} style={styles.drawerItem} onPress={() => navigate(path)}>
           {icon}
           <Text style={[styles.drawerItemText, { color: palette.text }]}>{label}</Text>
+          {badge ? (
+            <View style={styles.drawerBadge}>
+              <Text style={styles.drawerBadgeText}>{badge}</Text>
+            </View>
+          ) : null}
         </Pressable>
       ))}
     </View>
@@ -187,7 +205,63 @@ export default function MainLayout() {
       <Text style={[styles.drawerTitle, { color: palette.text, marginBottom: 12 }]}>
         {t('mainNav.drawer.notifications')}
       </Text>
-      {historyLoading ? (
+      <View style={styles.drawerTabBar}>
+        <Pressable
+          style={[styles.drawerTab, notiDrawerTab === 'notifications' && styles.drawerTabActive]}
+          onPress={() => setNotiDrawerTab('notifications')}
+        >
+          <Text style={[styles.drawerTabText, notiDrawerTab === 'notifications' && styles.drawerTabTextActive]}>
+            {t('mainNav.drawer.notifications')}
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.drawerTab, notiDrawerTab === 'alerts' && styles.drawerTabActive]}
+          onPress={() => setNotiDrawerTab('alerts')}
+        >
+          <Text style={[styles.drawerTabText, notiDrawerTab === 'alerts' && styles.drawerTabTextActive]}>
+            {t('notifications.tabAlerts', 'Alerts')}
+          </Text>
+          {openAlertCount > 0 ? (
+            <View style={styles.drawerTabBadge}>
+              <Text style={styles.drawerTabBadgeText}>
+                {openAlertCount > 99 ? '99+' : openAlertCount}
+              </Text>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
+
+      {notiDrawerTab === 'alerts' ? (
+        openAlertsQuery.isLoading ? (
+          <RNActivityIndicator color={palette.primary} style={{ marginVertical: 20 }} />
+        ) : (openAlertsQuery.data?.items?.length ?? 0) === 0 ? (
+          <Text style={{ color: '#64748B', textAlign: 'center', marginVertical: 20 }}>
+            {t('iot.alerts.emptyTitle', 'No alerts found')}
+          </Text>
+        ) : (
+          <View style={styles.drawerAlertList}>
+            {(openAlertsQuery.data?.items ?? []).map((alert) => (
+              <Pressable
+                key={alert.id}
+                style={styles.drawerAlertItem}
+                onPress={() => handleAlertPress(alert.id)}
+              >
+                <View style={styles.drawerAlertIcon}>
+                  <ShieldAlert size={18} color="#EF4444" />
+                </View>
+                <View style={styles.drawerAlertTextWrap}>
+                  <Text style={styles.drawerAlertTitle} numberOfLines={2}>
+                    {alert.display?.title ?? alert.display?.message ?? t('iot.alerts.notificationBody')}
+                  </Text>
+                  <Text style={styles.drawerAlertMeta} numberOfLines={1}>
+                    {alert.display?.severityLabel ?? alert.severity} - {alert.display?.openedAtLabel ?? t('iot.common.noData')}
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )
+      ) : historyLoading ? (
         <RNActivityIndicator color={palette.primary} style={{ marginVertical: 20 }} />
       ) : recentNotifications.length === 0 ? (
         <Text style={{ color: '#64748B', textAlign: 'center', marginVertical: 20 }}>
@@ -200,10 +274,26 @@ export default function MainLayout() {
           ))}
         </View>
       )}
-      <Pressable style={[styles.drawerItem, { marginTop: 12 }]} onPress={() => { closeNotiDrawer(); router.push('/(main)/notifications' as never); }}>
-        <Bell size={20} color={palette.primary} />
+      <Pressable
+        style={[styles.drawerItem, { marginTop: 12 }]}
+        onPress={() => {
+          closeNotiDrawer();
+          router.push(
+            notiDrawerTab === 'alerts'
+              ? ('/(main)/iot/alerts' as never)
+              : ('/(main)/notifications' as never),
+          );
+        }}
+      >
+        {notiDrawerTab === 'alerts' ? (
+          <ShieldAlert size={20} color={palette.primary} />
+        ) : (
+          <Bell size={20} color={palette.primary} />
+        )}
         <Text style={[styles.drawerItemText, { color: palette.text }]}>
-          {t('mainNav.drawer.viewAllNotifications')}
+          {notiDrawerTab === 'alerts'
+            ? t('mainNav.drawer.systemAlerts', 'System alerts')
+            : t('mainNav.drawer.viewAllNotifications')}
         </Text>
       </Pressable>
     </View>
@@ -394,7 +484,85 @@ const styles = StyleSheet.create({
     paddingVertical: 12, paddingHorizontal: 10,
     borderRadius: 10, backgroundColor: 'rgba(47,127,52,0.08)', marginBottom: 10,
   },
-  drawerItemText: { fontSize: 15, fontWeight: '600' },
+  drawerItemText: { flex: 1, fontSize: 15, fontWeight: '600' },
+  drawerBadge: {
+    minWidth: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 7,
+  },
+  drawerBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
+  drawerTabBar: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(15,23,42,0.06)',
+    borderRadius: 12,
+    padding: 3,
+    marginBottom: 12,
+  },
+  drawerTab: {
+    flex: 1,
+    minHeight: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 6,
+  },
+  drawerTabActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  drawerTabText: { color: '#64748B', fontSize: 12, fontWeight: '800' },
+  drawerTabTextActive: { color: '#245A34' },
+  drawerTabBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  drawerTabBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+  drawerAlertList: { gap: 10, marginHorizontal: -4 },
+  drawerAlertItem: {
+    flexDirection: 'row',
+    gap: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    padding: 12,
+  },
+  drawerAlertIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  drawerAlertTextWrap: { flex: 1 },
+  drawerAlertTitle: {
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '900',
+    lineHeight: 18,
+  },
+  drawerAlertMeta: {
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 4,
+  },
   centerButtonWrapper: { top: -26, alignItems: 'center', justifyContent: 'center', width: 88 },
   centerButton: {
     width: 74, height: 74, borderRadius: 37,

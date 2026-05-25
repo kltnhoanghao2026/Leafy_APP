@@ -12,22 +12,37 @@ describe("FarmPicker", () => {
     const onChange = jest.fn();
     render(
       <FarmPicker
-        farms={[{ id: "farm-db-id-123", name: "North Farm", addressLine: "Da Lat" }]}
+        farms={[
+          { id: "farm-db-id-123", name: "North Farm", addressLine: "Da Lat" },
+        ]}
         value={null}
         onChange={onChange}
       />,
     );
+
+    fireEvent.press(screen.getByText("Search farm"));
 
     expect(screen.getByText("North Farm")).toBeTruthy();
     expect(screen.getByText("Da Lat")).toBeTruthy();
     expect(screen.queryByText("farm-db-id-123")).toBeNull();
 
     fireEvent.press(screen.getByText("North Farm"));
-    expect(onChange).toHaveBeenCalledWith({ id: "farm-db-id-123", label: "North Farm" });
+    expect(onChange).toHaveBeenCalledWith({
+      id: "farm-db-id-123",
+      label: "North Farm",
+    });
   });
 
   it("uses a friendly fallback when farm metadata is missing", () => {
-    render(<FarmPicker farms={[{ id: "farm-db-id-123" }]} value={null} onChange={jest.fn()} />);
+    render(
+      <FarmPicker
+        farms={[{ id: "farm-db-id-123" }]}
+        value={null}
+        onChange={jest.fn()}
+      />,
+    );
+
+    fireEvent.press(screen.getByText("Search farm"));
 
     expect(screen.getByText("Unknown farm")).toBeTruthy();
     expect(screen.getByText("No farm metadata")).toBeTruthy();

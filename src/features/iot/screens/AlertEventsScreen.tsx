@@ -201,6 +201,7 @@ export function AlertEventsScreen() {
           ) : null}
         </View>
       }
+      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
       refreshControl={
         <RefreshControl
           onRefresh={alertsQuery.refetch}
@@ -276,11 +277,14 @@ const styles = StyleSheet.create({
   },
   headerWrap: {
     gap: 16,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   hint: {
     color: "#64748b",
     fontSize: 13,
+  },
+  itemSeparator: {
+    height: 16,
   },
   kicker: {
     color: "#15803d",

@@ -420,6 +420,61 @@ const formatAlertNumber = (value?: number | null) =>
     ? new Intl.NumberFormat(currentLocale(), { maximumFractionDigits: 1 }).format(value)
     : noData();
 
+const parseAlertDecimal = (value?: string | number | null) => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (!value) return undefined;
+  const normalized = value.replace(",", ".").trim();
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const isDiseaseAlert = (alert: AlertEventItemResponse) => {
+  const alertType = alert.alertType?.toUpperCase();
+  const message = alert.message ?? "";
+  return (
+    alertType === "DISEASE_DETECTED" ||
+    /disease detected from camera image/i.test(message) ||
+    /camera disease detection/i.test(message)
+  );
+};
+
+const cleanDiseaseName = (value?: string | null) => {
+  const cleaned = value?.replace(/\s*\(confidence\s*[0-9.,]+\)\s*$/i, "").trim();
+  if (!cleaned || /^(unknown|n\/a|null|none)$/i.test(cleaned)) return undefined;
+  if (/^[0-9.,]+\s*confidence$/i.test(cleaned)) return undefined;
+  return cleaned;
+};
+
+const parseDiseaseAlert = (alert: AlertEventItemResponse) => {
+  const message = alert.message ?? "";
+  const cameraImageMatch = message.match(
+    /disease detected from camera image:\s*(.+?)(?:\s*\(confidence\s*([0-9.,]+)\))?\s*$/i,
+  );
+  const cameraDetectionMatch = message.match(/camera disease detection\s*[:|-]\s*([0-9.,]+)\s*confidence/i);
+  const confidence =
+    parseAlertDecimal(cameraImageMatch?.[2]) ??
+    parseAlertDecimal(cameraDetectionMatch?.[1]) ??
+    parseAlertDecimal(alert.triggerValue ?? alert.readingValue);
+
+  return {
+    diseaseName: cleanDiseaseName(cameraImageMatch?.[1]),
+    confidence,
+  };
+};
+
+const formatDiseaseConfidence = (confidence?: number) => {
+  if (typeof confidence !== "number" || !Number.isFinite(confidence)) {
+    return t("iot.alerts.disease.confidenceUnknown", { defaultValue: "Confidence unknown" });
+  }
+
+  const percentValue = confidence > 1 ? confidence : confidence * 100;
+  const formatted = new Intl.NumberFormat(currentLocale(), { maximumFractionDigits: 0 }).format(percentValue);
+  return t("iot.alerts.disease.confidence", {
+    confidence: formatted,
+    defaultValue: `Confidence: ${formatted}%`,
+  });
+};
+
 const buildAlertTitle = (alert: AlertEventItemResponse) => {
   const sensorCode = resolveAlertSensorCode(alert);
   const sensorLabel = getSensorLabel(sensorCode, alert.sensorName);
@@ -475,20 +530,44 @@ export const withAlertDisplay = <T extends AlertEventItemResponse | AlertEventDe
   const severityLabel = mapEnumToLocalized(rawAlert.severity, "severity");
   const statusLabel = mapEnumToLocalized(rawAlert.status, "alertStatus");
   const openedAtLabel = formatTimestamp(opened);
-  const title = buildAlertTitle(rawAlert);
+  const diseaseAlert = isDiseaseAlert(rawAlert) ? parseDiseaseAlert(rawAlert) : undefined;
+  const title = diseaseAlert
+    ? diseaseAlert.diseaseName
+      ? t("iot.alerts.disease.titleWithDisease", {
+          disease: diseaseAlert.diseaseName,
+          defaultValue: `Disease detected: ${diseaseAlert.diseaseName}`,
+        })
+      : t("iot.alerts.disease.titleGeneric", { defaultValue: "Disease detected from camera" })
+    : buildAlertTitle(rawAlert);
+  const message = diseaseAlert
+    ? diseaseAlert.diseaseName
+      ? t("iot.alerts.disease.messageWithDisease", {
+          disease: diseaseAlert.diseaseName,
+          defaultValue: `Disease detected: ${diseaseAlert.diseaseName}`,
+        })
+      : t("iot.alerts.disease.messageGeneric", { defaultValue: "Camera detected possible plant disease." })
+    : title;
+  const displayType = diseaseAlert
+    ? t("iot.alerts.disease.type", { defaultValue: "Disease detected" })
+    : sensorLabel;
+  const displaySensor = diseaseAlert
+    ? t("iot.alerts.disease.cameraAnalysis", { defaultValue: "Image analysis" })
+    : sensorLabel;
+  const displayValue = diseaseAlert ? formatDiseaseConfidence(diseaseAlert.confidence) : valueLabel;
+  const displayThreshold = diseaseAlert ? noData() : thresholdLabel;
 
   return {
     ...rawAlert,
     display: {
-      type: sensorLabel,
+      type: displayType,
       title,
-      message: title,
-      sensor: sensorLabel,
-      sensorLabel,
-      value: valueLabel,
-      valueLabel,
-      threshold: thresholdLabel,
-      thresholdLabel,
+      message,
+      sensor: displaySensor,
+      sensorLabel: displaySensor,
+      value: displayValue,
+      valueLabel: displayValue,
+      threshold: displayThreshold,
+      thresholdLabel: displayThreshold,
       device: deviceLabel,
       deviceLabel,
       zone: zoneLabel,
@@ -524,8 +603,8 @@ export const withAlertDisplay = <T extends AlertEventItemResponse | AlertEventDe
 const formatRuleThreshold = (rawRule: AlertRuleResponse) => {
   const min = rawRule.thresholdMin ?? rawRule.minThreshold;
   const max = rawRule.thresholdMax ?? rawRule.maxThreshold;
-  const sensor = rawRule.sensorType ?? rawRule.sensorTypeId ?? undefined;
-  const unit = getSensorUnit(sensor);
+  const sensor = rawRule.sensorTypeCode ?? rawRule.sensorType ?? rawRule.sensorTypeId ?? undefined;
+  const unit = getSensorUnit(sensor, rawRule.sensorTypeUnit);
 
   if (min == null && max == null) return noData();
   if (min != null && max != null) return `${min}${unit ? ` ${unit}` : ""} - ${max}${unit ? ` ${unit}` : ""}`;
@@ -540,7 +619,10 @@ const formatRuleThreshold = (rawRule: AlertRuleResponse) => {
  */
 export const withRuleDisplay = (rawRule: AlertRuleResponse): DisplayAlertRule => {
   const lastTriggered = timestampParts(rawRule.lastTriggeredAt);
-  const sensorLabel = getSensorLabel(rawRule.sensorType ?? rawRule.sensorTypeId ?? undefined);
+  const sensorLabel = getSensorLabel(
+    rawRule.sensorTypeCode ?? rawRule.sensorType ?? rawRule.sensorTypeId ?? undefined,
+    rawRule.sensorTypeName,
+  );
   const severityLabel = mapEnumToLocalized(rawRule.severity, "severity");
   const enabledLabel = rawRule.enabled ? t("iot.rules.enabled", { defaultValue: "Enabled" }) : t("iot.rules.disabled", { defaultValue: "Disabled" });
   const thresholdLabel = formatRuleThreshold(rawRule);

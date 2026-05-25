@@ -9,7 +9,7 @@ import {
   RefreshControl,
   ScrollView,
 } from "react-native";
-import { Bell, CheckCheck, Inbox } from "lucide-react-native";
+import { Bell, CheckCheck, Inbox, ShieldAlert } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
@@ -19,6 +19,7 @@ import {
   type Tab,
   notificationKeys,
 } from "@/src/features/notifications";
+import { AlertEventCard } from "@/src/features/iot/components/AlertEventCard";
 
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -39,6 +40,10 @@ function NotificationsScreen() {
     unreadCount,
     isLoading,
     isError,
+    alertEvents,
+    alertCount,
+    isAlertLoading,
+    isAlertError,
     isFetchingNextPage,
     hasNextPage,
     notifications,
@@ -46,6 +51,7 @@ function NotificationsScreen() {
     markAllReadMutation,
     queryClient,
     handleNotificationPress,
+    handleAlertPress,
     handleMarkAllRead,
     handleTabChange,
     handleEndReached,
@@ -76,7 +82,7 @@ function NotificationsScreen() {
           </View>
         </View>
 
-        {hasUnread && (
+        {activeTab !== "alerts" && hasUnread && (
           <Pressable
             onPress={handleMarkAllRead}
             disabled={markAllReadMutation.isPending}
@@ -92,7 +98,7 @@ function NotificationsScreen() {
 
       {/* ── Tab segmented control ────────────────────────────────────────────── */}
       <View style={styles.tabBar}>
-        {(["all", "unread"] as Tab[]).map((tab) => {
+        {(["all", "unread", "alerts"] as Tab[]).map((tab) => {
           const isActive = activeTab === tab;
           return (
             <Pressable
@@ -105,9 +111,12 @@ function NotificationsScreen() {
               >
                 {tab === "all"
                   ? t("notifications.tabAll", "All")
-                  : t("notifications.tabUnread", "Unread")}
+                  : tab === "unread"
+                    ? t("notifications.tabUnread", "Unread")
+                    : t("notifications.tabAlerts", "Alerts")}
               </Text>
-              {tab === "unread" && unreadCount > 0 && (
+              {((tab === "unread" && unreadCount > 0) ||
+                (tab === "alerts" && alertCount > 0)) && (
                 <View
                   style={[
                     styles.tabBadge,
@@ -120,7 +129,11 @@ function NotificationsScreen() {
                       isActive && styles.tabBadgeTextActive,
                     ]}
                   >
-                    {unreadCount > 99 ? "99+" : unreadCount}
+                    {(tab === "alerts" ? alertCount : unreadCount) > 99
+                      ? "99+"
+                      : tab === "alerts"
+                        ? alertCount
+                        : unreadCount}
                   </Text>
                 </View>
               )}
@@ -130,7 +143,81 @@ function NotificationsScreen() {
       </View>
 
       {/* ── List ────────────────────────────────────────────────────────────── */}
-      {isLoading && !refreshing ? (
+      {activeTab === "alerts" ? (
+        isAlertLoading && !refreshing ? (
+          <View style={styles.skeletonContainer}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <NotificationSkeletonRow key={i} />
+            ))}
+          </View>
+        ) : isAlertError ? (
+          <ScrollView
+            contentContainerStyle={styles.emptyContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                colors={["#245A34"]}
+                tintColor="#245A34"
+              />
+            }
+          >
+            <ShieldAlert size={40} color="#FCA5A5" strokeWidth={1.5} />
+            <Text style={styles.emptyTitle}>
+              {t("iot.alerts.loadFailed", "Unable to load alerts.")}
+            </Text>
+            <Text style={styles.emptySub}>
+              {t("notifications.pageLoadErrorDetail", "Pull down to refresh.")}
+            </Text>
+          </ScrollView>
+        ) : alertEvents.length === 0 ? (
+          <ScrollView
+            contentContainerStyle={styles.emptyContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                colors={["#245A34"]}
+                tintColor="#245A34"
+              />
+            }
+          >
+            <View style={styles.emptyIconWrap}>
+              <ShieldAlert size={36} color="#10B981" strokeWidth={2} />
+            </View>
+            <Text style={styles.emptyTitle}>
+              {t("iot.alerts.emptyTitle", "No alerts found")}
+            </Text>
+            <Text style={styles.emptySub}>
+              {t("notifications.emptyAlertsSubtitle", "Open system alerts will appear here.")}
+            </Text>
+          </ScrollView>
+        ) : (
+          <FlatList
+            data={alertEvents}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <AlertEventCard alert={item} onPress={handleAlertPress} />
+            )}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                colors={["#245A34"]}
+                tintColor="#245A34"
+              />
+            }
+            ListFooterComponent={
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>
+                  {`${alertEvents.length} ${t("notifications.alertsShownCount", "alerts shown")}`}
+                </Text>
+              </View>
+            }
+            contentContainerStyle={styles.alertListContent}
+          />
+        )
+      ) : isLoading && !refreshing ? (
         <View style={styles.skeletonContainer}>
           {Array.from({ length: 7 }).map((_, i) => (
             <NotificationSkeletonRow key={i} />
@@ -300,6 +387,7 @@ const styles = StyleSheet.create({
   },
   retryBtnText: { fontSize: 13, fontWeight: "700", color: "#DC2626" },
   listEmpty: { flexGrow: 1 },
+  alertListContent: { paddingHorizontal: 16, paddingBottom: 8 },
   footer: { paddingVertical: 20, alignItems: "center" },
   footerText: { fontSize: 12, color: "#94A3B8", fontWeight: "600" },
 });
