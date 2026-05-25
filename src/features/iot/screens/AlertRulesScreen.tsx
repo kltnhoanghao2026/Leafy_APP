@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { ArrowLeft, BellRing, Pencil, Plus, Trash2 } from "lucide-react-native";
+import { ArrowLeft, BellRing, Gauge, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,7 +23,6 @@ import {
 } from "../hooks/useAlerts";
 import { SensorTypePicker } from "../components/SensorTypePicker";
 import type { AlertRuleResponse, AlertRuleRequest, AlertSeverity } from "../types";
-import { formatDateTime } from "../utils/deviceLabels";
 import type { DisplayAlertRule } from "../utils/iotDisplay";
 
 const SEVERITY_OPTIONS: AlertSeverity[] = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
@@ -54,9 +53,21 @@ const getThresholdMin = (rule: AlertRuleResponse) =>
 const getThresholdMax = (rule: AlertRuleResponse) =>
   rule.thresholdMax ?? rule.maxThreshold ?? null;
 
+const TECHNICAL_IDENTIFIER_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const isTechnicalIdentifier = (value?: string | null) => {
+  if (!value) return false;
+  const trimmed = value.trim();
+  return (
+    TECHNICAL_IDENTIFIER_PATTERN.test(trimmed) ||
+    (trimmed.length >= 24 && /^[0-9a-f-]+$/i.test(trimmed))
+  );
+};
+
 const toFormState = (rule: AlertRuleResponse): FormState => ({
   name: rule.name ?? "",
-  sensorType: rule.sensorType ?? rule.sensorTypeId ?? "",
+  sensorType: rule.sensorTypeCode ?? rule.sensorType ?? rule.sensorTypeId ?? "",
   thresholdMin: getThresholdMin(rule)?.toString() ?? "",
   thresholdMax: getThresholdMax(rule)?.toString() ?? "",
   severity: rule.severity,
@@ -469,13 +480,53 @@ function AlertRuleItem({
 }) {
   const { t } = useTranslation();
   const sensor = rule.display?.sensorLabel ?? t("iot.common.unknown");
+  const min = getThresholdMin(rule);
+  const max = getThresholdMax(rule);
+  const userName = rule.name?.trim();
+  const title =
+    userName && !isTechnicalIdentifier(userName)
+      ? userName
+      : t("iot.alertRules.ruleTitle", {
+          sensor,
+          defaultValue: `Cảnh báo ${sensor}`,
+        });
+  const condition =
+    min != null && max != null
+      ? t("iot.alertRules.conditionRange", {
+          sensor,
+          threshold: rule.display?.thresholdLabel ?? `${min} - ${max}`,
+          defaultValue: `Cảnh báo khi ${sensor} nằm ngoài khoảng ${rule.display?.thresholdLabel ?? `${min} - ${max}`}`,
+        })
+      : max != null
+        ? t("iot.alertRules.conditionMax", {
+            sensor,
+            threshold: rule.display?.thresholdLabel ?? String(max),
+            defaultValue: `Cảnh báo khi ${sensor} vượt ${rule.display?.thresholdLabel ?? max}`,
+          })
+        : min != null
+          ? t("iot.alertRules.conditionMin", {
+              sensor,
+              threshold: rule.display?.thresholdLabel ?? String(min),
+              defaultValue: `Cảnh báo khi ${sensor} thấp hơn ${rule.display?.thresholdLabel ?? min}`,
+            })
+          : t("iot.alertRules.conditionAny", {
+              sensor,
+              defaultValue: `Theo dõi bất thường của ${sensor}`,
+            });
+  const scope = rule.deviceId
+    ? t("iot.alertRules.scopeDevice", "Áp dụng cho thiết bị đã chọn")
+    : rule.zoneId
+      ? t("iot.alertRules.scopeZone", "Áp dụng cho khu vực đã chọn")
+      : rule.farmPlotId
+        ? t("iot.alertRules.scopeFarm", "Áp dụng cho vườn đã chọn")
+        : t("iot.alertRules.scopeAll", "Áp dụng cho tất cả thiết bị phù hợp");
 
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.cardTitleWrap}>
-          <Text style={styles.ruleName}>{rule.display?.name ?? sensor}</Text>
-          <Text style={styles.ruleSensor}>{sensor}</Text>
+          <Text style={styles.ruleName}>{title}</Text>
+          <Text style={styles.ruleSensor}>{condition}</Text>
         </View>
         <Switch
           disabled={pending}
@@ -483,12 +534,33 @@ function AlertRuleItem({
           onValueChange={() => onToggle(rule)}
         />
       </View>
-      <Text style={styles.metaText}>
-        {t("iot.rules.threshold")}: {rule.display?.thresholdLabel ?? t("iot.common.unknownValue")}
-      </Text>
-      <Text style={styles.metaText}>
-        {t("iot.alertRules.severity")}: {rule.display?.severityLabel ?? t("iot.common.unknownStatus")}
-      </Text>
+      <View style={styles.ruleSummary}>
+        <View style={styles.ruleSummaryIcon}>
+          <Gauge color="#166534" size={16} />
+        </View>
+        <View style={styles.ruleSummaryText}>
+          <Text style={styles.ruleSummaryLabel}>{t("iot.alertRules.thresholdRange", "Ngưỡng cảnh báo")}</Text>
+          <Text style={styles.ruleSummaryValue}>
+            {rule.display?.thresholdLabel ?? t("iot.common.unknownValue")}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.infoGrid}>
+        <View style={styles.infoPill}>
+          <Text style={styles.infoLabel}>{t("iot.alertRules.severity")}</Text>
+          <Text style={styles.infoValue}>
+            {rule.display?.severityLabel ?? t("iot.common.unknownStatus")}
+          </Text>
+        </View>
+        <View style={styles.infoPill}>
+          <Text style={styles.infoLabel}>{t("iot.alertRules.statusLabel", "Trạng thái")}</Text>
+          <Text style={styles.infoValue}>{rule.display?.enabledLabel}</Text>
+        </View>
+      </View>
+      <View style={styles.scopeRow}>
+        <SlidersHorizontal color="#64748b" size={14} />
+        <Text style={styles.scopeText}>{scope}</Text>
+      </View>
       <Text style={styles.metaText}>
         {t("iot.alertRules.lastTriggered")}: {rule.display?.lastTriggeredLabel ?? t("iot.common.noData")}
       </Text>
@@ -687,6 +759,33 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "900",
   },
+  infoGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 10,
+  },
+  infoLabel: {
+    color: "#64748b",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  infoPill: {
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+    borderRadius: 14,
+    borderWidth: 1,
+    flexGrow: 1,
+    minWidth: 120,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  infoValue: {
+    color: "#0f172a",
+    fontSize: 13,
+    fontWeight: "900",
+    marginTop: 3,
+  },
   input: {
     backgroundColor: "#f8fafc",
     borderColor: "#cbd5e1",
@@ -747,11 +846,47 @@ const styles = StyleSheet.create({
     color: "#0f172a",
     fontSize: 16,
     fontWeight: "900",
+    lineHeight: 22,
   },
   ruleSensor: {
     color: "#64748b",
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "800",
+    lineHeight: 19,
+    marginTop: 3,
+  },
+  ruleSummary: {
+    alignItems: "center",
+    backgroundColor: "#f0fdf4",
+    borderColor: "#bbf7d0",
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 14,
+    padding: 12,
+  },
+  ruleSummaryIcon: {
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    borderRadius: 12,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
+  },
+  ruleSummaryLabel: {
+    color: "#166534",
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+  ruleSummaryText: {
+    flex: 1,
+  },
+  ruleSummaryValue: {
+    color: "#0f172a",
+    fontSize: 15,
+    fontWeight: "900",
     marginTop: 3,
   },
   screen: {
@@ -769,6 +904,19 @@ const styles = StyleSheet.create({
     color: "#334155",
     fontSize: 13,
     fontWeight: "900",
+  },
+  scopeRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 10,
+  },
+  scopeText: {
+    color: "#64748b",
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 17,
   },
   sectionTitle: {
     color: "#0f172a",

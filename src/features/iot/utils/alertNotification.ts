@@ -8,7 +8,12 @@ export type IotAlertNotificationPayload = {
   alertType?: string;
   type?: string;
   referenceId?: string;
+  alertEventId?: string;
   alertId?: string;
+  mediaEventId?: string;
+  analysisId?: string;
+  diseaseName?: string;
+  confidence?: string;
   deviceUid?: string;
   timestamp?: string;
 };
@@ -28,10 +33,15 @@ export const getIotAlertIdFromPayload = (
     return null;
   }
 
-  const referenceId = data.referenceId ?? data.alertId;
-  return typeof referenceId === "string" && referenceId.trim()
-    ? referenceId.trim()
-    : null;
+  return (
+    getStringValue(data.referenceId) ??
+    getStringValue(data.alertEventId) ??
+    getStringValue(data.alertId)
+  );
+};
+
+const getStringValue = (value: unknown): string | null => {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 };
 
 export const isIotAlertNotification = (

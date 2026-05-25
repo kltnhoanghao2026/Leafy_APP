@@ -24,7 +24,11 @@ type FarmZonePickerProps = {
 
 type ActivePicker = "farm" | "zone" | null;
 
-export function FarmZonePicker({ value, onChange, title }: FarmZonePickerProps) {
+export function FarmZonePicker({
+  value,
+  onChange,
+  title,
+}: FarmZonePickerProps) {
   const { t } = useTranslation();
   const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const profileQuery = useQuery(getMyProfileQueryOptions());
@@ -76,51 +80,82 @@ export function FarmZonePicker({ value, onChange, title }: FarmZonePickerProps) 
   };
 
   const selectedFarmLabel =
-    selectedPlot?.name ?? value.farmPlotName ?? t("iot.devices.onboarding.selectFarm");
+    selectedPlot?.name ??
+    value.farmPlotName ??
+    t("iot.devices.onboarding.selectFarm");
   const selectedFarmMeta =
-    selectedPlot?.addressLine || selectedPlot?.code || t("iot.common.noFarmMetadata");
+    selectedPlot?.addressLine ||
+    selectedPlot?.code ||
+    t("iot.common.noFarmMetadata");
   const selectedZoneLabel =
-    selectedZone?.zoneName ?? value.zoneName ?? t("iot.devices.onboarding.selectZone");
+    selectedZone?.zoneName ??
+    value.zoneName ??
+    t("iot.devices.onboarding.selectZone");
   const selectedZoneMeta =
-    selectedZone?.cropType || selectedZone?.soilType || selectedZone?.zoneCode || t("iot.common.noZoneMetadata");
+    selectedZone?.cropType ||
+    selectedZone?.soilType ||
+    selectedZone?.zoneCode ||
+    t("iot.common.noZoneMetadata");
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{title ?? t("iot.devices.onboarding.locationTitle")}</Text>
+      <Text style={styles.title}>
+        {title ?? t("iot.devices.onboarding.locationTitle")}
+      </Text>
 
       <View style={styles.section}>
-        <Text style={styles.label}>{t("iot.devices.onboarding.selectFarm")}</Text>
+        <Text style={styles.label}>
+          {t("iot.devices.onboarding.selectFarm")}
+        </Text>
         {profileQuery.isLoading || plotsQuery.isLoading ? (
-          <Text style={styles.hint}>{t("iot.devices.onboarding.loadingFarms")}</Text>
+          <Text style={styles.hint}>
+            {t("iot.devices.onboarding.loadingFarms")}
+          </Text>
         ) : null}
         {profileQuery.isError || plotsQuery.isError ? (
-          <Text style={styles.error}>{t("iot.devices.onboarding.farmsLoadFailed")}</Text>
+          <Text style={styles.error}>
+            {t("iot.devices.onboarding.farmsLoadFailed")}
+          </Text>
         ) : null}
         {!plotsQuery.isLoading && !plotsQuery.data?.length ? (
           <Text style={styles.hint}>{t("iot.devices.onboarding.noFarms")}</Text>
         ) : null}
         <DropdownField
-          disabled={profileQuery.isLoading || plotsQuery.isLoading || !plots.length}
+          disabled={
+            profileQuery.isLoading || plotsQuery.isLoading || !plots.length
+          }
           hasValue={Boolean(value.farmPlotId)}
           label={selectedFarmLabel}
-          meta={value.farmPlotId ? selectedFarmMeta : t("iot.common.searchFarm")}
+          meta={
+            value.farmPlotId ? selectedFarmMeta : t("iot.common.searchFarm")
+          }
           onClear={clearPlot}
           onPress={() => setActivePicker("farm")}
         />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>{t("iot.devices.onboarding.selectZone")}</Text>
+        <Text style={styles.label}>
+          {t("iot.devices.onboarding.selectZone")}
+        </Text>
         {!value.farmPlotId ? (
-          <Text style={styles.hint}>{t("iot.devices.onboarding.selectFarmFirst")}</Text>
+          <Text style={styles.hint}>
+            {t("iot.devices.onboarding.selectFarmFirst")}
+          </Text>
         ) : null}
         {value.farmPlotId && zonesQuery.isLoading ? (
-          <Text style={styles.hint}>{t("iot.devices.onboarding.loadingZones")}</Text>
+          <Text style={styles.hint}>
+            {t("iot.devices.onboarding.loadingZones")}
+          </Text>
         ) : null}
         {value.farmPlotId && zonesQuery.isError ? (
-          <Text style={styles.error}>{t("iot.devices.onboarding.zonesLoadFailed")}</Text>
+          <Text style={styles.error}>
+            {t("iot.devices.onboarding.zonesLoadFailed")}
+          </Text>
         ) : null}
-        {value.farmPlotId && !zonesQuery.isLoading && !zonesQuery.data?.length ? (
+        {value.farmPlotId &&
+        !zonesQuery.isLoading &&
+        !zonesQuery.data?.length ? (
           <Text style={styles.hint}>{t("iot.devices.onboarding.noZones")}</Text>
         ) : null}
         <DropdownField
@@ -142,8 +177,12 @@ export function FarmZonePicker({ value, onChange, title }: FarmZonePickerProps) 
         searchPlaceholder={t("iot.common.searchFarm")}
         emptyText={t("iot.common.noFarmsFound")}
         keyExtractor={(plot) => plot.id}
-        labelExtractor={(plot) => plot.name || plot.code || t("iot.common.unknownFarm")}
-        subtitleExtractor={(plot) => plot.addressLine || plot.code || t("iot.common.noFarmMetadata")}
+        labelExtractor={(plot) =>
+          plot.name || plot.code || t("iot.common.unknownFarm")
+        }
+        subtitleExtractor={(plot) =>
+          plot.addressLine || plot.code || t("iot.common.noFarmMetadata")
+        }
         searchFields={[
           (plot) => plot.name,
           (plot) => plot.code,
@@ -158,7 +197,9 @@ export function FarmZonePicker({ value, onChange, title }: FarmZonePickerProps) 
         renderItem={(plot, isSelected) => (
           <PickerOption
             label={plot.name || plot.code || t("iot.common.unknownFarm")}
-            meta={plot.addressLine || plot.code || t("iot.common.noFarmMetadata")}
+            meta={
+              plot.addressLine || plot.code || t("iot.common.noFarmMetadata")
+            }
             selected={isSelected}
             onPress={() => {
               selectPlot(plot);
@@ -177,9 +218,14 @@ export function FarmZonePicker({ value, onChange, title }: FarmZonePickerProps) 
         searchPlaceholder={t("iot.common.searchZone")}
         emptyText={t("iot.common.noZonesFound")}
         keyExtractor={(zone) => zone.id}
-        labelExtractor={(zone) => zone.zoneName || zone.zoneCode || t("iot.common.unknownZone")}
+        labelExtractor={(zone) =>
+          zone.zoneName || zone.zoneCode || t("iot.common.unknownZone")
+        }
         subtitleExtractor={(zone) =>
-          zone.cropType || zone.soilType || zone.zoneCode || t("iot.common.noZoneMetadata")
+          zone.cropType ||
+          zone.soilType ||
+          zone.zoneCode ||
+          t("iot.common.noZoneMetadata")
         }
         searchFields={[
           (zone) => zone.zoneName,
@@ -195,8 +241,15 @@ export function FarmZonePicker({ value, onChange, title }: FarmZonePickerProps) 
         }}
         renderItem={(zone, isSelected) => (
           <PickerOption
-            label={zone.zoneName || zone.zoneCode || t("iot.common.unknownZone")}
-            meta={zone.cropType || zone.soilType || zone.zoneCode || t("iot.common.noZoneMetadata")}
+            label={
+              zone.zoneName || zone.zoneCode || t("iot.common.unknownZone")
+            }
+            meta={
+              zone.cropType ||
+              zone.soilType ||
+              zone.zoneCode ||
+              t("iot.common.noZoneMetadata")
+            }
             selected={isSelected}
             onPress={() => {
               selectZone(zone);
@@ -235,7 +288,15 @@ function DropdownField({
       ]}
     >
       <View style={styles.dropdownTextWrap}>
-        <Text style={[styles.dropdownLabel, !hasValue && styles.dropdownPlaceholder]}>{label}</Text>
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.dropdownLabel,
+            !hasValue && styles.dropdownPlaceholder,
+          ]}
+        >
+          {label}
+        </Text>
         {meta ? <Text style={styles.dropdownMeta}>{meta}</Text> : null}
       </View>
       {hasValue ? (
@@ -250,7 +311,11 @@ function DropdownField({
           <X color="#64748b" size={16} />
         </Pressable>
       ) : null}
-      <ChevronDown color={disabled ? "#cbd5e1" : "#16a34a"} size={18} />
+      <View
+        style={[styles.dropdownIcon, disabled && styles.dropdownIconDisabled]}
+      >
+        <ChevronDown color="#ffffff" size={20} />
+      </View>
     </Pressable>
   );
 }
@@ -267,9 +332,19 @@ function PickerOption({
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={[styles.pickerOption, selected && styles.pickerOptionSelected]}>
+    <Pressable
+      onPress={onPress}
+      style={[styles.pickerOption, selected && styles.pickerOptionSelected]}
+    >
       <View style={styles.dropdownTextWrap}>
-        <Text style={[styles.pickerOptionLabel, selected && styles.pickerOptionLabelSelected]}>{label}</Text>
+        <Text
+          style={[
+            styles.pickerOptionLabel,
+            selected && styles.pickerOptionLabelSelected,
+          ]}
+        >
+          {label}
+        </Text>
         {meta ? <Text style={styles.pickerOptionMeta}>{meta}</Text> : null}
       </View>
       {selected ? (
@@ -324,23 +399,43 @@ const styles = StyleSheet.create({
   },
   dropdown: {
     alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderColor: "#bbf7d0",
-    borderRadius: 14,
-    borderWidth: 1,
+    backgroundColor: "#dcfce7",
+    borderColor: "#16a34a",
+    borderRadius: 16,
+    borderWidth: 2,
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
     marginTop: 10,
-    paddingHorizontal: 12,
+    minHeight: 64,
+    paddingHorizontal: 14,
     paddingVertical: 12,
+    shadowColor: "#14532d",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    elevation: 3,
   },
   dropdownDisabled: {
     backgroundColor: "#f8fafc",
     borderColor: "#e2e8f0",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  dropdownIcon: {
+    alignItems: "center",
+    backgroundColor: "#16a34a",
+    borderRadius: 999,
+    height: 34,
+    justifyContent: "center",
+    width: 34,
+  },
+  dropdownIconDisabled: {
+    backgroundColor: "#cbd5e1",
   },
   dropdownLabel: {
     color: "#0f172a",
-    fontSize: 14,
+    flexShrink: 1,
+    fontSize: 16,
     fontWeight: "900",
   },
   dropdownMeta: {
@@ -354,6 +449,7 @@ const styles = StyleSheet.create({
   },
   dropdownTextWrap: {
     flex: 1,
+    minWidth: 0,
   },
   optionPressed: {
     opacity: 0.78,

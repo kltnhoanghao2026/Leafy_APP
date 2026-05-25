@@ -103,6 +103,26 @@ describe("iotDisplay", () => {
     expect(result.display.technical.alertId).toBeTruthy();
   });
 
+  it("formats disease detection alerts without exposing raw camera messages", () => {
+    const rawAlert = {
+      id: "alert-disease-id",
+      alertType: "DISEASE_DETECTED",
+      message: "Camera disease detection: 0.8 confidence",
+      severity: "MEDIUM",
+      status: "RESOLVED",
+      triggerValue: 0.8,
+      openedAt: "2026-05-23T08:30:00.000Z",
+    } as any;
+
+    const result = withAlertDisplay(rawAlert);
+
+    expect(result.display.type).not.toBe("DISEASE_DETECTED");
+    expect(result.display.title).not.toContain("Camera disease detection");
+    expect(result.display.message).not.toContain("confidence");
+    expect(result.display.sensorLabel).not.toBe("Sensor");
+    expect(result.display.valueLabel).toContain("80");
+  });
+
   it("maps alert rule labels while keeping rule ID technical", () => {
     const rawRule = {
       id: "rule-db-id",
@@ -122,6 +142,44 @@ describe("iotDisplay", () => {
     expect(result.display.thresholdLabel).toContain("10");
     expect(result.display.thresholdLabel).toContain("35");
     expect(result.display.technical.ruleId).toBeTruthy();
+  });
+
+  it("maps seeded sensor type UUIDs to localized labels", () => {
+    const rawRule = {
+      id: "rule-db-id",
+      ruleId: "rule-id-123",
+      name: "0728c31a-48fb-32df-a03f-144e3fc0bf6d",
+      sensorType: "0728c31a-48fb-32df-a03f-144e3fc0bf6d",
+      severity: "LOW",
+      thresholdMin: 10,
+      thresholdMax: 30,
+      enabled: true,
+    } as any;
+
+    const result = withRuleDisplay(rawRule);
+
+    expect(result.display.sensorLabel).not.toBe("0728c31a-48fb-32df-a03f-144e3fc0bf6d");
+    expect(result.display.sensorLabel).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}/i);
+  });
+
+  it("prefers alert rule sensor metadata from the backend over raw IDs", () => {
+    const rawRule = {
+      id: "rule-db-id",
+      ruleId: "rule-id-123",
+      sensorTypeId: "random-db-sensor-id",
+      sensorTypeCode: "SOIL_MOISTURE",
+      sensorTypeName: "Soil Moisture",
+      sensorTypeUnit: "%",
+      severity: "MEDIUM",
+      minThreshold: 25,
+      enabled: true,
+    } as any;
+
+    const result = withRuleDisplay(rawRule);
+
+    expect(result.display.sensorLabel).not.toBe("random-db-sensor-id");
+    expect(result.display.sensorLabel).not.toBe("Sensor");
+    expect(result.display.thresholdLabel).toContain("%");
   });
 
   it("uses unknown labels instead of raw unknown enum values", () => {

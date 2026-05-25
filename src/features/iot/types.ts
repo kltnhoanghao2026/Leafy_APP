@@ -380,6 +380,9 @@ export type AlertRule = {
   name?: string | null;
   sensorType: string;
   sensorTypeId?: string | null;
+  sensorTypeCode?: string | null;
+  sensorTypeName?: string | null;
+  sensorTypeUnit?: string | null;
   deviceId?: string | null;
   zoneId?: string | null;
   farmPlotId?: string | null;

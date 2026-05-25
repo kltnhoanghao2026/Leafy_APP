@@ -12,17 +12,24 @@ describe("ZonePicker", () => {
     const onChange = jest.fn();
     render(
       <ZonePicker
-        zones={[{ id: "zone-db-id-123", zoneName: "Tomato zone", cropType: "Tomato" }]}
+        zones={[
+          { id: "zone-db-id-123", zoneName: "Tomato zone", cropType: "Tomato" },
+        ]}
         value={null}
         onChange={onChange}
       />,
     );
+
+    fireEvent.press(screen.getByText("Search zone"));
 
     expect(screen.getByText("Tomato zone")).toBeTruthy();
     expect(screen.getByText("Tomato")).toBeTruthy();
     expect(screen.queryByText("zone-db-id-123")).toBeNull();
 
     fireEvent.press(screen.getByText("Tomato zone"));
-    expect(onChange).toHaveBeenCalledWith({ id: "zone-db-id-123", label: "Tomato zone" });
+    expect(onChange).toHaveBeenCalledWith({
+      id: "zone-db-id-123",
+      label: "Tomato zone",
+    });
   });
 });

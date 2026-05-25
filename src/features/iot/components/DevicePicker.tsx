@@ -1,6 +1,9 @@
+import { Check, ChevronDown, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useTranslation } from "react-i18next";
+
+import { PickerModal } from "@/src/components/ui/PickerModal";
 
 export type DevicePickerOption = {
   id?: string;
@@ -39,10 +42,7 @@ type DevicePickerProps = {
   onManualChange?: (value: string) => void;
 };
 
-const getDeviceLabel = (
-  device: DevicePickerOption,
-  fallback: string,
-) =>
+const getDeviceLabel = (device: DevicePickerOption, fallback: string) =>
   device.display?.nameLabel ??
   device.display?.deviceLabel ??
   device.deviceName ??
@@ -50,10 +50,16 @@ const getDeviceLabel = (
   device.deviceCode ??
   fallback;
 
-const getDeviceKey = (device: DevicePickerOption, mode: "deviceId" | "deviceUid") =>
+const getDeviceKey = (
+  device: DevicePickerOption,
+  mode: "deviceId" | "deviceUid",
+) =>
   mode === "deviceUid"
-    ? device.deviceUid ?? device.display?.technical?.deviceUid ?? ""
-    : device.id ?? device.deviceId ?? device.display?.technical?.deviceId ?? "";
+    ? (device.deviceUid ?? device.display?.technical?.deviceUid ?? "")
+    : (device.id ??
+      device.deviceId ??
+      device.display?.technical?.deviceId ??
+      "");
 
 export function DevicePicker({
   label,
@@ -68,102 +74,141 @@ export function DevicePicker({
   onManualChange,
 }: DevicePickerProps) {
   const { t } = useTranslation();
-  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
   const fallbackLabel = t("iot.common.unknownDevice");
 
   const selectedDevice = useMemo(
     () => devices.find((device) => getDeviceKey(device, mode) === value),
     [devices, mode, value],
   );
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredDevices = useMemo(() => {
-    if (!normalizedQuery) return devices;
-
-    return devices.filter((device) => {
-      const searchValue = [
-        getDeviceLabel(device, fallbackLabel),
-        device.deviceCode,
-        device.deviceUid,
-        device.id,
-        device.deviceId,
-        device.display?.technical?.deviceUid,
-        device.display?.technical?.deviceId,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-
-      return searchValue.includes(normalizedQuery);
-    });
-  }, [devices, fallbackLabel, normalizedQuery]);
+  const selectedLabel = selectedDevice
+    ? getDeviceLabel(selectedDevice, fallbackLabel)
+    : (placeholder ?? t("iot.common.searchDevice"));
 
   const selectDevice = (device: DevicePickerOption) => {
     onChange({
       id: device.id,
-      deviceId: device.deviceId ?? device.id ?? device.display?.technical?.deviceId,
+      deviceId:
+        device.deviceId ?? device.id ?? device.display?.technical?.deviceId,
       deviceUid: device.deviceUid ?? device.display?.technical?.deviceUid,
       label: getDeviceLabel(device, fallbackLabel),
     });
+    setOpen(false);
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.label}>{label ?? t("iot.common.selectDevice")}</Text>
-      <TextInput
-        autoCapitalize="none"
-        onChangeText={setQuery}
-        placeholder={placeholder ?? t("iot.common.searchDevice")}
-        placeholderTextColor="#94a3b8"
-        style={styles.input}
-        value={query}
-      />
-      {selectedDevice ? (
-        <View style={styles.selectedRow}>
-          <View style={styles.selectedTextWrap}>
-            <Text style={styles.selectedLabel}>
-              {getDeviceLabel(selectedDevice, fallbackLabel)}
-            </Text>
-            {selectedDevice.deviceCode &&
-            selectedDevice.deviceCode !== getDeviceLabel(selectedDevice, fallbackLabel) ? (
-              <Text style={styles.secondaryText}>{selectedDevice.deviceCode}</Text>
-            ) : null}
-          </View>
-          {allowClear ? (
-            <Pressable style={styles.clearButton} onPress={() => onChange(null)}>
-              <Text style={styles.clearText}>{t("iot.common.clearSelection")}</Text>
-            </Pressable>
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [
+          styles.dropdown,
+          pressed && styles.dropdownPressed,
+        ]}
+      >
+        <View style={styles.textWrap}>
+          <Text
+            numberOfLines={1}
+            style={[
+              styles.dropdownLabel,
+              !selectedDevice && styles.dropdownPlaceholder,
+            ]}
+          >
+            {selectedLabel}
+          </Text>
+          {selectedDevice?.deviceCode &&
+          selectedDevice.deviceCode !== selectedLabel ? (
+            <Text style={styles.dropdownMeta}>{selectedDevice.deviceCode}</Text>
           ) : null}
         </View>
-      ) : null}
-      <View style={styles.optionList}>
-        {filteredDevices.length === 0 ? (
-          <Text style={styles.emptyText}>{t("iot.common.noDevicesFound")}</Text>
-        ) : (
-          filteredDevices.slice(0, 8).map((device) => {
-            const key = getDeviceKey(device, mode) || device.id || device.deviceUid || getDeviceLabel(device, fallbackLabel);
-            const selected = key === value;
-            const deviceLabel = getDeviceLabel(device, fallbackLabel);
-
-            return (
-              <Pressable
-                key={key}
-                onPress={() => selectDevice(device)}
-                style={[styles.option, selected && styles.optionSelected]}
-              >
-                <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
+        {selectedDevice && allowClear ? (
+          <Pressable
+            hitSlop={8}
+            onPress={(event) => {
+              event.stopPropagation();
+              onChange(null);
+            }}
+            style={styles.clearIconButton}
+          >
+            <X color="#166534" size={16} />
+          </Pressable>
+        ) : null}
+        <View style={styles.dropdownIcon}>
+          <ChevronDown color="#ffffff" size={20} />
+        </View>
+      </Pressable>
+      <PickerModal
+        visible={open}
+        title={label ?? t("iot.common.selectDevice")}
+        items={devices}
+        selectedId={value ?? undefined}
+        searchPlaceholder={placeholder ?? t("iot.common.searchDevice")}
+        emptyText={t("iot.common.noDevicesFound")}
+        keyExtractor={(device) =>
+          getDeviceKey(device, mode) ||
+          device.id ||
+          device.deviceUid ||
+          getDeviceLabel(device, fallbackLabel)
+        }
+        labelExtractor={(device) => getDeviceLabel(device, fallbackLabel)}
+        subtitleExtractor={(device) =>
+          device.deviceCode ?? device.deviceUid ?? device.id
+        }
+        searchFields={[
+          (device) => getDeviceLabel(device, fallbackLabel),
+          (device) => device.deviceCode ?? undefined,
+          (device) => device.deviceUid ?? undefined,
+          (device) => device.id,
+          (device) => device.deviceId,
+          (device) => device.display?.technical?.deviceUid,
+          (device) => device.display?.technical?.deviceId,
+        ]}
+        onClose={() => setOpen(false)}
+        onSelect={(id) => {
+          const device = devices.find((item) => {
+            const key =
+              getDeviceKey(item, mode) ||
+              item.id ||
+              item.deviceUid ||
+              getDeviceLabel(item, fallbackLabel);
+            return key === id;
+          });
+          if (device) selectDevice(device);
+        }}
+        renderItem={(device, selected) => {
+          const deviceLabel = getDeviceLabel(device, fallbackLabel);
+          return (
+            <Pressable
+              onPress={() => selectDevice(device)}
+              style={[styles.option, selected && styles.optionSelected]}
+            >
+              <View style={styles.textWrap}>
+                <Text
+                  style={[
+                    styles.optionLabel,
+                    selected && styles.optionLabelSelected,
+                  ]}
+                >
                   {deviceLabel}
                 </Text>
                 {device.deviceCode && device.deviceCode !== deviceLabel ? (
                   <Text style={styles.secondaryText}>{device.deviceCode}</Text>
                 ) : null}
-              </Pressable>
-            );
-          })
-        )}
-      </View>
+              </View>
+              {selected ? (
+                <View style={styles.checkBadge}>
+                  <Check color="#ffffff" size={14} />
+                </View>
+              ) : null}
+            </Pressable>
+          );
+        }}
+      />
       {showAdvancedManualInput ? (
         <View style={styles.advancedBox}>
-          <Text style={styles.advancedLabel}>{t("iot.common.advancedManualInput")}</Text>
+          <Text style={styles.advancedLabel}>
+            {t("iot.common.advancedManualInput")}
+          </Text>
           <TextInput
             autoCapitalize="none"
             onChangeText={onManualChange}
@@ -192,23 +237,68 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "900",
   },
-  clearButton: {
-    backgroundColor: "#f1f5f9",
+  checkBadge: {
+    alignItems: "center",
+    backgroundColor: "#16a34a",
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
+    height: 24,
+    justifyContent: "center",
+    width: 24,
   },
-  clearText: {
-    color: "#334155",
-    fontSize: 12,
-    fontWeight: "900",
+  clearIconButton: {
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    borderRadius: 999,
+    height: 28,
+    justifyContent: "center",
+    width: 28,
   },
   container: {
     gap: 8,
   },
-  emptyText: {
+  dropdown: {
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    borderColor: "#16a34a",
+    borderRadius: 16,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 64,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: "#14532d",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  dropdownIcon: {
+    alignItems: "center",
+    backgroundColor: "#16a34a",
+    borderRadius: 999,
+    height: 34,
+    justifyContent: "center",
+    width: 34,
+  },
+  dropdownLabel: {
+    color: "#0f172a",
+    flexShrink: 1,
+    fontSize: 16,
+    fontWeight: "900",
+  },
+  dropdownMeta: {
     color: "#64748b",
-    fontSize: 13,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 3,
+  },
+  dropdownPlaceholder: {
+    color: "#64748b",
+  },
+  dropdownPressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }],
   },
   input: {
     backgroundColor: "#f8fafc",
@@ -226,49 +316,32 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   option: {
-    backgroundColor: "#ffffff",
-    borderColor: "#e2e8f0",
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 10,
+    alignItems: "center",
+    borderBottomColor: "rgba(148, 163, 184, 0.18)",
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 12,
   },
   optionLabel: {
     color: "#0f172a",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "900",
   },
   optionLabelSelected: {
     color: "#166534",
   },
-  optionList: {
-    gap: 8,
-  },
   optionSelected: {
-    backgroundColor: "#dcfce7",
-    borderColor: "#86efac",
+    backgroundColor: "#f0fdf4",
   },
   secondaryText: {
     color: "#64748b",
     fontSize: 12,
-    marginTop: 2,
+    marginTop: 3,
   },
-  selectedLabel: {
-    color: "#166534",
-    fontSize: 13,
-    fontWeight: "900",
-  },
-  selectedRow: {
-    alignItems: "center",
-    backgroundColor: "#f0fdf4",
-    borderColor: "#bbf7d0",
-    borderRadius: 14,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: 10,
-    justifyContent: "space-between",
-    padding: 10,
-  },
-  selectedTextWrap: {
+  textWrap: {
     flex: 1,
+    minWidth: 0,
   },
 });
