@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, QrCode, Keyboard, CheckCircle2 } from "lucide-react-native";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -55,6 +56,9 @@ const normalizeManualPayload = (
     deviceCode,
     deviceType,
     model: value.model?.trim() || undefined,
+    firmwareVersion: value.firmwareVersion?.trim() || undefined,
+    setupApSsid: value.setupApSsid?.trim() || undefined,
+    setupPortalUrl: value.setupPortalUrl?.trim() || undefined,
   };
 };
 
@@ -88,7 +92,7 @@ export function DeviceOnboardingScreen() {
       return;
     }
 
-    const result = parseDeviceQrPayload(payloadParam);
+    const result = parseDeviceQrPayload(payloadParam, t);
     if (result.ok) {
       setQrPayload(result.payload);
       setManualPayload(result.payload);
@@ -98,7 +102,7 @@ export function DeviceOnboardingScreen() {
     }
 
     setError(result.error);
-  }, [payloadParam]);
+  }, [payloadParam, t]);
 
   const effectivePayload = useMemo(() => {
     if (mode === "manual") {
@@ -128,6 +132,11 @@ export function DeviceOnboardingScreen() {
 
   const canConnect =
     Boolean(effectivePayload) && Boolean(location.farmPlotId) && Boolean(location.zoneId);
+  const hasSetupHints = Boolean(
+    effectivePayload?.firmwareVersion ||
+      effectivePayload?.setupApSsid ||
+      effectivePayload?.setupPortalUrl,
+  );
   const isSubmitting =
     provisionMutation.isPending ||
     claimCodeMutation.isPending ||
@@ -202,6 +211,18 @@ export function DeviceOnboardingScreen() {
     }
   };
 
+  const openSetupPortal = async () => {
+    if (!effectivePayload?.setupPortalUrl) {
+      return;
+    }
+
+    try {
+      await Linking.openURL(effectivePayload.setupPortalUrl);
+    } catch {
+      setError(t("iot.devices.onboarding.openPortalFailed"));
+    }
+  };
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Pressable style={styles.backButton} onPress={() => router.back()}>
@@ -259,6 +280,38 @@ export function DeviceOnboardingScreen() {
           <InfoLine label={t("iot.devices.onboarding.model")} value={effectivePayload.model || t("iot.common.none")} />
           <InfoLine label={t("iot.devices.onboarding.deviceCode")} value={effectivePayload.deviceCode} />
           <InfoLine label={t("iot.devices.onboarding.deviceType")} value={t(`iot.devices.type.${effectivePayload.deviceType}`, { defaultValue: t("iot.devices.defaultName") })} />
+        </View>
+      ) : null}
+
+      {effectivePayload && hasSetupHints ? (
+        <View style={styles.setupInfoCard}>
+          <Text style={styles.cardTitle}>{t("iot.devices.onboarding.setupInfoTitle")}</Text>
+          <Text style={styles.hintLeft}>{t("iot.devices.onboarding.setupInfoHint")}</Text>
+          {effectivePayload.firmwareVersion ? (
+            <InfoLine
+              label={t("iot.devices.onboarding.setupInfoFirmware")}
+              value={effectivePayload.firmwareVersion}
+            />
+          ) : null}
+          {effectivePayload.setupApSsid ? (
+            <InfoLine
+              label={t("iot.devices.onboarding.setupInfoWifi")}
+              value={effectivePayload.setupApSsid}
+            />
+          ) : null}
+          {effectivePayload.setupPortalUrl ? (
+            <>
+              <InfoLine
+                label={t("iot.devices.onboarding.setupInfoPortal")}
+                value={effectivePayload.setupPortalUrl}
+              />
+              <Pressable style={styles.portalButton} onPress={openSetupPortal}>
+                <Text style={styles.portalButtonText}>
+                  {t("iot.devices.onboarding.setupInfoOpenPortal")}
+                </Text>
+              </Pressable>
+            </>
+          ) : null}
         </View>
       ) : null}
 
@@ -419,6 +472,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
+  hintLeft: {
+    color: "#64748b",
+    fontSize: 13,
+    lineHeight: 19,
+  },
   infoHeader: {
     alignItems: "center",
     flexDirection: "row",
@@ -488,6 +546,19 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.8,
   },
+  portalButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#15803d",
+    borderRadius: 999,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+  },
+  portalButtonText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "900",
+  },
   primaryButton: {
     alignItems: "center",
     alignSelf: "flex-start",
@@ -529,6 +600,14 @@ const styles = StyleSheet.create({
     color: "#166534",
     fontSize: 17,
     fontWeight: "900",
+  },
+  setupInfoCard: {
+    backgroundColor: "#ecfdf5",
+    borderColor: "#a7f3d0",
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 10,
+    padding: 16,
   },
   title: {
     color: "#0f172a",
