@@ -95,7 +95,7 @@ export function IoTDashboardScreen() {
 
       {overviewQuery.isLoading ? (
         <LoadingBox text={t("iot.metrics.dashboard.loadingOverview")} />
-      ) : overviewQuery.isError ? (
+      ) : overviewQuery.isError && !overviewQuery.data ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>{t("iot.metrics.dashboard.overviewLoadFailed")}</Text>
           <Pressable style={styles.retryButton} onPress={() => overviewQuery.refetch()}>

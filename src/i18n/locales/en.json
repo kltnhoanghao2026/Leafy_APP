@@ -1116,6 +1116,7 @@
         "basicInfo": "Basic information",
         "type": "Device type",
         "connection": "Connection",
+        "firmware": "Firmware",
         "lastSeenAt": "Last online",
         "latestReadings": "Latest sensor readings",
         "readingsLoadFailed": "Unable to load sensor readings. Pull down to retry.",
@@ -1125,7 +1126,7 @@
         "configAction": "Device configuration",
         "configActionDescription": "View, save, and push MQTT configuration",
         "chartAction": "Charts",
-        "chartActionDescription": "More chart controls will be added later",
+        "chartActionDescription": "Jump to this device's telemetry charts",
         "alertAction": "Device alerts",
         "alertActionDescription": "View alerts for this device"
       },
@@ -1200,9 +1201,16 @@
         "noImage": "No uploaded image yet.",
         "placeholderImage": "No image",
         "mediaHistory": "Media history",
+        "detailTitle": "Image detail",
+        "viewDetail": "View detail",
         "noEvents": "No media events yet.",
         "requiresDeviceUid": "This action requires a device identifier.",
         "captureNow": "Capture now",
+        "captureAndAnalyze": "Capture & diagnose now",
+        "capturingAnalyzing": "Capturing and diagnosing...",
+        "captureAnalyzeSuccessTitle": "Capture requested",
+        "captureAnalyzeSuccess": "The device received the capture and diagnosis request. Request ID: {{requestId}}.",
+        "captureAnalyzeFailed": "Unable to request capture and diagnosis.",
         "captureRequested": "Capture requested",
         "noMedia": "No images yet",
         "captureTime": "Capture time",
@@ -1249,6 +1257,8 @@
       "title": "Camera schedules",
       "create": "Create schedule",
       "createSchedule": "Create schedule",
+      "addSchedule": "Add capture schedule",
+      "saveSchedule": "Save capture schedule",
       "creating": "Creating...",
       "createdTitle": "Schedule created",
       "created": "The camera schedule was created.",
@@ -1359,6 +1369,10 @@
       "emptyTitle": "No telemetry points",
       "emptyDescription": "Try another range or wait for the device to send readings.",
       "compareMode": "Compare mode",
+      "metricLabel": "Select metric",
+      "metricCompareLabel": "Select comparison metrics",
+      "searchMetric": "Search metric",
+      "selectedMetrics": "{{count}} selected metrics",
       "expand": "Expand",
       "expandedTitle": "Telemetry chart",
       "alertMarkers": "Alert markers",
@@ -1372,11 +1386,10 @@
     },
     "metrics": {
       "ranges": {
-        "H24": "24h",
-        "D3": "3 days",
+        "H1": "1 hour",
+        "H24": "1 day",
         "D7": "7 days",
-        "D30": "30 days",
-        "D90": "90 days"
+        "D30": "1 month"
       },
       "sensors": {
         "generic": "Sensor",
@@ -1465,6 +1478,11 @@
       "unknownDevice": "Unknown device",
       "unknownZone": "Unknown zone",
       "unknownFarm": "Unknown farm",
+      "messages": {
+        "aboveMax": "{{sensor}} exceeded maximum threshold: {{value}} > {{threshold}}",
+        "belowMin": "{{sensor}} fell below minimum threshold: {{value}} < {{threshold}}",
+        "generic": "{{sensor}} alert: {{value}}"
+      },
       "deepLinkOpening": "Opening alert detail...",
       "deepLinkMissingAlert": "This alert is no longer available.",
       "filters": {

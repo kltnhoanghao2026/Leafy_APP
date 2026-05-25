@@ -1,14 +1,15 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ArrowLeft,
   BarChart3,
   Bell,
+  ChevronRight,
   MoreHorizontal,
   SlidersHorizontal,
 } from "lucide-react-native";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
@@ -19,8 +20,13 @@ import {
   StyleSheet,
   Text,
   View,
+  type LayoutChangeEvent,
+  type ScrollView as ScrollViewType,
 } from "react-native";
 
+import { useFarmPlots } from "@/src/features/farm";
+import { farmZonesQueryOptions } from "@/src/features/farm/hooks/useFarmZones";
+import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
 import { DeviceActionsSheet } from "../components/DeviceActionsSheet";
 import { DeviceReadingList } from "../components/DeviceReadingList";
 import { DeviceChartsPanel } from "../components/DeviceChartsPanel";
@@ -113,8 +119,19 @@ export function DeviceDetailScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const scrollRef = useRef<ScrollViewType>(null);
+  const chartSectionY = useRef(0);
   const params = useLocalSearchParams<{ deviceId?: string | string[] }>();
   const deviceId = getParamValue(params.deviceId);
+  const profileQuery = useQuery(getMyProfileQueryOptions());
+  const farmsQuery = useFarmPlots(profileQuery.data?.id);
+  const allZoneQueries = useQueries({
+    queries:
+      farmsQuery.data?.map((farm) => ({
+        ...farmZonesQueryOptions(farm.id),
+        enabled: Boolean(farm.id),
+      })) ?? [],
+  });
   const detailQuery = useDeviceDetail(deviceId);
   const readingsQuery = useDeviceLatestReadings(deviceId);
   const [selectedSensor, setSelectedSensor] = useState<SensorCode>("AIR_TEMP");
@@ -129,6 +146,28 @@ export function DeviceDetailScreen() {
   const updateDeviceMutation = useUpdateDeviceMutation();
   const releaseDeviceMutation = useReleaseDeviceMutation();
   const isRefreshing = detailQuery.isRefetching || readingsQuery.isRefetching;
+  const farmLabel = useMemo(() => {
+    if (!device?.farmPlotId) return t("iot.common.noFarmMetadata");
+    const farm = farmsQuery.data?.find((item) => item.id === device.farmPlotId);
+    return farm?.name || farm?.code || t("iot.common.assigned");
+  }, [device?.farmPlotId, farmsQuery.data, t]);
+  const zoneLabel = useMemo(() => {
+    if (!device?.zoneId) return t("iot.common.noZoneMetadata");
+    for (const query of allZoneQueries) {
+      const zone = query.data?.find((item) => item.id === device.zoneId);
+      if (zone) return zone.zoneName || zone.zoneCode || t("iot.common.assigned");
+    }
+    return t("iot.common.assigned");
+  }, [allZoneQueries, device?.zoneId, t]);
+  const deviceTypeLabel = device?.deviceType?.trim() || t("iot.devices.defaultName");
+
+  const scrollToCharts = () => {
+    scrollRef.current?.scrollTo({ y: Math.max(chartSectionY.current - 12, 0), animated: true });
+  };
+
+  const captureChartSection = (event: LayoutChangeEvent) => {
+    chartSectionY.current = event.nativeEvent.layout.y;
+  };
 
   useEffect(() => {
     const firstSensor = readings[0]?.sensorCode;
@@ -199,7 +238,7 @@ export function DeviceDetailScreen() {
     );
   }
 
-  if (detailQuery.isError || !device) {
+  if ((detailQuery.isError && !device) || !device) {
     return (
       <View style={styles.screen}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
@@ -219,6 +258,7 @@ export function DeviceDetailScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
@@ -267,26 +307,27 @@ export function DeviceDetailScreen() {
         <View style={styles.infoGrid}>
           <InfoCard
             label={t("iot.devices.detail.type")}
-            value={device.deviceType ? t(`iot.devices.type.${device.deviceType}`, { defaultValue: t("iot.devices.defaultName") }) : t("iot.common.unknown")}
+            value={deviceTypeLabel}
           />
           <InfoCard
             label={t("iot.devices.detail.connection")}
             value={getProvisioningStatusLabel(device.provisioningStatus)}
           />
-          <InfoCard label={t("iot.common.farm")} value={device.farmPlotId ? t("iot.common.assigned") : t("iot.common.noFarmMetadata")} />
-          <InfoCard label={t("iot.common.zone")} value={device.zoneId ? t("iot.common.assigned") : t("iot.common.noZoneMetadata")} />
+          <InfoCard label={t("iot.common.farm")} value={farmLabel} />
+          <InfoCard label={t("iot.common.zone")} value={zoneLabel} />
+          <InfoCard label={t("iot.devices.detail.firmware")} value={device.firmwareVersion ?? t("iot.common.noData")} />
           <InfoCard label={t("iot.devices.detail.lastSeenAt")} value={formatDateTime(device.lastSeenAt)} />
         </View>
       </View>
 
-      <View style={styles.section}>
+      <View style={styles.section} onLayout={captureChartSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t("iot.devices.detail.latestReadings")}</Text>
           {readingsQuery.isFetching ? (
             <ActivityIndicator color="#15803d" size="small" />
           ) : null}
         </View>
-        {readingsQuery.isError ? (
+        {readingsQuery.isError && !readings.length ? (
           <View style={styles.warningBox}>
             <Text style={styles.warningText}>
               {t("iot.devices.detail.readingsLoadFailed")}
@@ -313,7 +354,7 @@ export function DeviceDetailScreen() {
         </View>
         <SensorChartCard
           chart={chartQuery.data}
-          error={chartQuery.isError}
+          error={chartQuery.isError && !chartQuery.data}
           loading={chartQuery.isFetching}
           range={selectedRange}
         />
@@ -339,6 +380,7 @@ export function DeviceDetailScreen() {
           icon={<BarChart3 color="#64748b" size={18} />}
           title={t("iot.devices.detail.chartAction")}
           subtitle={t("iot.devices.detail.chartActionDescription")}
+          onPress={scrollToCharts}
         />
         <PlaceholderAction
           icon={<Bell color="#64748b" size={18} />}
@@ -412,11 +454,12 @@ function PlaceholderAction({
         pressed && styles.placeholderActionPressed,
       ]}
     >
-      {icon}
+      <View style={styles.placeholderIcon}>{icon}</View>
       <View style={styles.placeholderTextWrap}>
         <Text style={styles.placeholderTitle}>{title}</Text>
         <Text style={styles.placeholderSubtitle}>{subtitle}</Text>
       </View>
+      <ChevronRight color="#16a34a" size={18} />
     </Pressable>
   );
 }
@@ -549,17 +592,29 @@ const styles = StyleSheet.create({
   },
   placeholderAction: {
     alignItems: "center",
-    backgroundColor: "#f1f5f9",
-    borderColor: "#e2e8f0",
+    backgroundColor: "#ffffff",
+    borderColor: "#bbf7d0",
     borderRadius: 16,
     borderWidth: 1,
     flexDirection: "row",
-    gap: 10,
-    opacity: 0.82,
+    gap: 12,
     padding: 14,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
   },
   placeholderActionPressed: {
-    opacity: 0.75,
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }],
+  },
+  placeholderIcon: {
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    borderRadius: 12,
+    height: 38,
+    justifyContent: "center",
+    width: 38,
   },
   placeholderSubtitle: {
     color: "#64748b",
@@ -570,9 +625,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   placeholderTitle: {
-    color: "#334155",
-    fontSize: 14,
-    fontWeight: "800",
+    color: "#0f172a",
+    fontSize: 15,
+    fontWeight: "900",
   },
   retryButton: {
     alignSelf: "center",

@@ -18,7 +18,7 @@ export type ProvisioningStatus =
 
 export type SortDirection = "asc" | "desc";
 
-export type ChartRange = "H24" | "D3" | "D7" | "D30" | "D90";
+export type ChartRange = "H1" | "H24" | "D7" | "D30";
 
 export type SensorCode =
   | "AIR_TEMP"
@@ -230,6 +230,7 @@ export type DeviceMediaAnalysis = {
 
 export type DeviceMediaEvent = {
   id: string;
+  mediaEventId?: string | null;
   requestId?: string | null;
   deviceId?: string | null;
   deviceUid?: string | null;
@@ -341,6 +342,7 @@ export type AlertEventItemResponse = {
   id: string;
   deviceId?: string | null;
   deviceName?: string | null;
+  deviceCode?: string | null;
   zoneId?: string | null;
   farmPlotId?: string | null;
   sensorTypeId?: string | null;
