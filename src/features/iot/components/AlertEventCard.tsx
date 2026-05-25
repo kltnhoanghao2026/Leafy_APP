@@ -17,6 +17,7 @@ export function AlertEventCard({ alert, onPress, highlighted }: AlertEventCardPr
   const { t } = useTranslation();
   const unknownDevice = t("iot.common.unknownDevice");
   const unknownZone = t("iot.common.unknownZone");
+  const unknownFarm = t("iot.common.unknownFarm");
   const unknownValue = t("iot.common.unknownValue");
 
   return (
@@ -47,6 +48,9 @@ export function AlertEventCard({ alert, onPress, highlighted }: AlertEventCardPr
       <Text style={styles.meta}>
         {t("iot.common.device")}: {alert.display?.deviceLabel ?? unknownDevice} - {t("iot.common.zone")}:{" "}
         {alert.display?.zoneLabel ?? unknownZone}
+      </Text>
+      <Text style={styles.meta}>
+        {t("iot.common.farm")}: {alert.display?.farmLabel ?? unknownFarm}
       </Text>
       <Text style={styles.time}>
         {alert.display?.openedAtLabel ?? t("iot.common.noData")}

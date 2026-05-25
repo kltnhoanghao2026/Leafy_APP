@@ -12,14 +12,22 @@ import { DeviceStatusBadge } from "./DeviceStatusBadge";
 
 type DeviceCardProps = {
   device: DeviceResponse;
+  farmLabel?: string;
+  zoneLabel?: string;
   onPress: (device: DeviceResponse) => void;
   onMorePress?: (device: DeviceResponse) => void;
 };
 
-export function DeviceCard({ device, onPress, onMorePress }: DeviceCardProps) {
+export function DeviceCard({
+  device,
+  farmLabel: farmLabelProp,
+  zoneLabel: zoneLabelProp,
+  onPress,
+  onMorePress,
+}: DeviceCardProps) {
   const { t } = useTranslation();
-  const farmLabel = device.farmPlotId ? t("iot.common.assigned") : t("iot.common.noFarmMetadata");
-  const zoneLabel = device.zoneId ? t("iot.common.assigned") : t("iot.common.noZoneMetadata");
+  const farmLabel = farmLabelProp ?? (device.farmPlotId ? t("iot.common.assigned") : t("iot.common.noFarmMetadata"));
+  const zoneLabel = zoneLabelProp ?? (device.zoneId ? t("iot.common.assigned") : t("iot.common.noZoneMetadata"));
 
   return (
     <Pressable

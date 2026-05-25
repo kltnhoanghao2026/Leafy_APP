@@ -1,5 +1,9 @@
+import { Check, ChevronDown } from "lucide-react-native";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
+import { PickerModal } from "@/src/components/ui/PickerModal";
 import type { LatestReadingItemResponse, SensorCode } from "../types";
 import { DEFAULT_SENSOR_CODES } from "../utils/chartFormat";
 import { getSensorLabel } from "../utils/sensorLabels";
@@ -11,54 +15,129 @@ type SensorSelectorProps = {
 };
 
 export function SensorSelector({ value, readings, onChange }: SensorSelectorProps) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
   const sensorCodes = Array.from(
     new Set([
       ...(readings?.map((reading) => reading.sensorCode).filter(Boolean) ?? []),
       ...DEFAULT_SENSOR_CODES,
     ]),
   );
+  const selectedLabel = getSensorLabel(value);
 
   return (
-    <View style={styles.wrap}>
-      {sensorCodes.map((sensorCode) => (
-        <Pressable
-          key={sensorCode}
-          onPress={() => onChange(sensorCode)}
-          style={[styles.chip, value === sensorCode && styles.chipActive]}
-        >
-          <Text style={[styles.label, value === sensorCode && styles.labelActive]}>
-            {getSensorLabel(sensorCode)}
-          </Text>
-        </Pressable>
-      ))}
+    <View>
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [styles.dropdown, pressed && styles.dropdownPressed]}
+      >
+        <View style={styles.textWrap}>
+          <Text style={styles.dropdownLabel}>{selectedLabel}</Text>
+          <Text style={styles.dropdownMeta}>{value}</Text>
+        </View>
+        <ChevronDown color="#16a34a" size={18} />
+      </Pressable>
+
+      <PickerModal
+        visible={open}
+        title={t("iot.charts.metricLabel")}
+        items={sensorCodes}
+        selectedId={value}
+        searchPlaceholder={t("iot.charts.searchMetric")}
+        keyExtractor={(sensorCode) => sensorCode}
+        labelExtractor={(sensorCode) => getSensorLabel(sensorCode)}
+        subtitleExtractor={(sensorCode) => sensorCode}
+        onClose={() => setOpen(false)}
+        onSelect={(sensorCode) => {
+          onChange(sensorCode as SensorCode);
+          setOpen(false);
+        }}
+        renderItem={(sensorCode, selected) => (
+          <Pressable
+            onPress={() => {
+              onChange(sensorCode as SensorCode);
+              setOpen(false);
+            }}
+            style={[styles.option, selected && styles.optionSelected]}
+          >
+            <View style={styles.textWrap}>
+              <Text style={[styles.optionLabel, selected && styles.optionLabelSelected]}>
+                {getSensorLabel(sensorCode)}
+              </Text>
+              <Text style={styles.optionMeta}>{sensorCode}</Text>
+            </View>
+            {selected ? (
+              <View style={styles.checkBadge}>
+                <Check color="#ffffff" size={14} />
+              </View>
+            ) : null}
+          </Pressable>
+        )}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  chip: {
-    backgroundColor: "#f8fafc",
-    borderColor: "#e2e8f0",
+  checkBadge: {
+    alignItems: "center",
+    backgroundColor: "#16a34a",
     borderRadius: 999,
+    height: 24,
+    justifyContent: "center",
+    width: 24,
+  },
+  dropdown: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#bbf7d0",
+    borderRadius: 14,
     borderWidth: 1,
+    flexDirection: "row",
+    gap: 10,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 11,
   },
-  chipActive: {
-    backgroundColor: "#dcfce7",
-    borderColor: "#22c55e",
+  dropdownLabel: {
+    color: "#0f172a",
+    fontSize: 14,
+    fontWeight: "900",
   },
-  label: {
+  dropdownMeta: {
     color: "#64748b",
     fontSize: 12,
-    fontWeight: "800",
+    marginTop: 2,
   },
-  labelActive: {
+  dropdownPressed: {
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }],
+  },
+  option: {
+    alignItems: "center",
+    borderBottomColor: "rgba(148, 163, 184, 0.18)",
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 12,
+  },
+  optionLabel: {
+    color: "#0f172a",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  optionLabelSelected: {
     color: "#166534",
   },
-  wrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
+  optionMeta: {
+    color: "#64748b",
+    fontSize: 12,
+    marginTop: 3,
+  },
+  optionSelected: {
+    backgroundColor: "#f0fdf4",
+  },
+  textWrap: {
+    flex: 1,
   },
 });

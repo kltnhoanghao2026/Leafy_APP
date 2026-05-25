@@ -44,6 +44,7 @@ const unwrapResponseData = <T>(response: ApiResponse<T> | T): T => {
     response &&
     typeof response === "object" &&
     "data" in response &&
+    ("code" in response || "message" in response) &&
     (response as ApiResponse<T>).data !== undefined
   ) {
     return (response as ApiResponse<T>).data;
@@ -65,21 +66,58 @@ const cleanParams = <T extends Record<string, unknown>>(params?: T): T | undefin
 };
 
 const normalizePagedResponse = <T>(
-  response: BackendPagedResponse<T>,
+  response: BackendPagedResponse<T> | T[] | null | undefined,
 ): PagedResponse<T> => {
-  const items = response.items ?? response.content ?? [];
-  const totalItems = response.totalItems ?? response.totalElements ?? items.length;
+  if (Array.isArray(response)) {
+    return {
+      items: response,
+      content: response,
+      page: 0,
+      size: response.length,
+      totalItems: response.length,
+      totalElements: response.length,
+      totalPages: response.length ? 1 : 0,
+      hasNext: false,
+      hasPrevious: false,
+    };
+  }
+
+  const pageResponse = response ?? ({} as BackendPagedResponse<T>);
+  const items = Array.isArray(pageResponse.items)
+    ? pageResponse.items
+    : Array.isArray(pageResponse.content)
+      ? pageResponse.content
+      : [];
+  const totalItems =
+    pageResponse.totalItems ?? pageResponse.totalElements ?? items.length;
 
   return {
-    ...response,
+    ...pageResponse,
     items,
+    content: pageResponse.content ?? items,
     totalItems,
-    totalElements: response.totalElements ?? totalItems,
-    page: response.page ?? 0,
-    size: response.size ?? items.length,
-    totalPages: response.totalPages ?? 1,
+    totalElements: pageResponse.totalElements ?? totalItems,
+    page: pageResponse.page ?? 0,
+    size: pageResponse.size ?? items.length,
+    totalPages: pageResponse.totalPages ?? (items.length ? 1 : 0),
+    hasNext: pageResponse.hasNext ?? false,
+    hasPrevious: pageResponse.hasPrevious ?? false,
   };
 };
+
+const normalizeDeviceDetail = (
+  detail: DeviceDetailResponse,
+): DeviceDetailResponse => ({
+  ...detail,
+  id: detail.id ?? detail.deviceId,
+  latestMedia: detail.latestMedia
+    ? {
+        ...detail.latestMedia,
+        id: detail.latestMedia.id ?? detail.latestMedia.mediaEventId,
+        status: detail.latestMedia.status ?? "UPLOADED",
+      }
+    : detail.latestMedia,
+});
 
 const isNotFoundError = (error: unknown): boolean => {
   if (typeof error !== "object" || error === null) {
@@ -178,7 +216,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.DEVICES.DETAIL(deviceId),
     );
 
-    return unwrapResponseData(response.data);
+    return normalizeDeviceDetail(unwrapResponseData(response.data));
   },
 
   async updateDevice(

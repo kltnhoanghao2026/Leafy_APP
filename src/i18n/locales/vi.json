@@ -1116,6 +1116,7 @@
         "basicInfo": "Thông tin cơ bản",
         "type": "Loại thiết bị",
         "connection": "Kết nối",
+        "firmware": "Firmware",
         "lastSeenAt": "Lần cuối online",
         "latestReadings": "Dữ liệu cảm biến mới nhất",
         "readingsLoadFailed": "Không tải được dữ liệu cảm biến. Kéo xuống để thử lại.",
@@ -1125,7 +1126,7 @@
         "configAction": "Cấu hình thiết bị",
         "configActionDescription": "Xem, lưu và push cấu hình MQTT",
         "chartAction": "Biểu đồ",
-        "chartActionDescription": "Sẽ bổ sung thêm điều khiển biểu đồ sau",
+        "chartActionDescription": "Cuộn tới biểu đồ telemetry của thiết bị",
         "alertAction": "Cảnh báo thiết bị",
         "alertActionDescription": "Xem cảnh báo của thiết bị này"
       },
@@ -1200,9 +1201,16 @@
         "noImage": "Chưa có ảnh nào được tải lên.",
         "placeholderImage": "Chưa có ảnh",
         "mediaHistory": "Lịch sử media",
+        "detailTitle": "Chi tiết ảnh",
+        "viewDetail": "Xem chi tiết",
         "noEvents": "Chưa có sự kiện media.",
         "requiresDeviceUid": "Tác vụ này cần mã định danh thiết bị.",
         "captureNow": "Chụp ảnh ngay",
+        "captureAndAnalyze": "Chụp & chẩn đoán ngay",
+        "capturingAnalyzing": "Đang chụp và chẩn đoán...",
+        "captureAnalyzeSuccessTitle": "Đã gửi yêu cầu chụp",
+        "captureAnalyzeSuccess": "Thiết bị đã nhận yêu cầu chụp và chẩn đoán. Mã yêu cầu: {{requestId}}.",
+        "captureAnalyzeFailed": "Không thể gửi yêu cầu chụp và chẩn đoán.",
         "captureRequested": "Đã yêu cầu chụp",
         "noMedia": "Chưa có ảnh",
         "captureTime": "Thời điểm chụp",
@@ -1249,6 +1257,8 @@
       "title": "Lịch camera",
       "create": "Tạo lịch",
       "createSchedule": "Tạo lịch",
+      "addSchedule": "Thêm lịch chụp",
+      "saveSchedule": "Lưu lịch chụp",
       "creating": "Đang tạo...",
       "createdTitle": "Đã tạo lịch",
       "created": "Lịch camera đã được tạo.",
@@ -1359,6 +1369,10 @@
       "emptyTitle": "Chưa có điểm telemetry",
       "emptyDescription": "Hãy thử khoảng thời gian khác hoặc đợi thiết bị gửi dữ liệu.",
       "compareMode": "Chế độ so sánh",
+      "metricLabel": "Chọn chỉ số",
+      "metricCompareLabel": "Chọn chỉ số so sánh",
+      "searchMetric": "Tìm chỉ số",
+      "selectedMetrics": "{{count}} chỉ số đã chọn",
       "expand": "Phóng to",
       "expandedTitle": "Biểu đồ telemetry",
       "alertMarkers": "Mốc cảnh báo",
@@ -1372,11 +1386,10 @@
     },
     "metrics": {
       "ranges": {
-        "H24": "24 giờ",
-        "D3": "3 ngày",
+        "H1": "1 giờ",
+        "H24": "1 ngày",
         "D7": "7 ngày",
-        "D30": "30 ngày",
-        "D90": "90 ngày"
+        "D30": "1 tháng"
       },
       "sensors": {
         "generic": "Cảm biến",
@@ -1465,6 +1478,11 @@
       "unknownDevice": "Không rõ thiết bị",
       "unknownZone": "Không rõ khu vực",
       "unknownFarm": "Không rõ vườn",
+      "messages": {
+        "aboveMax": "{{sensor}} vượt ngưỡng tối đa: {{value}} > {{threshold}}",
+        "belowMin": "{{sensor}} thấp hơn ngưỡng tối thiểu: {{value}} < {{threshold}}",
+        "generic": "Cảnh báo {{sensor}}: {{value}}"
+      },
       "deepLinkOpening": "Đang mở chi tiết cảnh báo...",
       "deepLinkMissingAlert": "Cảnh báo này không còn khả dụng.",
       "filters": {

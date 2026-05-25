@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, RefreshCw } from "lucide-react-native";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -20,7 +21,12 @@ import {
   useAlertEventDetail,
   useResolveAlertMutation,
 } from "../hooks/useAlerts";
+import { useFarmPlots } from "@/src/features/farm";
+import { farmZonesQueryOptions } from "@/src/features/farm/hooks/useFarmZones";
+import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
+import { useMyDevices } from "../hooks/useDevices";
 import type { DisplayAlertEvent } from "../utils/iotDisplay";
+import { withAlertContextDisplay } from "../utils/iotDisplay";
 import { getOnboardingErrorMessage } from "../utils/onboardingErrors";
 
 const getParamValue = (value?: string | string[]): string | undefined => {
@@ -37,10 +43,34 @@ export function AlertEventDetailScreen() {
   const params = useLocalSearchParams<{ alertId?: string | string[] }>();
   const alertId = getParamValue(params.alertId);
   const alertQuery = useAlertEventDetail(alertId);
+  const profileQuery = useQuery(getMyProfileQueryOptions());
+  const devicesQuery = useMyDevices({ page: 0, size: 100 });
+  const farmsQuery = useFarmPlots(profileQuery.data?.id);
+  const allZoneQueries = useQueries({
+    queries:
+      farmsQuery.data?.map((farm) => ({
+        ...farmZonesQueryOptions(farm.id),
+        enabled: Boolean(farm.id),
+      })) ?? [],
+  });
   const acknowledgeMutation = useAcknowledgeAlertMutation();
   const resolveMutation = useResolveAlertMutation();
   const [message, setMessage] = useState<string | null>(null);
-  const alert = alertQuery.data as (typeof alertQuery.data & Partial<DisplayAlertEvent>) | undefined;
+  const zones = useMemo(() => {
+    const byId = new Map<string, NonNullable<(typeof allZoneQueries)[number]["data"]>[number]>();
+    allZoneQueries.forEach((query) => {
+      query.data?.forEach((zone) => byId.set(zone.id, zone));
+    });
+    return Array.from(byId.values());
+  }, [allZoneQueries]);
+  const alert = useMemo(() => {
+    if (!alertQuery.data) return undefined;
+    return withAlertContextDisplay(alertQuery.data, {
+      devices: devicesQuery.data?.items,
+      farms: farmsQuery.data,
+      zones,
+    }) as typeof alertQuery.data & Partial<DisplayAlertEvent>;
+  }, [alertQuery.data, devicesQuery.data?.items, farmsQuery.data, zones]);
 
   const acknowledge = async () => {
     if (!alertId) return;

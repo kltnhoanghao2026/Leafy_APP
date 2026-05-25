@@ -43,15 +43,26 @@ export const deviceMetricsComparisonQueryOptions = (
 ) =>
   queryOptions({
     queryKey: iotKeys.deviceMetricsComparison(deviceId, sensorCodes, range),
-    queryFn: () =>
-      Promise.all(
+    queryFn: async () => {
+      const results = await Promise.allSettled(
         sensorCodes.map((sensorCode) =>
           collectorApi.getDeviceChart(deviceId as string, {
             sensorCode,
             range: range as ChartRange,
           }),
         ),
-      ),
+      );
+
+      const fulfilled = results.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : [],
+      );
+
+      if (fulfilled.length || results.length === 0) {
+        return fulfilled;
+      }
+
+      throw results.find((result) => result.status === "rejected")?.reason;
+    },
     enabled: Boolean(deviceId && range && sensorCodes.length),
     staleTime: 60_000,
   });

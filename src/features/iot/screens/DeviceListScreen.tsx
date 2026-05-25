@@ -1,6 +1,7 @@
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { BarChart3, Plus } from "lucide-react-native";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -13,6 +14,9 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { useFarmPlots } from "@/src/features/farm";
+import { farmZonesQueryOptions } from "@/src/features/farm/hooks/useFarmZones";
+import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
 import { DeviceActionsSheet } from "../components/DeviceActionsSheet";
 import { DeviceCard } from "../components/DeviceCard";
 import { DeviceEmptyState } from "../components/DeviceEmptyState";
@@ -80,6 +84,15 @@ const getManagementError = (
 export function DeviceListScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const profileQuery = useQuery(getMyProfileQueryOptions());
+  const farmsQuery = useFarmPlots(profileQuery.data?.id);
+  const allZoneQueries = useQueries({
+    queries:
+      farmsQuery.data?.map((farm) => ({
+        ...farmZonesQueryOptions(farm.id),
+        enabled: Boolean(farm.id),
+      })) ?? [],
+  });
   const [actionsDevice, setActionsDevice] = useState<DeviceResponse | null>(null);
   const [editingDevice, setEditingDevice] = useState<DeviceResponse | null>(null);
   const [releasingDevice, setReleasingDevice] = useState<DeviceResponse | null>(null);
@@ -93,6 +106,22 @@ export function DeviceListScreen() {
   const releaseDeviceMutation = useReleaseDeviceMutation();
 
   const devices = devicesQuery.data?.items ?? [];
+  const farmNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    farmsQuery.data?.forEach((farm) => {
+      map.set(farm.id, farm.name || farm.code);
+    });
+    return map;
+  }, [farmsQuery.data]);
+  const zoneNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    allZoneQueries.forEach((query) => {
+      query.data?.forEach((zone) => {
+        map.set(zone.id, zone.zoneName || zone.zoneCode);
+      });
+    });
+    return map;
+  }, [allZoneQueries]);
 
   const openDevice = (device: DeviceResponse) => {
     router.push({
@@ -110,7 +139,7 @@ export function DeviceListScreen() {
     );
   }
 
-  if (devicesQuery.isError) {
+  if (devicesQuery.isError && !devices.length) {
     return (
       <View style={styles.screen}>
         <View style={styles.header}>
@@ -201,6 +230,8 @@ export function DeviceListScreen() {
       renderItem={({ item }) => (
         <DeviceCard
           device={item}
+          farmLabel={item.farmPlotId ? farmNameById.get(item.farmPlotId) : undefined}
+          zoneLabel={item.zoneId ? zoneNameById.get(item.zoneId) : undefined}
           onMorePress={setActionsDevice}
           onPress={openDevice}
         />

@@ -18,6 +18,28 @@ import { getAlertSeverityLabel, getAlertStatusLabel } from "./alertLabels";
 import { formatDateTime, formatDeviceCode } from "./deviceLabels";
 import { getSensorLabel, getSensorUnit } from "./sensorLabels";
 
+type AlertDisplayContext = {
+  devices?: Array<{
+    id?: string | null;
+    deviceId?: string | null;
+    deviceName?: string | null;
+    deviceCode?: string | null;
+    farmPlotId?: string | null;
+    zoneId?: string | null;
+  }>;
+  farms?: Array<{
+    id?: string | null;
+    name?: string | null;
+    code?: string | null;
+  }>;
+  zones?: Array<{
+    id?: string | null;
+    farmPlotId?: string | null;
+    zoneName?: string | null;
+    zoneCode?: string | null;
+  }>;
+};
+
 export type {
   DisplayAlertEvent,
   DisplayAlertRule,
@@ -62,33 +84,64 @@ const parseDate = (value?: string | Date | null) => {
 
 const formatClockTime = (date?: Date) => {
   if (!date) return noData();
-  return new Intl.DateTimeFormat(currentLocale(), {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(date);
+  try {
+    return new Intl.DateTimeFormat(currentLocale(), {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(11, 16);
+  }
 };
 
 const formatRelativeTime = (date?: Date) => {
   if (!date) return noData();
   const diffSeconds = Math.round((date.getTime() - Date.now()) / 1000);
   const absSeconds = Math.abs(diffSeconds);
+  const locale = currentLocale();
 
   if (absSeconds < 60) {
     return t("iot.common.justNow", { defaultValue: "Just now" });
   }
 
-  const formatter = new Intl.RelativeTimeFormat(currentLocale(), { numeric: "auto" });
-  if (absSeconds < 3_600) {
-    return formatter.format(Math.round(diffSeconds / 60), "minute");
-  }
-  if (absSeconds < 86_400) {
-    return formatter.format(Math.round(diffSeconds / 3_600), "hour");
-  }
-  if (absSeconds < 604_800) {
-    return formatter.format(Math.round(diffSeconds / 86_400), "day");
+  const resolveUnit = (): { value: number; unit: Intl.RelativeTimeFormatUnit; fallbackUnit: string } => {
+    if (absSeconds < 3_600) {
+      return { value: Math.round(diffSeconds / 60), unit: "minute", fallbackUnit: "minute" };
+    }
+    if (absSeconds < 86_400) {
+      return { value: Math.round(diffSeconds / 3_600), unit: "hour", fallbackUnit: "hour" };
+    }
+    if (absSeconds < 604_800) {
+      return { value: Math.round(diffSeconds / 86_400), unit: "day", fallbackUnit: "day" };
+    }
+    return { value: Math.round(diffSeconds / 604_800), unit: "week", fallbackUnit: "week" };
+  };
+
+  const { value, unit, fallbackUnit } = resolveUnit();
+  const relativeTimeFormat = Intl.RelativeTimeFormat;
+  if (typeof relativeTimeFormat === "function") {
+    try {
+      return new relativeTimeFormat(locale, { numeric: "auto" }).format(value, unit);
+    } catch {
+      // Fall through to the lightweight formatter below.
+    }
   }
 
-  return formatter.format(Math.round(diffSeconds / 604_800), "week");
+  const amount = Math.abs(value);
+  if (locale.startsWith("vi")) {
+    const viUnit =
+      fallbackUnit === "minute"
+        ? "phút"
+        : fallbackUnit === "hour"
+          ? "giờ"
+          : fallbackUnit === "day"
+            ? "ngày"
+            : "tuần";
+    return value < 0 ? `${amount} ${viUnit} trước` : `sau ${amount} ${viUnit}`;
+  }
+
+  const suffix = amount === 1 ? fallbackUnit : `${fallbackUnit}s`;
+  return value < 0 ? `${amount} ${suffix} ago` : `in ${amount} ${suffix}`;
 };
 
 const timestampParts = (value?: string | Date | null): TimestampDisplay => {
@@ -331,14 +384,14 @@ export const withScheduleDisplay = (rawSchedule: DeviceCameraSchedule): DisplayC
 };
 
 export const formatAlertValue = (alert: AlertEventItemResponse) => {
-  const sensorCode = alert.sensorCode || alert.alertType || undefined;
+  const sensorCode = resolveAlertSensorCode(alert);
   const unit = getSensorUnit(sensorCode, alert.unit);
   const value = alert.triggerValue ?? alert.readingValue;
   return typeof value === "number" ? `${value.toFixed(1)}${unit ? ` ${unit}` : ""}` : noData();
 };
 
 const formatThreshold = (alert: AlertEventItemResponse) => {
-  const sensorCode = alert.sensorCode || alert.alertType || undefined;
+  const sensorCode = resolveAlertSensorCode(alert);
   const unit = getSensorUnit(sensorCode, alert.unit);
   const min = alert.thresholdMin;
   const max = alert.thresholdMax;
@@ -356,6 +409,52 @@ const formatThreshold = (alert: AlertEventItemResponse) => {
   });
 };
 
+const resolveAlertSensorCode = (alert: AlertEventItemResponse) => {
+  if (alert.sensorCode) return alert.sensorCode;
+  const match = alert.message?.match(/\b(AIR_TEMP|AIR_HUMIDITY|SOIL_MOISTURE|LIGHT_INTENSITY)\b/);
+  return match?.[1] ?? undefined;
+};
+
+const formatAlertNumber = (value?: number | null) =>
+  typeof value === "number" && Number.isFinite(value)
+    ? new Intl.NumberFormat(currentLocale(), { maximumFractionDigits: 1 }).format(value)
+    : noData();
+
+const buildAlertTitle = (alert: AlertEventItemResponse) => {
+  const sensorCode = resolveAlertSensorCode(alert);
+  const sensorLabel = getSensorLabel(sensorCode, alert.sensorName);
+  const unit = getSensorUnit(sensorCode, alert.unit);
+  const value = alert.triggerValue ?? alert.readingValue;
+  const thresholdMax = alert.thresholdMax;
+  const thresholdMin = alert.thresholdMin;
+  const formattedValue = formatAlertNumber(value);
+  const unitSuffix = unit ? ` ${unit}` : "";
+
+  if (typeof value === "number" && typeof thresholdMax === "number" && value > thresholdMax) {
+    return t("iot.alerts.messages.aboveMax", {
+      sensor: sensorLabel,
+      value: `${formattedValue}${unitSuffix}`,
+      threshold: `${formatAlertNumber(thresholdMax)}${unitSuffix}`,
+      defaultValue: `${sensorLabel} exceeded maximum threshold: ${formattedValue}${unitSuffix} > ${formatAlertNumber(thresholdMax)}${unitSuffix}`,
+    });
+  }
+
+  if (typeof value === "number" && typeof thresholdMin === "number" && value < thresholdMin) {
+    return t("iot.alerts.messages.belowMin", {
+      sensor: sensorLabel,
+      value: `${formattedValue}${unitSuffix}`,
+      threshold: `${formatAlertNumber(thresholdMin)}${unitSuffix}`,
+      defaultValue: `${sensorLabel} fell below minimum threshold: ${formattedValue}${unitSuffix} < ${formatAlertNumber(thresholdMin)}${unitSuffix}`,
+    });
+  }
+
+  return t("iot.alerts.messages.generic", {
+    sensor: sensorLabel,
+    value: `${formattedValue}${unitSuffix}`,
+    defaultValue: `${sensorLabel} alert: ${formattedValue}${unitSuffix}`,
+  });
+};
+
 /**
  * Converts a raw alert event into user-facing alert labels.
  * The alert ID stays in `display.technical.alertId` for internal operations.
@@ -366,22 +465,24 @@ export const withAlertDisplay = <T extends AlertEventItemResponse | AlertEventDe
   const opened = rawAlert.openedAt ?? rawAlert.triggeredAt ?? rawAlert.createdAt;
   const openedParts = timestampParts(opened);
   const createdParts = timestampParts(rawAlert.createdAt ?? opened);
-  const sensorLabel = getSensorLabel(rawAlert.sensorCode || rawAlert.alertType || undefined, rawAlert.sensorName);
+  const sensorCode = resolveAlertSensorCode(rawAlert);
+  const sensorLabel = getSensorLabel(sensorCode, rawAlert.sensorName);
   const valueLabel = formatAlertValue(rawAlert);
   const thresholdLabel = formatThreshold(rawAlert);
-  const deviceLabel = rawAlert.deviceName || t("iot.alerts.unknownDevice", { defaultValue: "Unknown device" });
+  const deviceLabel = rawAlert.deviceName || rawAlert.deviceCode || t("iot.alerts.unknownDevice", { defaultValue: "Unknown device" });
   const zoneLabel = t("iot.alerts.unknownZone", { defaultValue: "Unknown zone" });
   const farmLabel = t("iot.alerts.unknownFarm", { defaultValue: "Unknown farm" });
   const severityLabel = mapEnumToLocalized(rawAlert.severity, "severity");
   const statusLabel = mapEnumToLocalized(rawAlert.status, "alertStatus");
   const openedAtLabel = formatTimestamp(opened);
+  const title = buildAlertTitle(rawAlert);
 
   return {
     ...rawAlert,
     display: {
       type: sensorLabel,
-      title: rawAlert.message || sensorLabel,
-      message: rawAlert.message || t("iot.alerts.notificationBody", { defaultValue: "Alert requires attention" }),
+      title,
+      message: title,
       sensor: sensorLabel,
       sensorLabel,
       value: valueLabel,
@@ -469,6 +570,44 @@ export const withRuleDisplay = (rawRule: AlertRuleResponse): DisplayAlertRule =>
         zoneId: compactTechnicalId(rawRule.zoneId),
         farmPlotId: compactTechnicalId(rawRule.farmPlotId),
       },
+    },
+  };
+};
+
+export const withAlertContextDisplay = <T extends AlertEventItemResponse | AlertEventDetailResponse>(
+  alert: DisplayAlertEvent<T>,
+  context: AlertDisplayContext,
+): DisplayAlertEvent<T> => {
+  const device = context.devices?.find(
+    (item) => item.id === alert.deviceId || item.deviceId === alert.deviceId,
+  );
+  const zoneId = alert.zoneId ?? device?.zoneId;
+  const zone = context.zones?.find((item) => item.id === zoneId);
+  const farmPlotId = alert.farmPlotId ?? device?.farmPlotId ?? zone?.farmPlotId;
+  const farm = context.farms?.find((item) => item.id === farmPlotId);
+  const deviceLabel =
+    alert.deviceName ||
+    alert.deviceCode ||
+    device?.deviceName ||
+    device?.deviceCode ||
+    alert.display.deviceLabel;
+  const zoneLabel = zone?.zoneName || zone?.zoneCode || alert.display.zoneLabel;
+  const farmLabel = farm?.name || farm?.code || alert.display.farmLabel;
+
+  return {
+    ...alert,
+    farmPlotId,
+    zoneId,
+    deviceName: alert.deviceName ?? device?.deviceName,
+    deviceCode: alert.deviceCode ?? device?.deviceCode,
+    display: {
+      ...alert.display,
+      device: deviceLabel,
+      deviceLabel,
+      zone: zoneLabel,
+      zoneLabel,
+      farm: farmLabel,
+      farmLabel,
     },
   };
 };

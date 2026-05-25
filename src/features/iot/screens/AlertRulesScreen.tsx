@@ -324,7 +324,7 @@ export function AlertRulesScreen() {
             </View>
           ) : null}
 
-          {rulesQuery.isError ? (
+          {rulesQuery.isError && !rules.length ? (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{t("iot.alertRules.loadFailed")}</Text>
               <Pressable style={styles.retryButton} onPress={() => rulesQuery.refetch()}>
