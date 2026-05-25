@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import type { ZoneOverviewResponse } from "../types";
 import { MetricSummaryCard } from "./MetricSummaryCard";
@@ -12,22 +13,31 @@ const getOpenAlerts = (overview?: ZoneOverviewResponse): number => {
 };
 
 export function ZoneOverviewCard({ overview }: ZoneOverviewCardProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Tổng quan khu vực</Text>
+      <Text style={styles.title}>{t("iot.metrics.zone.overviewTitle")}</Text>
       <View style={styles.grid}>
-        <MetricSummaryCard label="Thiết bị" value={overview?.deviceCount ?? "-"} />
         <MetricSummaryCard
-          label="Online"
+          label={t("iot.metrics.zone.devices")}
+          value={overview?.deviceCount ?? "-"}
+        />
+        <MetricSummaryCard
+          label={t("iot.metrics.dashboard.online")}
           tone="green"
           value={overview?.onlineDeviceCount ?? "-"}
         />
         <MetricSummaryCard
-          label="Offline"
+          label={t("iot.metrics.dashboard.offline")}
           tone="amber"
           value={overview?.offlineDeviceCount ?? "-"}
         />
-        <MetricSummaryCard label="Cảnh báo mở" tone="red" value={getOpenAlerts(overview)} />
+        <MetricSummaryCard
+          label={t("iot.metrics.dashboard.openAlerts")}
+          tone="red"
+          value={getOpenAlerts(overview)}
+        />
       </View>
     </View>
   );

@@ -1,11 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 export function ChartEmptyState() {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.empty}>
-      <Text style={styles.title}>Chưa có dữ liệu biểu đồ</Text>
+      <Text style={styles.title}>{t("iot.metrics.zone.noChartData")}</Text>
       <Text style={styles.text}>
-        Hãy thử khoảng thời gian khác hoặc đợi backend aggregate dữ liệu cảm biến.
+        {t("iot.metrics.zone.noChartDataDescription")}
       </Text>
     </View>
   );

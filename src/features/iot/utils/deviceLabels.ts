@@ -1,21 +1,26 @@
+import i18n from "@/src/i18n";
+
 import type { DeviceStatus, ProvisioningStatus } from "../types";
+
+const label = (key: string, fallback: string) =>
+  i18n.t(key, { defaultValue: fallback });
 
 export const getDeviceStatusLabel = (status?: DeviceStatus | null): string => {
   switch (status) {
     case "ONLINE":
-      return "Đang online";
+      return label("iot.devices.status.ONLINE", "Online");
     case "OFFLINE":
-      return "Đang offline";
+      return label("iot.devices.status.OFFLINE", "Offline");
     case "DISABLED":
-      return "Đã vô hiệu";
+      return label("iot.devices.status.DISABLED", "Disabled");
     case "MAINTENANCE":
-      return "Bảo trì";
+      return label("iot.devices.status.MAINTENANCE", "Maintenance");
     case "ERROR":
-      return "Lỗi";
+      return label("iot.devices.status.ERROR", "Error");
     case "PENDING":
-      return "Đang chờ";
+      return label("iot.devices.status.PENDING", "Pending");
     default:
-      return status ? String(status) : "Không rõ";
+      return status ? String(status) : label("iot.common.unknown", "Unknown");
   }
 };
 
@@ -24,17 +29,17 @@ export const getProvisioningStatusLabel = (
 ): string => {
   switch (status) {
     case "PENDING":
-      return "Đang chờ";
+      return label("iot.devices.provisioning.PENDING", "Pending");
     case "PROVISIONED":
-      return "Đã đăng ký";
+      return label("iot.devices.provisioning.PROVISIONED", "Provisioned");
     case "CLAIMED":
-      return "Đã kết nối";
+      return label("iot.devices.provisioning.CLAIMED", "Claimed");
     case "DISABLED":
-      return "Đã vô hiệu";
+      return label("iot.devices.provisioning.DISABLED", "Disabled");
     case "UNCLAIMED":
-      return "Chưa kết nối";
+      return label("iot.devices.provisioning.UNCLAIMED", "Unclaimed");
     default:
-      return status ? String(status) : "Không rõ";
+      return status ? String(status) : label("iot.common.unknown", "Unknown");
   }
 };
 
@@ -59,7 +64,7 @@ export const getDeviceStatusColor = (status?: DeviceStatus | null): string => {
 
 export const formatDeviceCode = (deviceCode?: string | null): string => {
   if (!deviceCode) {
-    return "Chưa có mã";
+    return label("iot.devices.noCode", "No code");
   }
 
   return deviceCode.length > 18
@@ -69,7 +74,7 @@ export const formatDeviceCode = (deviceCode?: string | null): string => {
 
 export const formatDateTime = (value?: string | null): string => {
   if (!value) {
-    return "Chưa có dữ liệu";
+    return label("iot.common.noData", "No data");
   }
 
   const date = new Date(value);
@@ -77,7 +82,7 @@ export const formatDateTime = (value?: string | null): string => {
     return value;
   }
 
-  return new Intl.DateTimeFormat("vi-VN", {
+  return new Intl.DateTimeFormat(i18n.language || "en", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

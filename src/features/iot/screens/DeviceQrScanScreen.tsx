@@ -10,10 +10,12 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { encodeQrPayloadParam, parseDeviceQrPayload } from "../utils/qrPayload";
 
 export function DeviceQrScanScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
@@ -51,34 +53,32 @@ export function DeviceQrScanScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>Thêm thiết bị</Text>
+        <Text style={styles.backText}>{t("iot.devices.onboarding.title")}</Text>
       </Pressable>
 
       <View style={styles.header}>
-        <Text style={styles.kicker}>QR scanner</Text>
-        <Text style={styles.title}>Quét mã QR thiết bị</Text>
+        <Text style={styles.kicker}>{t("iot.devices.onboarding.qrScannerKicker")}</Text>
+        <Text style={styles.title}>{t("iot.devices.onboarding.scanQrTitle")}</Text>
         <Text style={styles.subtitle}>
-          Đưa mã QR vào khung camera. Sau khi đọc hợp lệ, app sẽ tự quay về bước
-          chọn vị trí.
+          {t("iot.devices.onboarding.qrScannerDescription")}
         </Text>
       </View>
 
       <View style={styles.cameraCard}>
         {!permission ? (
-          <Text style={styles.hint}>Đang kiểm tra quyền camera...</Text>
+          <Text style={styles.hint}>{t("iot.devices.onboarding.checkingCameraPermission")}</Text>
         ) : null}
 
         {permission && !hasPermission ? (
           <View style={styles.permissionBox}>
             <Camera color="#64748b" size={28} />
-            <Text style={styles.permissionTitle}>Cần quyền camera</Text>
+            <Text style={styles.permissionTitle}>{t("iot.devices.onboarding.cameraPermissionTitle")}</Text>
             <Text style={styles.hint}>
-              Cho phép camera để quét QR. Nếu đã từ chối quyền, hãy mở cài đặt hệ
-              thống để cấp lại.
+              {t("iot.devices.onboarding.cameraPermissionDescription")}
             </Text>
             {canAskAgain ? (
               <Pressable style={styles.primaryButton} onPress={requestPermission}>
-                <Text style={styles.primaryButtonText}>Cấp quyền camera</Text>
+                <Text style={styles.primaryButtonText}>{t("iot.devices.onboarding.requestCameraPermission")}</Text>
               </Pressable>
             ) : null}
           </View>
@@ -100,7 +100,7 @@ export function DeviceQrScanScreen() {
       <View style={styles.fallbackCard}>
         <View style={styles.fallbackHeader}>
           <ClipboardCheck color="#15803d" size={20} />
-          <Text style={styles.cardTitle}>Dán JSON để kiểm thử</Text>
+          <Text style={styles.cardTitle}>{t("iot.devices.onboarding.pasteJsonTitle")}</Text>
         </View>
         <TextInput
           multiline
@@ -111,7 +111,7 @@ export function DeviceQrScanScreen() {
           value={manualJson}
         />
         <Pressable style={styles.secondaryButton} onPress={() => usePayload(manualJson)}>
-          <Text style={styles.secondaryButtonText}>Dùng nội dung này</Text>
+          <Text style={styles.secondaryButtonText}>{t("iot.devices.onboarding.useThisContent")}</Text>
         </Pressable>
       </View>
 

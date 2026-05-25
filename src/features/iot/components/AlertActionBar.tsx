@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import type { AlertStatus } from "../types";
 
@@ -17,13 +18,14 @@ export function AlertActionBar({
   onAcknowledge,
   onResolve,
 }: AlertActionBarProps) {
+  const { t } = useTranslation();
   const canAcknowledge = status === "OPEN";
   const canResolve = status === "OPEN" || status === "ACKNOWLEDGED";
 
   if (status === "RESOLVED" || status === "CLOSED") {
     return (
       <View style={styles.resolvedBox}>
-        <Text style={styles.resolvedText}>Canh bao da duoc xu ly.</Text>
+        <Text style={styles.resolvedText}>{t("iot.alerts.resolvedNotice")}</Text>
       </View>
     );
   }
@@ -39,7 +41,7 @@ export function AlertActionBar({
         ]}
       >
         <Text style={styles.secondaryText}>
-          {acknowledging ? "Dang xac nhan..." : "Xac nhan da xem"}
+          {acknowledging ? t("iot.alerts.acknowledging") : t("iot.alerts.acknowledge")}
         </Text>
       </Pressable>
       <Pressable
@@ -51,7 +53,7 @@ export function AlertActionBar({
         ]}
       >
         <Text style={styles.primaryText}>
-          {resolving ? "Dang xu ly..." : "Danh dau da xu ly"}
+          {resolving ? t("iot.alerts.resolving") : t("iot.alerts.resolve")}
         </Text>
       </Pressable>
     </View>

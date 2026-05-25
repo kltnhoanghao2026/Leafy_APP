@@ -29,21 +29,21 @@ export const validateConfigForm = (
   const offlineTimeoutSec = parseInteger(values.offlineTimeoutSec);
 
   if (samplingIntervalSec === null) {
-    errors.push("Chu ky doc cam bien phai la so nguyen duong.");
+    errors.push("iot.config.validation.samplingRequired");
   } else if (samplingIntervalSec < 5 || samplingIntervalSec > 3600) {
-    errors.push("Chu ky doc cam bien phai trong khoang 5-3600 giay.");
+    errors.push("iot.config.validation.samplingRange");
   }
 
   if (publishIntervalSec === null) {
-    errors.push("Chu ky gui du lieu phai la so nguyen duong.");
+    errors.push("iot.config.validation.publishRequired");
   } else if (publishIntervalSec < 10 || publishIntervalSec > 86400) {
-    errors.push("Chu ky gui du lieu phai trong khoang 10-86400 giay.");
+    errors.push("iot.config.validation.publishRange");
   }
 
   if (offlineTimeoutSec === null) {
-    errors.push("Thoi gian xac dinh offline phai la so nguyen duong.");
+    errors.push("iot.config.validation.offlineRequired");
   } else if (offlineTimeoutSec < 60 || offlineTimeoutSec > 86400) {
-    errors.push("Thoi gian xac dinh offline phai trong khoang 60-86400 giay.");
+    errors.push("iot.config.validation.offlineRange");
   }
 
   if (
@@ -51,7 +51,7 @@ export const validateConfigForm = (
     publishIntervalSec !== null &&
     publishIntervalSec < samplingIntervalSec
   ) {
-    errors.push("Chu ky gui du lieu nen lon hon hoac bang chu ky doc cam bien.");
+    errors.push("iot.config.validation.publishAfterSampling");
   }
 
   if (
@@ -59,7 +59,7 @@ export const validateConfigForm = (
     offlineTimeoutSec !== null &&
     offlineTimeoutSec <= publishIntervalSec
   ) {
-    errors.push("Thoi gian offline phai lon hon chu ky gui du lieu.");
+    errors.push("iot.config.validation.offlineAfterPublish");
   }
 
   if (errors.length) {

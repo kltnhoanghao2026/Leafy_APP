@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react-native";
 
 import type { DeviceResponse } from "../types";
@@ -15,6 +16,9 @@ type DeviceCardProps = {
 };
 
 export function DeviceCard({ device, onPress }: DeviceCardProps) {
+  const { t } = useTranslation();
+  const unassigned = t("iot.common.unassigned");
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -24,7 +28,7 @@ export function DeviceCard({ device, onPress }: DeviceCardProps) {
       <View style={styles.header}>
         <View style={styles.titleWrap}>
           <Text style={styles.name} numberOfLines={1}>
-            {device.deviceName || "Thiết bị IoT"}
+            {device.deviceName || t("iot.devices.defaultName")}
           </Text>
           <Text style={styles.code} numberOfLines={1}>
             {formatDeviceCode(device.deviceCode || device.deviceUid)}
@@ -41,10 +45,14 @@ export function DeviceCard({ device, onPress }: DeviceCardProps) {
       </View>
 
       <View style={styles.details}>
-        <Text style={styles.detailText}>Vườn: {device.farmPlotId || "Chưa gán"}</Text>
-        <Text style={styles.detailText}>Khu vực: {device.zoneId || "Chưa gán"}</Text>
         <Text style={styles.detailText}>
-          Lần cuối online: {formatDateTime(device.lastSeenAt)}
+          {t("iot.common.farm")}: {device.farmPlotId || unassigned}
+        </Text>
+        <Text style={styles.detailText}>
+          {t("iot.common.zone")}: {device.zoneId || unassigned}
+        </Text>
+        <Text style={styles.detailText}>
+          {t("iot.devices.detail.lastSeenAt")}: {formatDateTime(device.lastSeenAt)}
         </Text>
       </View>
     </Pressable>

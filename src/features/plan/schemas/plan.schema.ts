@@ -95,6 +95,10 @@ export interface PlanResponse {
   estimatedCost: string | null;
   events: EmbeddedPlanEventResponse[] | null;
   applyCount: number | null;
+  /** Number of completed applies where success=true. */
+  successApplyCount: number | null;
+  /** Number of completed applies where success=false. */
+  failedApplyCount: number | null;
   applies?: PlanApplyResponse[] | null;
   isPublic: boolean;
   isConsulted: boolean;

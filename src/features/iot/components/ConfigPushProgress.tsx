@@ -1,4 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 type PushState = "idle" | "sending" | "waiting" | "acked" | "failed" | "timeout";
 
@@ -7,16 +8,18 @@ type ConfigPushProgressProps = {
   error?: string | null;
 };
 
-const messages: Record<PushState, string> = {
-  idle: "",
-  sending: "Dang gui cau hinh...",
-  waiting: "Dang cho thiet bi xac nhan...",
-  acked: "Thiet bi da xac nhan cau hinh.",
-  failed: "Thiet bi bao loi khi ap dung cau hinh.",
-  timeout: "Qua thoi gian cho ACK.",
+const messageKeys: Record<PushState, string> = {
+  idle: "iot.config.pushProgress.idle",
+  sending: "iot.config.pushProgress.sending",
+  waiting: "iot.config.pushProgress.waiting",
+  acked: "iot.config.pushProgress.acked",
+  failed: "iot.config.pushProgress.failed",
+  timeout: "iot.config.pushProgress.timeout",
 };
 
 export function ConfigPushProgress({ state, error }: ConfigPushProgressProps) {
+  const { t } = useTranslation();
+
   if (state === "idle") {
     return null;
   }
@@ -28,7 +31,7 @@ export function ConfigPushProgress({ state, error }: ConfigPushProgressProps) {
     <View style={[styles.card, isError && styles.errorCard]}>
       {isLoading ? <ActivityIndicator color="#15803d" /> : null}
       <View style={styles.textWrap}>
-        <Text style={[styles.title, isError && styles.errorTitle]}>{messages[state]}</Text>
+        <Text style={[styles.title, isError && styles.errorTitle]}>{t(messageKeys[state])}</Text>
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </View>
     </View>

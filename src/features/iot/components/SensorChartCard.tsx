@@ -1,4 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import Svg, { Circle, Line, Polyline, Text as SvgText } from "react-native-svg";
 
 import type { ChartRange, SensorChartResponse } from "../types";
@@ -25,6 +26,7 @@ export function SensorChartCard({
   loading,
   error,
 }: SensorChartCardProps) {
+  const { t } = useTranslation();
   const points = normalizeChartPoints(chart?.points ?? [], range);
   const latest = points.length ? points[points.length - 1] : undefined;
   const values = points.map((point) => point.value);
@@ -55,16 +57,18 @@ export function SensorChartCard({
           <Text style={styles.title}>
             {chart
               ? getSensorDisplay(chart.sensorCode, chart.sensorName, chart.unit)
-              : "Biểu đồ cảm biến"}
+              : t("iot.devices.detail.sensorChart")}
           </Text>
-          <Text style={styles.subtitle}>Range: {range}</Text>
+          <Text style={styles.subtitle}>
+            {t("iot.metrics.zone.rangeLabel", { range })}
+          </Text>
         </View>
         {loading ? <ActivityIndicator color="#15803d" /> : null}
       </View>
 
       {error ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorText}>Không tải được biểu đồ. Kéo để thử lại.</Text>
+          <Text style={styles.errorText}>{t("iot.metrics.zone.chartLoadFailed")}</Text>
         </View>
       ) : null}
 
@@ -73,9 +77,9 @@ export function SensorChartCard({
       {!error && points.length ? (
         <>
           <View style={styles.summaryRow}>
-            <Summary label="Mới nhất" value={latest ? `${latest.value.toFixed(1)}${unit}` : "-"} />
-            <Summary label="Thấp nhất" value={min !== null ? `${min.toFixed(1)}${unit}` : "-"} />
-            <Summary label="Cao nhất" value={max !== null ? `${max.toFixed(1)}${unit}` : "-"} />
+            <Summary label={t("iot.metrics.zone.latest")} value={latest ? `${latest.value.toFixed(1)}${unit}` : "-"} />
+            <Summary label={t("iot.metrics.zone.lowest")} value={min !== null ? `${min.toFixed(1)}${unit}` : "-"} />
+            <Summary label={t("iot.metrics.zone.highest")} value={max !== null ? `${max.toFixed(1)}${unit}` : "-"} />
           </View>
           <View style={styles.chartBox}>
             <Svg height={chartHeight} width="100%" viewBox={`0 0 ${chartWidth} ${chartHeight}`}>

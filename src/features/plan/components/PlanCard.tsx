@@ -2,6 +2,7 @@ import { Text, TouchableOpacity, View } from "react-native";
 import {
   BarChart2,
   Bot,
+  CheckCircle,
   ClipboardList,
   DollarSign,
   Globe,
@@ -12,6 +13,7 @@ import {
   Trash2,
   User,
   UserCheck,
+  XCircle,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "@/src/utils/date";
@@ -120,20 +122,38 @@ export function PlanCard({
           </View>
 
           {/* Apply count badge */}
-          <View className={`shrink-0 rounded-full px-2.5 py-1 ring-1 ${
-            (plan.applyCount ?? 0) > 0
-              ? "bg-blue-50 text-blue-700 ring-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-800"
-              : "bg-slate-100 text-slate-500 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700"
-          }`}>
-            <Text className={`text-[10px] font-black ${
+          <View className="shrink-0 items-end">
+            <View className={`rounded-full px-2.5 py-1 ring-1 ${
               (plan.applyCount ?? 0) > 0
-                ? "text-blue-700 dark:text-blue-400"
-                : "text-slate-500 dark:text-slate-400"
+                ? "bg-blue-50 text-blue-700 ring-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-800"
+                : "bg-slate-100 text-slate-500 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700"
             }`}>
-              {(plan.applyCount ?? 0) > 0
-                ? `${plan.applyCount} áp dụng`
-                : "Chưa áp dụng"}
-            </Text>
+              <Text className={`text-[10px] font-black ${
+                (plan.applyCount ?? 0) > 0
+                  ? "text-blue-700 dark:text-blue-400"
+                  : "text-slate-500 dark:text-slate-400"
+              }`}>
+                {(plan.applyCount ?? 0) > 0
+                  ? `${plan.applyCount} áp dụng`
+                  : "Chưa áp dụng"}
+              </Text>
+            </View>
+            {(plan.successApplyCount ?? 0) > 0 || (plan.failedApplyCount ?? 0) > 0 ? (
+              <View className="mt-1 flex-row items-center gap-1.5">
+                {(plan.successApplyCount ?? 0) > 0 && (
+                  <View className="flex-row items-center gap-0.5">
+                    <CheckCircle size={10} color="#16a34a" strokeWidth={2.5} />
+                    <Text className="text-[10px] font-bold text-green-600">{plan.successApplyCount}</Text>
+                  </View>
+                )}
+                {(plan.failedApplyCount ?? 0) > 0 && (
+                  <View className="flex-row items-center gap-0.5">
+                    <XCircle size={10} color="#dc2626" strokeWidth={2.5} />
+                    <Text className="text-[10px] font-bold text-red-500">{plan.failedApplyCount}</Text>
+                  </View>
+                )}
+              </View>
+            ) : null}
           </View>
         </View>
 

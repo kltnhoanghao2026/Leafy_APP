@@ -1,10 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import type { DeviceConfigResponse } from "../types";
 import {
   formatConfigDate,
+  getConfigPushStatusKey,
   getConfigPushStatusColor,
-  getConfigPushStatusLabel,
 } from "../utils/configLabels";
 
 type ConfigStatusCardProps = {
@@ -12,27 +13,30 @@ type ConfigStatusCardProps = {
 };
 
 export function ConfigStatusCard({ config }: ConfigStatusCardProps) {
+  const { t } = useTranslation();
   const color = getConfigPushStatusColor(config?.lastPushStatus);
 
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Trang thai cau hinh</Text>
-          <Text style={styles.subtitle}>Version {config?.configVersion ?? "-"}</Text>
+          <Text style={styles.title}>{t("iot.config.statusTitle")}</Text>
+          <Text style={styles.subtitle}>
+            {t("iot.config.version", { version: config?.configVersion ?? "-" })}
+          </Text>
         </View>
         <View style={[styles.badge, { backgroundColor: `${color}1A` }]}>
           <Text style={[styles.badgeText, { color }]}>
-            {getConfigPushStatusLabel(config?.lastPushStatus)}
+            {t(getConfigPushStatusKey(config?.lastPushStatus))}
           </Text>
         </View>
       </View>
 
-      <InfoLine label="ACK luc" value={formatConfigDate(config?.lastAckAt)} />
-      <InfoLine label="Ap dung luc" value={formatConfigDate(config?.appliedAt)} />
+      <InfoLine label={t("iot.config.lastAckAt")} value={formatConfigDate(config?.lastAckAt)} />
+      <InfoLine label={t("iot.config.appliedAt")} value={formatConfigDate(config?.appliedAt)} />
       {config?.lastPushError ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorLabel}>Loi tu thiet bi</Text>
+          <Text style={styles.errorLabel}>{t("iot.config.deviceError")}</Text>
           <Text style={styles.errorText}>{config.lastPushError}</Text>
         </View>
       ) : null}

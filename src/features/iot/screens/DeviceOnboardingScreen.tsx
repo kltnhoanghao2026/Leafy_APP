@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { collectorApi } from "../api/collector.api";
 import { DeviceQrPayloadForm } from "../components/DeviceQrPayloadForm";
@@ -20,6 +21,7 @@ import { OnboardingProgress } from "../components/OnboardingProgress";
 import { WifiSetupGuide } from "../components/WifiSetupGuide";
 import {
   useClaimDeviceMutation,
+  useConnectDeviceMutation,
   useGenerateClaimCodeMutation,
   useProvisionDeviceMutation,
 } from "../hooks/useDeviceOnboarding";
@@ -57,6 +59,7 @@ const normalizeManualPayload = (
 };
 
 export function DeviceOnboardingScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ payload?: string | string[] }>();
   const payloadParam = getParamValue(params.payload);
@@ -73,6 +76,12 @@ export function DeviceOnboardingScreen() {
   const provisionMutation = useProvisionDeviceMutation();
   const claimCodeMutation = useGenerateClaimCodeMutation();
   const claimMutation = useClaimDeviceMutation();
+  const connectMutation = useConnectDeviceMutation();
+  const defaultDeviceName = t("iot.devices.defaultName");
+  const suggestedSensorName = (zone?: string) =>
+    t("iot.devices.onboarding.suggestedSensorName", {
+      zone: zone || t("iot.common.unknown"),
+    });
 
   useEffect(() => {
     if (!payloadParam) {
@@ -110,12 +119,12 @@ export function DeviceOnboardingScreen() {
     }
 
     if (location.zoneName || location.zoneId) {
-      setDeviceName(`Cảm biến - ${location.zoneName || location.zoneId}`);
+      setDeviceName(suggestedSensorName(location.zoneName || location.zoneId));
       return;
     }
 
-    setDeviceName("Thiết bị IoT");
-  }, [deviceName, effectivePayload, location.zoneId, location.zoneName]);
+    setDeviceName(defaultDeviceName);
+  }, [defaultDeviceName, deviceName, effectivePayload, location.zoneId, location.zoneName]);
 
   const canConnect =
     Boolean(effectivePayload) && Boolean(location.farmPlotId) && Boolean(location.zoneId);
@@ -123,6 +132,7 @@ export function DeviceOnboardingScreen() {
     provisionMutation.isPending ||
     claimCodeMutation.isPending ||
     claimMutation.isPending ||
+    connectMutation.isPending ||
     Boolean(progressStep);
 
   const updateLocation = (nextLocation: FarmZoneSelection) => {
@@ -131,11 +141,11 @@ export function DeviceOnboardingScreen() {
     const canUseZoneSuggestion =
       !effectivePayload?.model &&
       (!deviceName ||
-        deviceName === "Thiết bị IoT" ||
-        deviceName.startsWith("Cảm biến - "));
+        deviceName === defaultDeviceName ||
+        deviceName.startsWith(t("iot.devices.onboarding.suggestedSensorPrefix")));
 
     if (canUseZoneSuggestion && (nextLocation.zoneName || nextLocation.zoneId)) {
-      setDeviceName(`Cảm biến - ${nextLocation.zoneName || nextLocation.zoneId}`);
+      setDeviceName(suggestedSensorName(nextLocation.zoneName || nextLocation.zoneId));
     }
   };
 
@@ -143,36 +153,27 @@ export function DeviceOnboardingScreen() {
     setError(null);
 
     if (!effectivePayload) {
-      setError("Vui lòng quét QR hoặc nhập đủ deviceUid, deviceCode và deviceType.");
+      setError(t("iot.devices.onboarding.missingDeviceInfo"));
       return;
     }
 
     if (!location.farmPlotId || !location.zoneId) {
-      setError("Vui lòng chọn vườn và khu vực lắp đặt.");
+      setError(t("iot.devices.onboarding.missingLocation"));
       return;
     }
 
     try {
-      setProgressStep("Đang đăng ký thiết bị...");
-      const provisioned = await provisionMutation.mutateAsync({
+      setProgressStep(t("iot.devices.onboarding.progressProvisioning"));
+      const claimed = await connectMutation.mutateAsync({
         deviceUid: effectivePayload.deviceUid,
         deviceCode: effectivePayload.deviceCode,
         deviceType: effectivePayload.deviceType,
-        deviceName: deviceName.trim() || effectivePayload.model || "Thiết bị IoT",
-      });
-
-      setProgressStep("Đang tạo mã xác nhận...");
-      const claimCode = await claimCodeMutation.mutateAsync(provisioned.id);
-
-      setProgressStep("Đang gán thiết bị vào khu vực...");
-      const claimed = await claimMutation.mutateAsync({
-        deviceUid: provisioned.deviceUid,
-        claimCode: claimCode.claimCode,
+        deviceName: deviceName.trim() || effectivePayload.model || defaultDeviceName,
         farmPlotId: location.farmPlotId,
         zoneId: location.zoneId,
       });
 
-      setProgressStep("Đang cập nhật danh sách...");
+      setProgressStep(t("iot.devices.onboarding.progressRefreshing"));
       const refreshedDevices = await collectorApi.getMyDevices({
         page: 0,
         size: 100,
@@ -180,11 +181,10 @@ export function DeviceOnboardingScreen() {
         sortDir: "desc",
       });
       const resolved =
-        claimed ||
         refreshedDevices.items.find(
-          (device) => device.deviceUid === provisioned.deviceUid,
+          (device) => device.deviceUid === claimed.deviceUid,
         ) ||
-        provisioned;
+        claimed;
 
       setSuccessDevice(resolved);
       setShowWifiGuide(resolved.status !== "ONLINE");
@@ -206,14 +206,14 @@ export function DeviceOnboardingScreen() {
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>Thiết bị IoT</Text>
+        <Text style={styles.backText}>{t("iot.devices.list.title")}</Text>
       </Pressable>
 
       <View style={styles.header}>
-        <Text style={styles.kicker}>Kết nối thiết bị</Text>
-        <Text style={styles.title}>Thêm thiết bị IoT</Text>
+        <Text style={styles.kicker}>{t("iot.devices.onboarding.kicker")}</Text>
+        <Text style={styles.title}>{t("iot.devices.onboarding.title")}</Text>
         <Text style={styles.subtitle}>
-          Quét mã QR hoặc nhập thủ công, sau đó chọn vườn/khu vực để gán thiết bị.
+          {t("iot.devices.onboarding.description")}
         </Text>
       </View>
 
@@ -221,29 +221,29 @@ export function DeviceOnboardingScreen() {
         <ModeButton
           active={mode === "scan"}
           icon={<QrCode color={mode === "scan" ? "#166534" : "#64748b"} size={18} />}
-          label="Quét mã QR"
+          label={t("iot.devices.onboarding.scanQr")}
           onPress={() => setMode("scan")}
         />
         <ModeButton
           active={mode === "manual"}
           icon={<Keyboard color={mode === "manual" ? "#166534" : "#64748b"} size={18} />}
-          label="Nhập thủ công"
+          label={t("iot.devices.onboarding.manual")}
           onPress={() => setMode("manual")}
         />
       </View>
 
       {mode === "scan" ? (
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Quét QR thiết bị</Text>
+          <Text style={styles.cardTitle}>{t("iot.devices.onboarding.scanQrTitle")}</Text>
           <Text style={styles.hint}>
-            QR cần chứa deviceUid, deviceCode, deviceType và có thể có model.
+            {t("iot.devices.onboarding.scanQrDescription")}
           </Text>
           <Pressable
             style={styles.primaryButton}
             onPress={() => router.push("/iot/qr-scan")}
           >
             <QrCode color="#ffffff" size={18} />
-            <Text style={styles.primaryButtonText}>Mở camera quét QR</Text>
+            <Text style={styles.primaryButtonText}>{t("iot.devices.onboarding.openQrCamera")}</Text>
           </Pressable>
         </View>
       ) : (
@@ -254,22 +254,22 @@ export function DeviceOnboardingScreen() {
         <View style={styles.deviceInfoCard}>
           <View style={styles.infoHeader}>
             <CheckCircle2 color="#16a34a" size={20} />
-            <Text style={styles.cardTitle}>Thông tin thiết bị đã đọc</Text>
+            <Text style={styles.cardTitle}>{t("iot.devices.onboarding.readDeviceInfo")}</Text>
           </View>
-          <InfoLine label="Model" value={effectivePayload.model || "Không có"} />
-          <InfoLine label="Device code" value={effectivePayload.deviceCode} />
-          <InfoLine label="Device UID" value={effectivePayload.deviceUid} />
-          <InfoLine label="Device type" value={effectivePayload.deviceType} />
+          <InfoLine label={t("iot.devices.onboarding.model")} value={effectivePayload.model || t("iot.common.none")} />
+          <InfoLine label={t("iot.devices.onboarding.deviceCode")} value={effectivePayload.deviceCode} />
+          <InfoLine label={t("iot.devices.onboarding.deviceUid")} value={effectivePayload.deviceUid} />
+          <InfoLine label={t("iot.devices.onboarding.deviceType")} value={effectivePayload.deviceType} />
         </View>
       ) : null}
 
       <FarmZonePicker value={location} onChange={updateLocation} />
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Tên hiển thị</Text>
+        <Text style={styles.cardTitle}>{t("iot.devices.onboarding.displayName")}</Text>
         <TextInput
           onChangeText={setDeviceName}
-          placeholder="Thiết bị IoT"
+          placeholder={defaultDeviceName}
           placeholderTextColor="#94a3b8"
           style={styles.input}
           value={deviceName}
@@ -286,11 +286,13 @@ export function DeviceOnboardingScreen() {
 
       {successDevice ? (
         <View style={styles.successBox}>
-          <Text style={styles.successTitle}>Kết nối thiết bị thành công</Text>
+          <Text style={styles.successTitle}>{t("iot.devices.onboarding.successTitle")}</Text>
           <Text style={styles.successText}>
-            {successDevice.deviceName || successDevice.deviceCode} đã được gán vào{" "}
-            {location.farmPlotName || location.farmPlotId} /{" "}
-            {location.zoneName || location.zoneId}.
+            {t("iot.devices.onboarding.successDescription", {
+              device: successDevice.deviceName || successDevice.deviceCode,
+              farm: location.farmPlotName || location.farmPlotId || t("iot.common.unknown"),
+              zone: location.zoneName || location.zoneId || t("iot.common.unknown"),
+            })}
           </Text>
           {showWifiGuide ? <WifiSetupGuide /> : null}
         </View>
@@ -306,7 +308,7 @@ export function DeviceOnboardingScreen() {
         ]}
       >
         <Text style={styles.connectButtonText}>
-          {isSubmitting ? "Đang kết nối..." : "Kết nối thiết bị"}
+          {isSubmitting ? t("iot.devices.onboarding.connecting") : t("iot.devices.onboarding.connectDevice")}
         </Text>
       </Pressable>
     </ScrollView>

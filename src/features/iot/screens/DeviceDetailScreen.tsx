@@ -1,7 +1,9 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, BarChart3, Bell, SlidersHorizontal } from "lucide-react-native";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Pressable,
@@ -13,6 +15,8 @@ import {
 } from "react-native";
 
 import { DeviceReadingList } from "../components/DeviceReadingList";
+import { DeviceChartsPanel } from "../components/DeviceChartsPanel";
+import { DeviceMediaPanel } from "../components/DeviceMediaPanel";
 import { DeviceStatusBadge } from "../components/DeviceStatusBadge";
 import { RangeSelector } from "../components/RangeSelector";
 import { SensorChartCard } from "../components/SensorChartCard";
@@ -22,6 +26,7 @@ import {
   useDeviceDetail,
   useDeviceLatestReadings,
 } from "../hooks/useDeviceDetail";
+import { iotKeys } from "../hooks/useDevices";
 import {
   formatDateTime,
   formatDeviceCode,
@@ -38,7 +43,7 @@ const getParamValue = (value?: string | string[]): string | undefined => {
   return value;
 };
 
-const getFriendlyError = (error: unknown): string => {
+const getFriendlyError = (error: unknown, t: ReturnType<typeof useTranslation>["t"]): string => {
   const status =
     typeof error === "object" &&
     error !== null &&
@@ -50,22 +55,24 @@ const getFriendlyError = (error: unknown): string => {
       : undefined;
 
   if (status === 401) {
-    return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+    return t("iot.devices.detail.errorAuth");
   }
 
   if (status === 403) {
-    return "Bạn không có quyền xem thiết bị này.";
+    return t("iot.devices.detail.errorForbidden");
   }
 
   if (status === 404) {
-    return "Không tìm thấy thiết bị.";
+    return t("iot.devices.detail.errorNotFound");
   }
 
-  return "Không kết nối được máy chủ. Vui lòng thử lại.";
+  return t("iot.devices.detail.errorNetwork");
 };
 
 export function DeviceDetailScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const params = useLocalSearchParams<{ deviceId?: string | string[] }>();
   const deviceId = getParamValue(params.deviceId);
   const detailQuery = useDeviceDetail(deviceId);
@@ -89,15 +96,23 @@ export function DeviceDetailScreen() {
     detailQuery.refetch();
     readingsQuery.refetch();
     chartQuery.refetch();
+    if (device?.deviceUid) {
+      queryClient.invalidateQueries({
+        queryKey: iotKeys.deviceCameraSchedules(device.deviceUid),
+      });
+    }
+    if (deviceId) {
+      queryClient.invalidateQueries({ queryKey: iotKeys.deviceMedia(deviceId) });
+    }
   };
 
   if (!deviceId) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorTitle}>Thiếu mã thiết bị</Text>
-        <Text style={styles.errorText}>Không thể mở chi tiết nếu route thiếu deviceId.</Text>
+        <Text style={styles.errorTitle}>{t("iot.devices.detail.missingDeviceId")}</Text>
+        <Text style={styles.errorText}>{t("iot.devices.detail.missingDeviceIdDescription")}</Text>
         <Pressable style={styles.retryButton} onPress={() => router.back()}>
-          <Text style={styles.retryButtonText}>Quay lại</Text>
+          <Text style={styles.retryButtonText}>{t("iot.common.back")}</Text>
         </Pressable>
       </View>
     );
@@ -107,7 +122,7 @@ export function DeviceDetailScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color="#15803d" size="large" />
-        <Text style={styles.loadingText}>Đang tải chi tiết thiết bị...</Text>
+        <Text style={styles.loadingText}>{t("iot.devices.detail.loading")}</Text>
       </View>
     );
   }
@@ -117,13 +132,13 @@ export function DeviceDetailScreen() {
       <View style={styles.screen}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <ArrowLeft color="#0f172a" size={20} />
-          <Text style={styles.backText}>Quay lại</Text>
+          <Text style={styles.backText}>{t("iot.common.back")}</Text>
         </Pressable>
         <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>Không tải được thiết bị</Text>
-          <Text style={styles.errorText}>{getFriendlyError(detailQuery.error)}</Text>
+          <Text style={styles.errorTitle}>{t("iot.devices.detail.loadFailed")}</Text>
+          <Text style={styles.errorText}>{getFriendlyError(detailQuery.error, t)}</Text>
           <Pressable style={styles.retryButton} onPress={refresh}>
-            <Text style={styles.retryButtonText}>Thử lại</Text>
+            <Text style={styles.retryButtonText}>{t("iot.common.retry")}</Text>
           </Pressable>
         </View>
       </View>
@@ -144,14 +159,14 @@ export function DeviceDetailScreen() {
     >
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>Danh sách thiết bị</Text>
+        <Text style={styles.backText}>{t("iot.devices.list.title")}</Text>
       </Pressable>
 
       <View style={styles.hero}>
         <View style={styles.heroHeader}>
           <View style={styles.heroText}>
-            <Text style={styles.kicker}>Chi tiết thiết bị</Text>
-            <Text style={styles.title}>{device.deviceName || "Thiết bị IoT"}</Text>
+            <Text style={styles.kicker}>{t("iot.devices.detail.kicker")}</Text>
+            <Text style={styles.title}>{device.deviceName || t("iot.devices.defaultName")}</Text>
             <Text style={styles.code}>
               {formatDeviceCode(device.deviceCode || device.deviceUid)}
             </Text>
@@ -167,22 +182,22 @@ export function DeviceDetailScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Thông tin cơ bản</Text>
+        <Text style={styles.sectionTitle}>{t("iot.devices.detail.basicInfo")}</Text>
         <View style={styles.infoGrid}>
-          <InfoCard label="Loại thiết bị" value={device.deviceType || "Không rõ"} />
+          <InfoCard label={t("iot.devices.detail.type")} value={device.deviceType || t("iot.common.unknown")} />
           <InfoCard
-            label="Kết nối"
+            label={t("iot.devices.detail.connection")}
             value={getProvisioningStatusLabel(device.provisioningStatus)}
           />
-          <InfoCard label="Vườn" value={device.farmPlotId || "Chưa gán"} />
-          <InfoCard label="Khu vực" value={device.zoneId || "Chưa gán"} />
-          <InfoCard label="Lần cuối online" value={formatDateTime(device.lastSeenAt)} />
+          <InfoCard label={t("iot.common.farm")} value={device.farmPlotId || t("iot.common.unassigned")} />
+          <InfoCard label={t("iot.common.zone")} value={device.zoneId || t("iot.common.unassigned")} />
+          <InfoCard label={t("iot.devices.detail.lastSeenAt")} value={formatDateTime(device.lastSeenAt)} />
         </View>
       </View>
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Dữ liệu cảm biến mới nhất</Text>
+          <Text style={styles.sectionTitle}>{t("iot.devices.detail.latestReadings")}</Text>
           {readingsQuery.isFetching ? (
             <ActivityIndicator color="#15803d" size="small" />
           ) : null}
@@ -190,7 +205,7 @@ export function DeviceDetailScreen() {
         {readingsQuery.isError ? (
           <View style={styles.warningBox}>
             <Text style={styles.warningText}>
-              Không tải được dữ liệu cảm biến. Kéo xuống để thử lại.
+              {t("iot.devices.detail.readingsLoadFailed")}
             </Text>
           </View>
         ) : (
@@ -199,9 +214,9 @@ export function DeviceDetailScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Biểu đồ cảm biến</Text>
+        <Text style={styles.sectionTitle}>{t("iot.devices.detail.sensorChart")}</Text>
         <View style={styles.selectorBlock}>
-          <Text style={styles.selectorLabel}>Chỉ số</Text>
+          <Text style={styles.selectorLabel}>{t("iot.metrics.zone.sensor")}</Text>
           <SensorSelector
             onChange={setSelectedSensor}
             readings={readings}
@@ -209,7 +224,7 @@ export function DeviceDetailScreen() {
           />
         </View>
         <View style={styles.selectorBlock}>
-          <Text style={styles.selectorLabel}>Khoảng thời gian</Text>
+          <Text style={styles.selectorLabel}>{t("iot.metrics.zone.range")}</Text>
           <RangeSelector onChange={setSelectedRange} value={selectedRange} />
         </View>
         <SensorChartCard
@@ -220,11 +235,15 @@ export function DeviceDetailScreen() {
         />
       </View>
 
+      <DeviceChartsPanel deviceId={deviceId} />
+
+      <DeviceMediaPanel deviceId={deviceId} deviceUid={device.deviceUid} />
+
       <View style={styles.actions}>
         <PlaceholderAction
           icon={<SlidersHorizontal color="#64748b" size={18} />}
-          title="Cấu hình thiết bị"
-          subtitle="Xem, lưu và push cấu hình MQTT"
+          title={t("iot.devices.detail.configAction")}
+          subtitle={t("iot.devices.detail.configActionDescription")}
           onPress={() =>
             router.push({
               pathname: "/iot/devices/[deviceId]/config",
@@ -234,13 +253,13 @@ export function DeviceDetailScreen() {
         />
         <PlaceholderAction
           icon={<BarChart3 color="#64748b" size={18} />}
-          title="Biểu đồ"
-          subtitle="Sẽ bổ sung ở Phase 3"
+          title={t("iot.devices.detail.chartAction")}
+          subtitle={t("iot.devices.detail.chartActionDescription")}
         />
         <PlaceholderAction
           icon={<Bell color="#64748b" size={18} />}
-          title="Cảnh báo thiết bị"
-          subtitle="Xem cảnh báo theo deviceId"
+          title={t("iot.devices.detail.alertAction")}
+          subtitle={t("iot.devices.detail.alertActionDescription")}
           onPress={() =>
             router.push({
               pathname: "/iot/alerts",

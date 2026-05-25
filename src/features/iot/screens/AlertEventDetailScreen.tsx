@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import { AlertActionBar } from "../components/AlertActionBar";
 import { AlertSeverityBadge } from "../components/AlertSeverityBadge";
@@ -32,6 +33,7 @@ const getParamValue = (value?: string | string[]): string | undefined => {
 };
 
 export function AlertEventDetailScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ alertId?: string | string[] }>();
   const alertId = getParamValue(params.alertId);
@@ -49,7 +51,7 @@ export function AlertEventDetailScreen() {
     setMessage(null);
     try {
       await acknowledgeMutation.mutateAsync(alertId);
-      setMessage("Da xac nhan canh bao.");
+      setMessage(t("iot.alerts.acknowledgeSuccess"));
       alertQuery.refetch();
     } catch (error) {
       setMessage(getOnboardingErrorMessage(error));
@@ -61,7 +63,7 @@ export function AlertEventDetailScreen() {
     setMessage(null);
     try {
       await resolveMutation.mutateAsync(alertId);
-      setMessage("Da danh dau canh bao la da xu ly.");
+      setMessage(t("iot.alerts.resolveSuccess"));
       alertQuery.refetch();
     } catch (error) {
       setMessage(getOnboardingErrorMessage(error));
@@ -71,10 +73,10 @@ export function AlertEventDetailScreen() {
   if (!alertId) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorTitle}>Thieu ma canh bao</Text>
-        <Text style={styles.errorText}>Khong the mo chi tiet neu route thieu alertId.</Text>
+        <Text style={styles.errorTitle}>{t("iot.alerts.missingAlertId")}</Text>
+        <Text style={styles.errorText}>{t("iot.alerts.missingAlertIdDescription")}</Text>
         <Pressable style={styles.retryButton} onPress={() => router.back()}>
-          <Text style={styles.retryText}>Quay lai</Text>
+          <Text style={styles.retryText}>{t("iot.common.back")}</Text>
         </Pressable>
       </View>
     );
@@ -84,7 +86,7 @@ export function AlertEventDetailScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color="#15803d" size="large" />
-        <Text style={styles.loadingText}>Dang tai chi tiet canh bao...</Text>
+        <Text style={styles.loadingText}>{t("iot.alerts.loadingDetail")}</Text>
       </View>
     );
   }
@@ -103,12 +105,12 @@ export function AlertEventDetailScreen() {
     >
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>Canh bao IoT</Text>
+        <Text style={styles.backText}>{t("iot.alerts.title")}</Text>
       </Pressable>
 
       <View style={styles.header}>
-        <Text style={styles.kicker}>Alert detail</Text>
-        <Text style={styles.title}>Chi tiet canh bao</Text>
+        <Text style={styles.kicker}>{t("iot.alerts.detailKicker")}</Text>
+        <Text style={styles.title}>{t("iot.alerts.detailTitle")}</Text>
         <View style={styles.badges}>
           <AlertSeverityBadge severity={alert?.severity} />
           <AlertStatusBadge status={alert?.status} />
@@ -117,11 +119,11 @@ export function AlertEventDetailScreen() {
 
       {alertQuery.isError || !alert ? (
         <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>Khong tai duoc canh bao</Text>
-          <Text style={styles.errorText}>Canh bao khong ton tai hoac ban khong co quyen xem.</Text>
+          <Text style={styles.errorTitle}>{t("iot.alerts.detailLoadFailed")}</Text>
+          <Text style={styles.errorText}>{t("iot.alerts.detailLoadFailedDescription")}</Text>
           <Pressable style={styles.retryButton} onPress={() => alertQuery.refetch()}>
             <RefreshCw color="#ffffff" size={16} />
-            <Text style={styles.retryText}>Thu lai</Text>
+            <Text style={styles.retryText}>{t("iot.common.retry")}</Text>
           </Pressable>
         </View>
       ) : (
@@ -129,30 +131,30 @@ export function AlertEventDetailScreen() {
           <View style={styles.card}>
             <Text style={styles.message}>{alert.message}</Text>
             <InfoLine
-              label="Cam bien"
+              label={t("iot.metrics.zone.sensor")}
               value={getSensorLabel(sensorCode, alert.sensorName)}
             />
             <InfoLine
-              label="Gia tri doc"
+              label={t("iot.alerts.readingValue")}
               value={
                 typeof value === "number"
                   ? `${value.toFixed(1)}${unit ? ` ${unit}` : ""}`
-                  : "Khong co"
+                  : t("iot.common.none")
               }
             />
             <InfoLine
-              label="Nguong min/max"
+              label={t("iot.alerts.thresholdMinMax")}
               value={`${alert.thresholdMin ?? "-"} / ${alert.thresholdMax ?? "-"}`}
             />
-            <InfoLine label="Device" value={alert.deviceName || alert.deviceId || "-"} />
-            <InfoLine label="Zone" value={alert.zoneId || "-"} />
-            <InfoLine label="Farm plot" value={alert.farmPlotId || "-"} />
+            <InfoLine label={t("iot.common.device")} value={alert.deviceName || alert.deviceId || "-"} />
+            <InfoLine label={t("iot.common.zone")} value={alert.zoneId || "-"} />
+            <InfoLine label={t("iot.common.farm")} value={alert.farmPlotId || "-"} />
             <InfoLine
-              label="Mo luc"
+              label={t("iot.alerts.openedAt")}
               value={formatDateTime(alert.openedAt || alert.triggeredAt || alert.createdAt)}
             />
-            <InfoLine label="Xac nhan luc" value={formatDateTime(alert.acknowledgedAt)} />
-            <InfoLine label="Xu ly luc" value={formatDateTime(alert.resolvedAt)} />
+            <InfoLine label={t("iot.alerts.acknowledgedAt")} value={formatDateTime(alert.acknowledgedAt)} />
+            <InfoLine label={t("iot.alerts.resolvedAt")} value={formatDateTime(alert.resolvedAt)} />
           </View>
 
           {message ? (

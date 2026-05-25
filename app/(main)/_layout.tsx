@@ -37,6 +37,59 @@ import {
   styles,
 } from './_shared';
 import { GlobalWebSocketListener } from '@/src/components/GlobalWebSocketListener';
+import { useAlertEvents } from '@/src/features/iot/hooks/useAlerts';
+import { getIotAlertRoute, isIotAlertNotification } from '@/src/features/iot/utils/alertNotification';
+
+// ── Notification deep-link map ────────────────────────────────────────────────
+
+const NOTIFICATION_ROUTES: Record<
+  string,
+  (referenceId: string) => string | null
+> = {
+  POST_COMMENT: (id) => `/(main)/community/post/${id}`,
+  POST_UPVOTE: (id) => `/(main)/community/post/${id}`,
+  COMMENT_REPLY: (id) => `/(main)/community/post/${id}`,
+  COMMENT_UPVOTE: (id) => `/(main)/community/post/${id}`,
+  USER_FOLLOW: (id) => `/(main)/profile/${id}`,
+  CONSULT_REQUEST: (id) => `/(main)/profile/${id}`,
+  PLAN_CONSULTING_CREATED: () => null,
+  PLAN_APPLIED: () => null,
+  SYSTEM: () => null,
+  DIRECT_MESSAGE: (id) => `/(main)/chat/${id}`,
+  IOT_ALERT: (id) => `/(main)/iot/alerts/${id}`,
+  IOT_ALERT_EVENT: (id) => `/(main)/iot/alerts/${id}`,
+  ALERT_EVENT: (id) => `/(main)/iot/alerts/${id}`,
+  ALERT_TRIGGERED: (id) => `/(main)/iot/alerts/${id}`,
+  DEVICE_ALERT: (id) => `/(main)/iot/alerts/${id}`,
+};
+
+const DRAWER_WIDTH = 280;
+
+// ── Center action tab button ──────────────────────────────────────────────────
+
+type CenterActionButtonProps = BottomTabBarButtonProps & {
+  borderColor: string;
+  labelColor: string;
+  label: string;
+};
+
+function CenterActionButton({
+  onPress,
+  borderColor,
+  labelColor,
+  label,
+}: CenterActionButtonProps) {
+  return (
+    <Pressable onPress={onPress} style={styles.centerButtonWrapper}>
+      <View style={[styles.centerButton, { borderColor }]}>
+        <Activity color="#FFFFFF" size={34} strokeWidth={2.5} />
+      </View>
+      <Text style={[styles.centerButtonLabel, { color: labelColor }]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 
@@ -51,6 +104,13 @@ export default function MainLayout() {
   const drawerBg = scheme === 'dark' ? palette.background : '#FFFFFF';
   const queryClient = useQueryClient();
   const markReadMutation = useMarkNotificationReadMutation();
+  const openAlertsQuery = useAlertEvents({
+    page: 0,
+    size: 1,
+    status: "OPEN",
+    sortBy: "openedAt",
+    sortDir: "desc",
+  });
 
   const { data: stateData } = useNotificationState();
   const unreadCount = stateData?.data?.unreadCount ?? 0;
@@ -73,6 +133,18 @@ export default function MainLayout() {
         },
       });
     }
+    if (isIotAlertNotification({
+      referenceId: notification.referenceId ?? undefined,
+      type: notification.type,
+    })) {
+      const path = getIotAlertRoute({
+        referenceId: notification.referenceId ?? undefined,
+        type: notification.type,
+      });
+      if (path) router.push(path as never);
+      return;
+    }
+
     if (notification.referenceId && notification.type) {
       const routeFn = NOTIFICATION_ROUTES[notification.type];
       if (routeFn) {
@@ -232,6 +304,11 @@ export default function MainLayout() {
     animation: 'shift' as const,
     transitionSpec: { animation: 'timing' as const, config: { duration: 220 } },
   };
+  const openAlertCount =
+    openAlertsQuery.data?.totalItems ??
+    openAlertsQuery.data?.totalElements ??
+    openAlertsQuery.data?.items?.length ??
+    0;
 
   // ── Tab Screens ──────────────────────────────────────────────────────────────
 

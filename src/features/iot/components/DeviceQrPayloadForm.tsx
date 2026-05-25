@@ -1,4 +1,5 @@
 import { StyleSheet, Text, TextInput, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import type { DeviceQrPayload } from "../types";
 
@@ -8,33 +9,35 @@ type DeviceQrPayloadFormProps = {
 };
 
 export function DeviceQrPayloadForm({ value, onChange }: DeviceQrPayloadFormProps) {
+  const { t } = useTranslation();
+
   const update = (field: keyof DeviceQrPayload, fieldValue: string) => {
     onChange({ ...value, [field]: fieldValue });
   };
 
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>Nhập thủ công thông tin thiết bị</Text>
+      <Text style={styles.title}>{t("iot.devices.onboarding.manualInfoTitle")}</Text>
       <Field
-        label="Device UID"
+        label={t("iot.devices.onboarding.deviceUid")}
         onChangeText={(text) => update("deviceUid", text)}
         placeholder="LEAFY-ESP32-001"
         value={value.deviceUid ?? ""}
       />
       <Field
-        label="Device code"
+        label={t("iot.devices.onboarding.deviceCode")}
         onChangeText={(text) => update("deviceCode", text)}
         placeholder="ESP32-001"
         value={value.deviceCode ?? ""}
       />
       <Field
-        label="Device type"
+        label={t("iot.devices.onboarding.deviceType")}
         onChangeText={(text) => update("deviceType", text)}
         placeholder="ESP32_CAM_SENSOR"
         value={value.deviceType ?? ""}
       />
       <Field
-        label="Model"
+        label={t("iot.devices.onboarding.model")}
         onChangeText={(text) => update("model", text)}
         placeholder="Leafy IoT Module V1"
         value={value.model ?? ""}
