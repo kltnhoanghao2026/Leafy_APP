@@ -165,10 +165,15 @@ export type UpdateDeviceRequest = {
 };
 
 export type DeviceQrPayload = {
+  type?: "LEAFY_IOT_DEVICE";
+  version?: 1;
   deviceUid: string;
   deviceCode: string;
   deviceType: string;
   model?: string;
+  firmwareVersion?: string;
+  setupApSsid?: string;
+  setupPortalUrl?: string;
 };
 
 export type LatestReadingItemResponse = {

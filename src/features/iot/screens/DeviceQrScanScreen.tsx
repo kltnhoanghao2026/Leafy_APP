@@ -23,7 +23,7 @@ export function DeviceQrScanScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const usePayload = (rawValue: string) => {
-    const result = parseDeviceQrPayload(rawValue);
+    const result = parseDeviceQrPayload(rawValue, t);
     if (!result.ok) {
       setError(result.error);
       setScanned(false);
