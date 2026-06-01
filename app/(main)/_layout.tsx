@@ -1,13 +1,14 @@
 import { Tabs, useRouter } from 'expo-router';
 import {
+  Home,
+  RadioTower,
   Activity,
+  Users,
+  User,
+  Menu,
   Bell,
   ClipboardList,
-  Home,
-  Menu,
-  RadioTower,
-  User,
-  Users,
+  ShieldAlert,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +29,8 @@ import {
   notificationKeys,
 } from '@/src/features/notifications';
 import type { UserNotificationResponse } from '@/src/features/notifications';
+import { useAlertEvents } from '@/src/features/iot/hooks/useAlerts';
+import { getIotAlertRoute, isIotAlertNotification } from '@/src/features/iot/utils/alertNotification';
 import {
   CenterActionButton,
   NOTIFICATION_ROUTES,
@@ -37,59 +40,17 @@ import {
   styles,
 } from './_shared';
 import { GlobalWebSocketListener } from '@/src/components/GlobalWebSocketListener';
-import { useAlertEvents } from '@/src/features/iot/hooks/useAlerts';
-import { getIotAlertRoute, isIotAlertNotification } from '@/src/features/iot/utils/alertNotification';
 
-// ── Notification deep-link map ────────────────────────────────────────────────
+// ── Notification deep-link map (merged: incoming routes + IoT routes from HEAD) ─
 
-const NOTIFICATION_ROUTES: Record<
-  string,
-  (referenceId: string) => string | null
-> = {
-  POST_COMMENT: (id) => `/(main)/community/post/${id}`,
-  POST_UPVOTE: (id) => `/(main)/community/post/${id}`,
-  COMMENT_REPLY: (id) => `/(main)/community/post/${id}`,
-  COMMENT_UPVOTE: (id) => `/(main)/community/post/${id}`,
-  USER_FOLLOW: (id) => `/(main)/profile/${id}`,
-  CONSULT_REQUEST: (id) => `/(main)/profile/${id}`,
-  PLAN_CONSULTING_CREATED: () => null,
-  PLAN_APPLIED: () => null,
-  SYSTEM: () => null,
-  DIRECT_MESSAGE: (id) => `/(main)/chat/${id}`,
+const NOTIFICATION_ROUTES_MERGED: Record<string, (referenceId: string) => string | null> = {
+  ...NOTIFICATION_ROUTES,
   IOT_ALERT: (id) => `/(main)/iot/alerts/${id}`,
   IOT_ALERT_EVENT: (id) => `/(main)/iot/alerts/${id}`,
   ALERT_EVENT: (id) => `/(main)/iot/alerts/${id}`,
   ALERT_TRIGGERED: (id) => `/(main)/iot/alerts/${id}`,
   DEVICE_ALERT: (id) => `/(main)/iot/alerts/${id}`,
 };
-
-const DRAWER_WIDTH = 280;
-
-// ── Center action tab button ──────────────────────────────────────────────────
-
-type CenterActionButtonProps = BottomTabBarButtonProps & {
-  borderColor: string;
-  labelColor: string;
-  label: string;
-};
-
-function CenterActionButton({
-  onPress,
-  borderColor,
-  labelColor,
-  label,
-}: CenterActionButtonProps) {
-  return (
-    <Pressable onPress={onPress} style={styles.centerButtonWrapper}>
-      <View style={[styles.centerButton, { borderColor }]}>
-        <Activity color="#FFFFFF" size={34} strokeWidth={2.5} />
-      </View>
-      <Text style={[styles.centerButtonLabel, { color: labelColor }]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
 
 // ── Layout ────────────────────────────────────────────────────────────────────
 
@@ -99,17 +60,20 @@ export default function MainLayout() {
   const insets = useSafeAreaInsets();
   const [moreDrawerVisible, setMoreDrawerVisible] = useState(false);
   const [notiDrawerVisible, setNotiDrawerVisible] = useState(false);
+  const [notiDrawerTab, setNotiDrawerTab] = useState<'notifications' | 'alerts'>('notifications');
+
   const { scheme, palette } = useAppColors();
   const tabIconDefault = palette.tabIconDefault;
   const drawerBg = scheme === 'dark' ? palette.background : '#FFFFFF';
+
   const queryClient = useQueryClient();
   const markReadMutation = useMarkNotificationReadMutation();
   const openAlertsQuery = useAlertEvents({
     page: 0,
-    size: 1,
-    status: "OPEN",
-    sortBy: "openedAt",
-    sortDir: "desc",
+    size: 5,
+    status: 'OPEN',
+    sortBy: 'openedAt',
+    sortDir: 'desc',
   });
 
   const { data: stateData } = useNotificationState();
@@ -146,12 +110,17 @@ export default function MainLayout() {
     }
 
     if (notification.referenceId && notification.type) {
-      const routeFn = NOTIFICATION_ROUTES[notification.type];
+      const routeFn = NOTIFICATION_ROUTES_MERGED[notification.type];
       if (routeFn) {
         const path = routeFn(notification.referenceId);
         if (path) router.push(path as never);
       }
     }
+  };
+
+  const handleAlertPress = (alertId: string) => {
+    closeNotiDrawer();
+    router.push(`/(main)/iot/alerts/${alertId}` as never);
   };
 
   const navigate = (path: string) => {
@@ -161,7 +130,7 @@ export default function MainLayout() {
 
   // ── Drawer Icon Helper ──────────────────────────────────────────────────────
 
-  const getDrawerIcon = (labelKey: string) => {
+  const getDrawerIconFn = (labelKey: string) => {
     const iconProps = { size: 20, color: palette.primary };
     switch (labelKey) {
       case 'mainNav.drawer.manageFarm':
@@ -178,6 +147,8 @@ export default function MainLayout() {
         return <Activity {...iconProps} />;
       case 'mainNav.drawer.experts':
         return <Users {...iconProps} />;
+      case 'mainNav.drawer.systemAlerts':
+        return <ShieldAlert {...iconProps} />;
       case 'mainNav.drawer.more':
         return <Users {...iconProps} />;
       default:
@@ -202,7 +173,7 @@ export default function MainLayout() {
       </Text>
       {DRAWER_MENU_ITEMS.map((item) => (
         <Pressable key={item.path} style={styles.drawerItem} onPress={() => navigate(item.path)}>
-          {getDrawerIcon(item.labelKey)}
+          {getDrawerIconFn(item.labelKey)}
           <Text style={[styles.drawerItemText, { color: palette.text }]}>
             {item.label || t(item.labelKey)}
           </Text>
@@ -224,7 +195,63 @@ export default function MainLayout() {
       <Text style={[styles.drawerTitle, { color: palette.text, marginBottom: 12 }]}>
         {t('mainNav.drawer.notifications')}
       </Text>
-      {historyLoading ? (
+      <View style={styles.drawerTabBar}>
+        <Pressable
+          style={[styles.drawerTab, notiDrawerTab === 'notifications' && styles.drawerTabActive]}
+          onPress={() => setNotiDrawerTab('notifications')}
+        >
+          <Text style={[styles.drawerTabText, notiDrawerTab === 'notifications' && styles.drawerTabTextActive]}>
+            {t('mainNav.drawer.notifications')}
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.drawerTab, notiDrawerTab === 'alerts' && styles.drawerTabActive]}
+          onPress={() => setNotiDrawerTab('alerts')}
+        >
+          <Text style={[styles.drawerTabText, notiDrawerTab === 'alerts' && styles.drawerTabTextActive]}>
+            {t('notifications.tabAlerts', 'Alerts')}
+          </Text>
+          {openAlertCount > 0 ? (
+            <View style={styles.drawerTabBadge}>
+              <Text style={styles.drawerTabBadgeText}>
+                {openAlertCount > 99 ? '99+' : openAlertCount}
+              </Text>
+            </View>
+          ) : null}
+        </Pressable>
+      </View>
+
+      {notiDrawerTab === 'alerts' ? (
+        openAlertsQuery.isLoading ? (
+          <RNActivityIndicator color={palette.primary} style={{ marginVertical: 20 }} />
+        ) : (openAlertsQuery.data?.items?.length ?? 0) === 0 ? (
+          <Text style={{ color: '#64748B', textAlign: 'center', marginVertical: 20 }}>
+            {t('iot.alerts.emptyTitle', 'No alerts found')}
+          </Text>
+        ) : (
+          <View style={styles.drawerAlertList}>
+            {(openAlertsQuery.data?.items ?? []).map((alert) => (
+              <Pressable
+                key={alert.id}
+                style={styles.drawerAlertItem}
+                onPress={() => handleAlertPress(alert.id)}
+              >
+                <View style={styles.drawerAlertIcon}>
+                  <ShieldAlert size={18} color="#EF4444" />
+                </View>
+                <View style={styles.drawerAlertTextWrap}>
+                  <Text style={styles.drawerAlertTitle} numberOfLines={2}>
+                    {alert.display?.title ?? alert.display?.message ?? t('iot.alerts.notificationBody')}
+                  </Text>
+                  <Text style={styles.drawerAlertMeta} numberOfLines={1}>
+                    {alert.display?.severityLabel ?? alert.severity} - {alert.display?.openedAtLabel ?? t('iot.common.noData')}
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )
+      ) : historyLoading ? (
         <RNActivityIndicator color={palette.primary} style={{ marginVertical: 20 }} />
       ) : recentNotifications.length === 0 ? (
         <Text style={{ color: '#64748B', textAlign: 'center', marginVertical: 20 }}>
@@ -239,11 +266,24 @@ export default function MainLayout() {
       )}
       <Pressable
         style={[styles.drawerItem, { marginTop: 12 }]}
-        onPress={() => router.push('/(main)/notifications' as never)}
+        onPress={() => {
+          closeNotiDrawer();
+          router.push(
+            notiDrawerTab === 'alerts'
+              ? ('/(main)/iot/alerts' as never)
+              : ('/(main)/notifications' as never),
+          );
+        }}
       >
-        <Bell size={20} color={palette.primary} />
+        {notiDrawerTab === 'alerts' ? (
+          <ShieldAlert size={20} color={palette.primary} />
+        ) : (
+          <Bell size={20} color={palette.primary} />
+        )}
         <Text style={[styles.drawerItemText, { color: palette.text }]}>
-          {t('mainNav.drawer.viewAllNotifications')}
+          {notiDrawerTab === 'alerts'
+            ? t('mainNav.drawer.systemAlerts', 'System alerts')
+            : t('mainNav.drawer.viewAllNotifications')}
         </Text>
       </Pressable>
     </View>
@@ -304,6 +344,7 @@ export default function MainLayout() {
     animation: 'shift' as const,
     transitionSpec: { animation: 'timing' as const, config: { duration: 220 } },
   };
+
   const openAlertCount =
     openAlertsQuery.data?.totalItems ??
     openAlertsQuery.data?.totalElements ??
@@ -328,9 +369,9 @@ export default function MainLayout() {
     {
       name: 'calendar',
       headerTitle: t('mainNav.headers.calendar'),
-      tabBarButton: (props: unknown) => (
+      tabBarButton: (props) => (
         <CenterActionButton
-          {...(props as object)}
+          {...props}
           borderColor={palette.background}
           labelColor={palette.primary}
           label={t('mainNav.tabs.calendar')}
@@ -392,7 +433,6 @@ export default function MainLayout() {
         swipeEdgeWidth={40}
       >
         <Tabs screenOptions={sharedTabScreenOptions}>
-          {/* Visible tabs */}
           {visibleTabs.map((tab) => (
             <Tabs.Screen
               key={tab.name}
@@ -408,7 +448,6 @@ export default function MainLayout() {
             />
           ))}
 
-          {/* Hidden feature stacks */}
           {hiddenTabs.map((name) => (
             <Tabs.Screen
               key={name}
@@ -422,8 +461,6 @@ export default function MainLayout() {
           ))}
         </Tabs>
 
-        {/* Global WebSocket listeners — must be inside the Drawer so they
-            are part of the main layout and not unmounted on screen navigation */}
         <GlobalWebSocketListener />
       </Drawer>
     </Drawer>

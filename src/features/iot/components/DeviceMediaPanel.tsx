@@ -1,11 +1,14 @@
-import { Camera, Pencil, Play, ShieldAlert, Trash2, Wand2 } from "lucide-react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { Camera, Clock, Eye, Pencil, Play, ShieldAlert, Trash2, Wand2, X } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -14,6 +17,7 @@ import {
 
 import {
   useCreateDeviceCameraScheduleMutation,
+  useCaptureDeviceImageMutation,
   useDeleteDeviceCameraScheduleMutation,
   useDetectCameraDiseaseMutation,
   useDeviceCameraSchedules,
@@ -29,12 +33,25 @@ import type {
   DeviceCameraSchedule,
   DeviceMediaEvent,
 } from "../types";
-import { formatDateTime } from "../utils/deviceLabels";
+import type { DisplayDeviceCameraSchedule, DisplayDeviceMediaEvent } from "../utils/iotDisplay";
 
 const RECURRENCE_OPTIONS: CameraScheduleRecurrence[] = ["DAILY", "WEEKLY", "MONTHLY"];
 const RESOLUTION_OPTIONS: CameraCaptureResolution[] = ["QVGA", "VGA", "HD"];
 const QUALITY_OPTIONS: CameraCaptureQuality[] = ["LOW", "MEDIUM", "HIGH"];
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+const toTimeDate = (value: string) => {
+  const [hour = "8", minute = "0", second = "0"] = value.split(":");
+  const date = new Date();
+  date.setHours(Number(hour), Number(minute), Number(second), 0);
+  return date;
+};
+
+const formatTimeOfDay = (date: Date) => {
+  const hour = date.getHours().toString().padStart(2, "0");
+  const minute = date.getMinutes().toString().padStart(2, "0");
+  return `${hour}:${minute}:00`;
+};
+
 const isHttpUrl = (value: string) => {
   try {
     const url = new URL(value);
@@ -63,28 +80,28 @@ const translateEnum = (
   return label === key ? value : label;
 };
 
-const getMediaTimestamp = (media: DeviceMediaEvent) =>
-  media.uploadedAt ?? media.capturedAt ?? media.timestamp ?? media.requestedAt;
+type DisplayableSchedule = DeviceCameraSchedule & Partial<DisplayDeviceCameraSchedule>;
+type DisplayableMedia = DeviceMediaEvent & Partial<DisplayDeviceMediaEvent>;
 
 const isDiseaseDetected = (media?: DeviceMediaEvent | null) =>
   media?.analysis?.analysisStatus === "DISEASE_DETECTED" ||
   media?.analysis?.status === "DISEASE_DETECTED" ||
   media?.analysis?.diseaseDetected === true;
 
-const normalizeSchedules = (value: unknown): DeviceCameraSchedule[] => {
+const normalizeSchedules = (value: unknown): DisplayableSchedule[] => {
   if (Array.isArray(value)) {
-    return value;
+    return value as DisplayableSchedule[];
   }
 
   if (value && typeof value === "object" && "data" in value) {
     const response = value as { data?: unknown };
     if (Array.isArray(response.data)) {
-      return response.data as DeviceCameraSchedule[];
+      return response.data as DisplayableSchedule[];
     }
     if (response.data && typeof response.data === "object" && "data" in response.data) {
       const envelope = response.data as { data?: unknown };
       if (Array.isArray(envelope.data)) {
-        return envelope.data as DeviceCameraSchedule[];
+        return envelope.data as DisplayableSchedule[];
       }
     }
   }
@@ -96,6 +113,7 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
   const { t } = useTranslation();
   const mediaQuery = useDeviceMedia(deviceId);
   const schedulesQuery = useDeviceCameraSchedules(deviceUid ?? undefined);
+  const captureMutation = useCaptureDeviceImageMutation(deviceId);
   const createScheduleMutation = useCreateDeviceCameraScheduleMutation(
     deviceUid ?? undefined,
   );
@@ -111,8 +129,10 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
   const [uploadEndpoint, setUploadEndpoint] = useState("");
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<DisplayableMedia | null>(null);
 
-  const mediaEvents = mediaQuery.data ?? [];
+  const mediaEvents = (mediaQuery.data ?? []) as DisplayableMedia[];
   const schedules = useMemo(
     () => normalizeSchedules(schedulesQuery.data),
     [schedulesQuery.data],
@@ -276,6 +296,29 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
     }
   };
 
+  const captureAndAnalyze = async () => {
+    if (!deviceUid) {
+      showError(t("iot.devices.media.requiresDeviceUid"));
+      return;
+    }
+
+    try {
+      const capture = await captureMutation.mutateAsync({ quality, resolution });
+      await detectMutation.mutateAsync({
+        deviceUid,
+        force: true,
+      });
+      Alert.alert(
+        t("iot.devices.media.captureAnalyzeSuccessTitle"),
+        t("iot.devices.media.captureAnalyzeSuccess", {
+          requestId: capture.requestId ?? t("iot.common.unknown"),
+        }),
+      );
+    } catch {
+      showError(t("iot.devices.media.captureAnalyzeFailed"));
+    }
+  };
+
   const triggerAnalysis = async (media: DeviceMediaEvent) => {
     if (!deviceUid) {
       showError(t("iot.devices.media.requiresDeviceUid"));
@@ -329,6 +372,29 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
         <LatestMediaCard media={latestUploaded} />
       )}
 
+      <View style={styles.quickActions}>
+        <Pressable
+          disabled={!deviceUid || captureMutation.isPending || detectMutation.isPending}
+          onPress={captureAndAnalyze}
+          style={({ pressed }) => [
+            styles.primaryButton,
+            (!deviceUid || captureMutation.isPending || detectMutation.isPending) && styles.disabledButton,
+            pressed && styles.pressedButton,
+          ]}
+        >
+          {captureMutation.isPending || detectMutation.isPending ? (
+            <ActivityIndicator color="#ffffff" size="small" />
+          ) : (
+            <Camera color="#ffffff" size={16} />
+          )}
+          <Text style={styles.primaryButtonText}>
+            {captureMutation.isPending || detectMutation.isPending
+              ? t("iot.devices.media.capturingAnalyzing")
+              : t("iot.devices.media.captureAndAnalyze")}
+          </Text>
+        </Pressable>
+      </View>
+
       <View style={styles.subsection}>
         <View style={styles.rowBetween}>
           <Text style={styles.subsectionTitle}>{t("iot.cameraSchedules.title")}</Text>
@@ -346,53 +412,35 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
             {schedules.map((schedule) => (
               <View key={schedule.scheduleId ?? schedule.id} style={styles.scheduleItem}>
                 <View style={styles.rowBetween}>
-                  <Text style={styles.scheduleTime}>{schedule.timeOfDay}</Text>
-                  <Pressable
-                    onPress={() => toggleSchedule(schedule)}
-                    style={[
-                      styles.badge,
-                      schedule.enabled ? styles.badgeSuccess : styles.badgeMuted,
-                    ]}
-                  >
-                    <Text style={schedule.enabled ? styles.badgeSuccessText : styles.badgeMutedText}>
-                      {schedule.enabled
-                        ? t("iot.cameraSchedules.enabled")
-                        : t("iot.cameraSchedules.disabled")}
+                  <View>
+                    <Text style={styles.scheduleTime}>{schedule.display?.timeLabel ?? t("iot.common.noData")}</Text>
+                    <Text style={styles.scheduleSummary}>
+                      {schedule.display?.recurrenceLabel ?? t("iot.common.unknown")} ·{" "}
+                      {schedule.display?.resolutionLabel ?? t("iot.common.unknown")} ·{" "}
+                      {schedule.display?.qualityLabel ?? t("iot.common.unknown")}
                     </Text>
-                  </Pressable>
+                  </View>
+                  <ScheduleStatusButton schedule={schedule} onPress={() => toggleSchedule(schedule)} />
                 </View>
                 <View style={styles.scheduleMediaRow}>
                   <MediaThumbnail media={schedule.lastMediaEvent} compact />
                   <View style={styles.scheduleMediaText}>
                     <Text style={styles.metaText}>
                       {t("iot.cameraSchedules.status")}:{" "}
-                      {schedule.status ?? schedule.lastMediaEvent?.status ?? t("iot.common.unknown")}
+                      {schedule.display?.lastMediaStatusLabel ??
+                        schedule.lastMediaEvent?.display?.statusLabel ??
+                        t("iot.common.unknownStatus")}
                     </Text>
                     <Text style={styles.metaText}>
                       {t("iot.devices.media.analysisStatus")}:{" "}
-                      {schedule.lastMediaEvent?.analysis?.analysisStatus ??
-                        t("iot.common.unknown")}
+                      {schedule.lastMediaEvent?.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")}
                     </Text>
                   </View>
                 </View>
-                <Text style={styles.metaText}>
-                  {translateEnum(t, "iot.cameraSchedules.recurrence", schedule.recurrence)}
-                  {" | "}
-                  {translateEnum(t, "iot.cameraSchedules.resolutionOptions", schedule.resolution)}
-                  {" | "}
-                  {translateEnum(t, "iot.cameraSchedules.qualityOptions", schedule.quality)}
-                </Text>
-                <Text style={styles.metaText}>
-                  {t("iot.cameraSchedules.nextRunAt")}: {formatDateTime(schedule.nextRunAt)}
-                </Text>
-                <Text style={styles.metaText}>
-                  {t("iot.cameraSchedules.lastRunAt")}: {formatDateTime(schedule.lastRunAt)}
-                </Text>
-                {schedule.uploadEndpoint ? (
-                  <Text style={styles.metaText}>
-                    {t("iot.cameraSchedules.uploadEndpoint")}: {schedule.uploadEndpoint}
-                  </Text>
-                ) : null}
+                <View style={styles.scheduleStats}>
+                  <ScheduleStat label={t("iot.cameraSchedules.nextRunAt")} value={schedule.display?.nextRunLabel ?? t("iot.common.noData")} />
+                  <ScheduleStat label={t("iot.cameraSchedules.lastRunAt")} value={schedule.display?.lastRunLabel ?? t("iot.common.noData")} />
+                </View>
                 <View style={styles.actionRow}>
                   <Pressable style={styles.inlineAction} onPress={() => runScheduleNow(schedule)}>
                     <Play color="#166534" size={14} />
@@ -425,14 +473,46 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
             ? t("iot.cameraSchedules.editSchedule")
             : t("iot.cameraSchedules.create")}
         </Text>
-        <TextInput
-          autoCapitalize="none"
-          placeholder="08:00:00"
-          placeholderTextColor="#94a3b8"
-          style={styles.input}
-          value={timeOfDay}
-          onChangeText={setTimeOfDay}
-        />
+        <Pressable
+          disabled={!deviceUid || createScheduleMutation.isPending || updateScheduleMutation.isPending}
+          onPress={submitSchedule}
+          style={({ pressed }) => [
+            styles.primaryButton,
+            (!deviceUid || createScheduleMutation.isPending || updateScheduleMutation.isPending) &&
+              styles.disabledButton,
+            pressed && styles.pressedButton,
+          ]}
+        >
+          {createScheduleMutation.isPending || updateScheduleMutation.isPending ? (
+            <ActivityIndicator color="#ffffff" size="small" />
+          ) : null}
+          <Text style={styles.primaryButtonText}>
+            {createScheduleMutation.isPending || updateScheduleMutation.isPending
+              ? t("iot.cameraSchedules.creating")
+              : editingScheduleId
+                ? t("iot.cameraSchedules.saveSchedule")
+                : t("iot.cameraSchedules.addSchedule")}
+          </Text>
+        </Pressable>
+
+        <View style={styles.optionGroup}>
+          <Text style={styles.inputLabel}>{t("iot.cameraSchedules.timeOfDay")}</Text>
+          <Pressable style={styles.timePickerButton} onPress={() => setShowTimePicker(true)}>
+            <Clock color="#166534" size={18} />
+            <Text style={styles.timePickerText}>{timeOfDay.slice(0, 5)}</Text>
+          </Pressable>
+          {showTimePicker ? (
+            <DateTimePicker
+              mode="time"
+              display="spinner"
+              value={toTimeDate(timeOfDay)}
+              onChange={(_event, selectedDate) => {
+                setShowTimePicker(false);
+                if (selectedDate) setTimeOfDay(formatTimeOfDay(selectedDate));
+              }}
+            />
+          ) : null}
+        </View>
 
         <OptionGroup
           label={t("iot.cameraSchedules.recurrenceLabel")}
@@ -464,30 +544,10 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
           value={uploadEndpoint}
           onChangeText={setUploadEndpoint}
         />
+        <Text style={styles.helperText}>{t("iot.cameraSchedules.customUploadHelp")}</Text>
 
         {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
 
-        <Pressable
-          disabled={!deviceUid || createScheduleMutation.isPending || updateScheduleMutation.isPending}
-          onPress={submitSchedule}
-          style={({ pressed }) => [
-            styles.primaryButton,
-            (!deviceUid || createScheduleMutation.isPending || updateScheduleMutation.isPending) &&
-              styles.disabledButton,
-            pressed && styles.pressedButton,
-          ]}
-        >
-          {createScheduleMutation.isPending || updateScheduleMutation.isPending ? (
-            <ActivityIndicator color="#ffffff" size="small" />
-          ) : null}
-          <Text style={styles.primaryButtonText}>
-            {createScheduleMutation.isPending || updateScheduleMutation.isPending
-              ? t("iot.cameraSchedules.creating")
-              : editingScheduleId
-                ? t("iot.cameraSchedules.editSchedule")
-                : t("iot.cameraSchedules.createSchedule")}
-          </Text>
-        </Pressable>
         {editingScheduleId ? (
           <Pressable style={styles.inlineButton} onPress={resetForm}>
             <Text style={styles.inlineButtonText}>{t("common.cancel")}</Text>
@@ -502,44 +562,45 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
         ) : (
           <View style={styles.list}>
             {mediaEvents.map((media) => (
-              <View key={media.id} style={styles.historyItem}>
-                <View style={styles.rowBetween}>
-                  <Text style={styles.historyTitle}>
-                    {translateEnum(t, "iot.devices.media.triggerType", media.triggerType)}
-                  </Text>
-                  <Text style={styles.badge}>
-                    {translateEnum(t, "iot.devices.media.status", media.status)}
-                  </Text>
+              <Pressable
+                key={media.id}
+                onPress={() => setSelectedMedia(media)}
+                style={({ pressed }) => [styles.historyItem, pressed && styles.pressedButton]}
+              >
+                <MediaThumbnail media={media} compact />
+                <View style={styles.historyContent}>
+                  <View style={styles.rowBetween}>
+                    <Text style={styles.historyTitle}>
+                      {media.display?.triggerTypeLabel ?? t("iot.common.unknown")}
+                    </Text>
+                    <Text style={styles.badge}>
+                      {media.display?.statusLabel ?? t("iot.common.unknownStatus")}
+                    </Text>
+                  </View>
+                  <Text style={styles.metaText}>{media.display?.timestampLabel ?? t("iot.common.noData")}</Text>
+                  <MediaAnalysis media={media} compact />
+                  <View style={styles.viewDetailRow}>
+                    <Eye color="#166534" size={14} />
+                    <Text style={styles.inlineActionText}>{t("iot.devices.media.viewDetail")}</Text>
+                  </View>
                 </View>
-                <Text style={styles.metaText}>{formatDateTime(getMediaTimestamp(media))}</Text>
-                <MediaAnalysis media={media} />
-                <Pressable
-                  disabled={detectMutation.isPending || (!media.fileId && !media.fileUrl)}
-                  onPress={() => triggerAnalysis(media)}
-                  style={({ pressed }) => [
-                    styles.inlineAction,
-                    (detectMutation.isPending || (!media.fileId && !media.fileUrl)) &&
-                      styles.disabledButton,
-                    pressed && styles.pressedButton,
-                  ]}
-                >
-                  <Wand2 color="#166534" size={14} />
-                  <Text style={styles.inlineActionText}>
-                    {detectMutation.isPending
-                      ? t("iot.devices.media.analyzing")
-                      : t("iot.devices.media.triggerAnalysis")}
-                  </Text>
-                </Pressable>
-              </View>
+              </Pressable>
             ))}
           </View>
         )}
       </View>
+
+      <MediaDetailModal
+        media={selectedMedia}
+        analyzing={detectMutation.isPending}
+        onAnalyze={triggerAnalysis}
+        onClose={() => setSelectedMedia(null)}
+      />
     </View>
   );
 }
 
-function LatestMediaCard({ media }: { media?: DeviceMediaEvent | null }) {
+function LatestMediaCard({ media }: { media?: DisplayableMedia | null }) {
   const { t } = useTranslation();
 
   return (
@@ -561,7 +622,7 @@ function LatestMediaCard({ media }: { media?: DeviceMediaEvent | null }) {
           <>
             <Text style={styles.metaText}>
               {t("iot.cameraSchedules.status")}:{" "}
-              {translateEnum(t, "iot.devices.media.status", media.status)}
+              {media.display?.statusLabel ?? t("iot.common.unknownStatus")}
             </Text>
             <MediaAnalysis media={media} />
           </>
@@ -576,9 +637,11 @@ function LatestMediaCard({ media }: { media?: DeviceMediaEvent | null }) {
 function MediaThumbnail({
   media,
   compact = false,
+  large = false,
 }: {
-  media?: DeviceMediaEvent | null;
+  media?: DisplayableMedia | null;
   compact?: boolean;
+  large?: boolean;
 }) {
   const { t } = useTranslation();
   const directUrl = media?.fileUrl ?? media?.analysis?.fileUrl ?? null;
@@ -587,7 +650,15 @@ function MediaThumbnail({
 
   if (!uri) {
     return (
-      <View style={compact ? styles.thumbnailPlaceholderSmall : styles.thumbnailPlaceholder}>
+      <View
+        style={
+          large
+            ? styles.thumbnailPlaceholderLarge
+            : compact
+              ? styles.thumbnailPlaceholderSmall
+              : styles.thumbnailPlaceholder
+        }
+      >
         {imageUrlQuery.isLoading ? (
           <ActivityIndicator color="#15803d" size="small" />
         ) : (
@@ -598,10 +669,16 @@ function MediaThumbnail({
     );
   }
 
-  return <Image source={{ uri }} style={compact ? styles.thumbnailSmall : styles.thumbnail} />;
+  return (
+    <Image
+      resizeMode={large ? "contain" : "cover"}
+      source={{ uri }}
+      style={large ? styles.thumbnailLarge : compact ? styles.thumbnailSmall : styles.thumbnail}
+    />
+  );
 }
 
-function MediaAnalysis({ media }: { media: DeviceMediaEvent }) {
+function MediaAnalysis({ media, compact = false }: { media: DisplayableMedia; compact?: boolean }) {
   const { t } = useTranslation();
   const analysis = media.analysis;
   const status = analysis?.analysisStatus ?? analysis?.status;
@@ -614,20 +691,116 @@ function MediaAnalysis({ media }: { media: DeviceMediaEvent }) {
     <View style={styles.analysisBox}>
       <Text style={styles.metaText}>
         {t("iot.devices.media.analysisStatus")}:{" "}
-        {translateEnum(t, "iot.devices.media.analysisStatusOptions", status)}
+        {media.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")}
       </Text>
-      {analysis?.diseaseType || analysis?.diseaseName ? (
+      {!compact && (analysis?.diseaseType || analysis?.diseaseName) ? (
         <Text style={styles.metaText}>
           {t("iot.devices.media.diseaseType")}:{" "}
-          {analysis.diseaseType ?? analysis.diseaseName}
+          {media.display?.analysis.diseaseLabel ?? t("iot.common.unknownValue")}
         </Text>
       ) : null}
-      {analysis?.severity ? (
+      {!compact && analysis?.severity ? (
         <Text style={styles.metaText}>
           {t("iot.devices.media.severity")}:{" "}
-          {translateEnum(t, "iot.alerts.severity", analysis.severity)}
+          {media.display?.analysis.severityLabel ?? t("iot.common.unknownStatus")}
         </Text>
       ) : null}
+    </View>
+  );
+}
+
+function ScheduleStatusButton({
+  schedule,
+  onPress,
+}: {
+  schedule: DisplayableSchedule;
+  onPress: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.statusPill, schedule.enabled ? styles.statusPillOn : styles.statusPillOff]}
+    >
+      <Text style={schedule.enabled ? styles.statusPillOnText : styles.statusPillOffText}>
+        {schedule.display?.enabledLabel ??
+          (schedule.enabled ? t("iot.cameraSchedules.enabled") : t("iot.cameraSchedules.disabled"))}
+      </Text>
+    </Pressable>
+  );
+}
+
+function ScheduleStat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.scheduleStat}>
+      <Text style={styles.scheduleStatLabel}>{label}</Text>
+      <Text style={styles.scheduleStatValue}>{value}</Text>
+    </View>
+  );
+}
+
+function MediaDetailModal({
+  media,
+  analyzing,
+  onAnalyze,
+  onClose,
+}: {
+  media: DisplayableMedia | null;
+  analyzing: boolean;
+  onAnalyze: (media: DeviceMediaEvent) => void;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  if (!media) return null;
+
+  return (
+    <Modal animationType="slide" visible={Boolean(media)} onRequestClose={onClose}>
+      <ScrollView style={styles.modalScreen} contentContainerStyle={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <View>
+            <Text style={styles.title}>{t("iot.devices.media.detailTitle")}</Text>
+            <Text style={styles.subtitle}>{media.display?.timestampLabel ?? t("iot.common.noData")}</Text>
+          </View>
+          <Pressable style={styles.closeButton} onPress={onClose}>
+            <X color="#0f172a" size={20} />
+          </Pressable>
+        </View>
+
+        <MediaThumbnail media={media} large />
+
+        <View style={styles.detailCard}>
+          <InfoLine label={t("iot.devices.media.captureTime")} value={media.display?.capturedAt ?? media.display?.timestampLabel ?? t("iot.common.noData")} />
+          <InfoLine label={t("iot.devices.media.uploadStatus")} value={media.display?.statusLabel ?? t("iot.common.unknownStatus")} />
+          <InfoLine label={t("iot.devices.media.analysisStatus")} value={media.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")} />
+          <InfoLine label={t("iot.devices.media.diseaseType")} value={media.display?.analysis.diseaseLabel ?? t("iot.common.unknownValue")} />
+          <InfoLine label={t("iot.devices.media.severity")} value={media.display?.analysis.severityLabel ?? t("iot.common.unknownStatus")} />
+          <InfoLine label={t("iot.devices.media.fileSize")} value={media.display?.sizeLabel ?? t("iot.common.noData")} />
+        </View>
+
+        <Pressable
+          disabled={analyzing || (!media.fileId && !media.fileUrl)}
+          onPress={() => onAnalyze(media)}
+          style={({ pressed }) => [
+            styles.primaryButton,
+            (analyzing || (!media.fileId && !media.fileUrl)) && styles.disabledButton,
+            pressed && styles.pressedButton,
+          ]}
+        >
+          <Wand2 color="#ffffff" size={16} />
+          <Text style={styles.primaryButtonText}>
+            {analyzing ? t("iot.devices.media.analyzing") : t("iot.devices.media.triggerAnalysis")}
+          </Text>
+        </Pressable>
+      </ScrollView>
+    </Modal>
+  );
+}
+
+function InfoLine({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.infoLine}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
@@ -797,11 +970,19 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
   },
+  helperText: {
+    color: "#64748b",
+    fontSize: 12,
+    lineHeight: 18,
+  },
   historyItem: {
+    alignItems: "center",
     backgroundColor: "#ffffff",
     borderColor: "#e2e8f0",
     borderRadius: 16,
     borderWidth: 1,
+    flexDirection: "row",
+    gap: 10,
     padding: 12,
   },
   historyTitle: {
@@ -849,6 +1030,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "900",
   },
+  infoLabel: {
+    color: "#64748b",
+    flex: 1,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  infoLine: {
+    alignItems: "flex-start",
+    borderBottomColor: "rgba(148, 163, 184, 0.16)",
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    paddingVertical: 9,
+  },
+  infoValue: {
+    color: "#0f172a",
+    flex: 1.2,
+    fontSize: 12,
+    fontWeight: "900",
+    textAlign: "right",
+  },
   latestCard: {
     backgroundColor: "#ffffff",
     borderColor: "#dcfce7",
@@ -881,6 +1083,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
   },
+  modalContent: {
+    gap: 14,
+    padding: 18,
+    paddingTop: 54,
+  },
+  modalHeader: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalScreen: {
+    backgroundColor: "#f8fafc",
+    flex: 1,
+  },
   muted: {
     color: "#64748b",
     fontSize: 13,
@@ -906,6 +1122,9 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 14,
     fontWeight: "900",
+  },
+  quickActions: {
+    marginTop: 12,
   },
   rowBetween: {
     alignItems: "center",
@@ -934,6 +1153,34 @@ const styles = StyleSheet.create({
   },
   scheduleMediaText: {
     flex: 1,
+  },
+  scheduleStat: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 12,
+    flex: 1,
+    padding: 10,
+  },
+  scheduleStatLabel: {
+    color: "#64748b",
+    fontSize: 10,
+    fontWeight: "900",
+  },
+  scheduleStats: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 6,
+  },
+  scheduleStatValue: {
+    color: "#0f172a",
+    fontSize: 11,
+    fontWeight: "900",
+    marginTop: 4,
+  },
+  scheduleSummary: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "800",
+    marginTop: 2,
   },
   secondaryButton: {
     alignItems: "center",
@@ -968,11 +1215,33 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
   },
+  closeButton: {
+    backgroundColor: "#f1f5f9",
+    borderRadius: 999,
+    padding: 10,
+  },
+  detailCard: {
+    backgroundColor: "#ffffff",
+    borderColor: "#e2e8f0",
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+  },
+  historyContent: {
+    flex: 1,
+  },
   thumbnail: {
     backgroundColor: "#e2e8f0",
     borderRadius: 14,
     height: 116,
     width: 116,
+  },
+  thumbnailLarge: {
+    alignSelf: "stretch",
+    backgroundColor: "#e2e8f0",
+    borderRadius: 18,
+    height: 260,
+    width: "100%",
   },
   thumbnailSmall: {
     backgroundColor: "#e2e8f0",
@@ -991,6 +1260,18 @@ const styles = StyleSheet.create({
     padding: 10,
     width: 116,
   },
+  thumbnailPlaceholderLarge: {
+    alignItems: "center",
+    alignSelf: "stretch",
+    backgroundColor: "#f1f5f9",
+    borderColor: "#e2e8f0",
+    borderRadius: 18,
+    borderWidth: 1,
+    height: 260,
+    justifyContent: "center",
+    padding: 16,
+    width: "100%",
+  },
   thumbnailPlaceholderSmall: {
     alignItems: "center",
     backgroundColor: "#f1f5f9",
@@ -1008,10 +1289,53 @@ const styles = StyleSheet.create({
     marginTop: 6,
     textAlign: "center",
   },
+  timePickerButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#bbf7d0",
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  timePickerText: {
+    color: "#0f172a",
+    fontSize: 16,
+    fontWeight: "900",
+  },
   title: {
     color: "#0f172a",
     fontSize: 18,
     fontWeight: "900",
+  },
+  statusPill: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  statusPillOff: {
+    backgroundColor: "#f1f5f9",
+  },
+  statusPillOffText: {
+    color: "#64748b",
+    fontSize: 11,
+    fontWeight: "900",
+  },
+  statusPillOn: {
+    backgroundColor: "#dcfce7",
+  },
+  statusPillOnText: {
+    color: "#166534",
+    fontSize: 11,
+    fontWeight: "900",
+  },
+  viewDetailRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 6,
+    marginTop: 6,
   },
   warningBox: {
     backgroundColor: "#fff7ed",

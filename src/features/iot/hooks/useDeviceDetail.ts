@@ -1,6 +1,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { collectorApi } from "../api/collector.api";
+import { withMediaDisplay } from "../utils/iotDisplay";
 import { iotKeys } from "./useDevices";
 
 export const deviceDetailQueryOptions = (deviceId?: string) =>
@@ -20,7 +21,13 @@ export const latestReadingsQueryOptions = (deviceId?: string) =>
   });
 
 export const useDeviceDetail = (deviceId?: string) => {
-  return useQuery(deviceDetailQueryOptions(deviceId));
+  return useQuery({
+    ...deviceDetailQueryOptions(deviceId),
+    select: (detail) => ({
+      ...detail,
+      latestMedia: detail.latestMedia ? withMediaDisplay(detail.latestMedia) : detail.latestMedia,
+    }),
+  });
 };
 
 export const useDeviceLatestReadings = (deviceId?: string) => {

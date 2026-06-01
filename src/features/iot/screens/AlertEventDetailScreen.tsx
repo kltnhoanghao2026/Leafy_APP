@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { ArrowLeft, RefreshCw } from "lucide-react-native";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -20,9 +21,13 @@ import {
   useAlertEventDetail,
   useResolveAlertMutation,
 } from "../hooks/useAlerts";
-import { formatDateTime } from "../utils/deviceLabels";
+import { useFarmPlots } from "@/src/features/farm";
+import { farmZonesQueryOptions } from "@/src/features/farm/hooks/useFarmZones";
+import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
+import { useMyDevices } from "../hooks/useDevices";
+import type { DisplayAlertEvent } from "../utils/iotDisplay";
+import { withAlertContextDisplay } from "../utils/iotDisplay";
 import { getOnboardingErrorMessage } from "../utils/onboardingErrors";
-import { getSensorLabel, getSensorUnit } from "../utils/sensorLabels";
 
 const getParamValue = (value?: string | string[]): string | undefined => {
   if (Array.isArray(value)) {
@@ -38,13 +43,34 @@ export function AlertEventDetailScreen() {
   const params = useLocalSearchParams<{ alertId?: string | string[] }>();
   const alertId = getParamValue(params.alertId);
   const alertQuery = useAlertEventDetail(alertId);
+  const profileQuery = useQuery(getMyProfileQueryOptions());
+  const devicesQuery = useMyDevices({ page: 0, size: 100 });
+  const farmsQuery = useFarmPlots(profileQuery.data?.id);
+  const allZoneQueries = useQueries({
+    queries:
+      farmsQuery.data?.map((farm) => ({
+        ...farmZonesQueryOptions(farm.id),
+        enabled: Boolean(farm.id),
+      })) ?? [],
+  });
   const acknowledgeMutation = useAcknowledgeAlertMutation();
   const resolveMutation = useResolveAlertMutation();
   const [message, setMessage] = useState<string | null>(null);
-  const alert = alertQuery.data;
-  const sensorCode = alert?.sensorCode || alert?.alertType || undefined;
-  const value = alert?.triggerValue ?? alert?.readingValue;
-  const unit = getSensorUnit(sensorCode, alert?.unit);
+  const zones = useMemo(() => {
+    const byId = new Map<string, NonNullable<(typeof allZoneQueries)[number]["data"]>[number]>();
+    allZoneQueries.forEach((query) => {
+      query.data?.forEach((zone) => byId.set(zone.id, zone));
+    });
+    return Array.from(byId.values());
+  }, [allZoneQueries]);
+  const alert = useMemo(() => {
+    if (!alertQuery.data) return undefined;
+    return withAlertContextDisplay(alertQuery.data, {
+      devices: devicesQuery.data?.items,
+      farms: farmsQuery.data,
+      zones,
+    }) as typeof alertQuery.data & Partial<DisplayAlertEvent>;
+  }, [alertQuery.data, devicesQuery.data?.items, farmsQuery.data, zones]);
 
   const acknowledge = async () => {
     if (!alertId) return;
@@ -129,32 +155,28 @@ export function AlertEventDetailScreen() {
       ) : (
         <>
           <View style={styles.card}>
-            <Text style={styles.message}>{alert.message}</Text>
+            <Text style={styles.message}>{alert.display?.title ?? alert.display?.message ?? t("iot.alerts.notificationBody")}</Text>
             <InfoLine
               label={t("iot.metrics.zone.sensor")}
-              value={getSensorLabel(sensorCode, alert.sensorName)}
+              value={alert.display?.sensorLabel ?? t("iot.common.unknown")}
             />
             <InfoLine
               label={t("iot.alerts.readingValue")}
-              value={
-                typeof value === "number"
-                  ? `${value.toFixed(1)}${unit ? ` ${unit}` : ""}`
-                  : t("iot.common.none")
-              }
+              value={alert.display?.valueLabel ?? t("iot.common.unknownValue")}
             />
             <InfoLine
               label={t("iot.alerts.thresholdMinMax")}
-              value={`${alert.thresholdMin ?? "-"} / ${alert.thresholdMax ?? "-"}`}
+              value={alert.display?.thresholdLabel ?? t("iot.common.unknownValue")}
             />
-            <InfoLine label={t("iot.common.device")} value={alert.deviceName || alert.deviceId || "-"} />
-            <InfoLine label={t("iot.common.zone")} value={alert.zoneId || "-"} />
-            <InfoLine label={t("iot.common.farm")} value={alert.farmPlotId || "-"} />
+            <InfoLine label={t("iot.common.device")} value={alert.display?.deviceLabel ?? t("iot.common.unknownDevice")} />
+            <InfoLine label={t("iot.common.zone")} value={alert.display?.zoneLabel ?? t("iot.common.unknownZone")} />
+            <InfoLine label={t("iot.common.farm")} value={alert.display?.farmLabel ?? t("iot.common.unknownFarm")} />
             <InfoLine
               label={t("iot.alerts.openedAt")}
-              value={formatDateTime(alert.openedAt || alert.triggeredAt || alert.createdAt)}
+              value={alert.display?.openedAtLabel ?? t("iot.common.noData")}
             />
-            <InfoLine label={t("iot.alerts.acknowledgedAt")} value={formatDateTime(alert.acknowledgedAt)} />
-            <InfoLine label={t("iot.alerts.resolvedAt")} value={formatDateTime(alert.resolvedAt)} />
+            <InfoLine label={t("iot.alerts.acknowledgedAt")} value={alert.display?.acknowledgedAtLabel ?? t("iot.common.noData")} />
+            <InfoLine label={t("iot.alerts.resolvedAt")} value={alert.display?.resolvedAtLabel ?? t("iot.common.noData")} />
           </View>
 
           {message ? (

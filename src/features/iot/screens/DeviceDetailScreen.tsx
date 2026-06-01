@@ -1,22 +1,38 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, BarChart3, Bell, SlidersHorizontal } from "lucide-react-native";
+import {
+  ArrowLeft,
+  BarChart3,
+  Bell,
+  ChevronRight,
+  MoreHorizontal,
+  SlidersHorizontal,
+} from "lucide-react-native";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  type LayoutChangeEvent,
+  type ScrollView as ScrollViewType,
 } from "react-native";
 
+import { useFarmPlots } from "@/src/features/farm";
+import { farmZonesQueryOptions } from "@/src/features/farm/hooks/useFarmZones";
+import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
+import { DeviceActionsSheet } from "../components/DeviceActionsSheet";
 import { DeviceReadingList } from "../components/DeviceReadingList";
 import { DeviceChartsPanel } from "../components/DeviceChartsPanel";
+import { EditDeviceSheet } from "../components/EditDeviceSheet";
 import { DeviceMediaPanel } from "../components/DeviceMediaPanel";
+import { ReleaseDeviceConfirmDialog } from "../components/ReleaseDeviceConfirmDialog";
 import { DeviceStatusBadge } from "../components/DeviceStatusBadge";
 import { RangeSelector } from "../components/RangeSelector";
 import { SensorChartCard } from "../components/SensorChartCard";
@@ -26,14 +42,18 @@ import {
   useDeviceDetail,
   useDeviceLatestReadings,
 } from "../hooks/useDeviceDetail";
-import { iotKeys } from "../hooks/useDevices";
+import {
+  iotKeys,
+  useReleaseDeviceMutation,
+  useUpdateDeviceMutation,
+} from "../hooks/useDevices";
 import {
   formatDateTime,
   formatDeviceCode,
   getProvisioningStatusLabel,
 } from "../utils/deviceLabels";
 import { useDeviceChart } from "../hooks/useTelemetry";
-import type { ChartRange, SensorCode } from "../types";
+import type { ChartRange, SensorCode, UpdateDeviceRequest } from "../types";
 
 const getParamValue = (value?: string | string[]): string | undefined => {
   if (Array.isArray(value)) {
@@ -69,21 +89,85 @@ const getFriendlyError = (error: unknown, t: ReturnType<typeof useTranslation>["
   return t("iot.devices.detail.errorNetwork");
 };
 
+const getDeviceManagementError = (
+  error: unknown,
+  t: ReturnType<typeof useTranslation>["t"],
+  action: "edit" | "release",
+) => {
+  const status =
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof error.response === "object" &&
+    error.response !== null &&
+    "status" in error.response
+      ? error.response.status
+      : undefined;
+
+  if (status === 403) return t("iot.devices.release.forbidden");
+  if (status === 404) return t("iot.devices.edit.notFound");
+  if (status === 400) return t("iot.devices.edit.nameRequired");
+  return t(`iot.devices.${action}.error`);
+};
+
+const getDeviceLabel = (
+  device?: { deviceName?: string | null; deviceCode?: string | null } | null,
+  fallback = "Selected device",
+) => device?.deviceName?.trim() || device?.deviceCode?.trim() || fallback;
+
 export function DeviceDetailScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const scrollRef = useRef<ScrollViewType>(null);
+  const chartSectionY = useRef(0);
   const params = useLocalSearchParams<{ deviceId?: string | string[] }>();
   const deviceId = getParamValue(params.deviceId);
+  const profileQuery = useQuery(getMyProfileQueryOptions());
+  const farmsQuery = useFarmPlots(profileQuery.data?.id);
+  const allZoneQueries = useQueries({
+    queries:
+      farmsQuery.data?.map((farm) => ({
+        ...farmZonesQueryOptions(farm.id),
+        enabled: Boolean(farm.id),
+      })) ?? [],
+  });
   const detailQuery = useDeviceDetail(deviceId);
   const readingsQuery = useDeviceLatestReadings(deviceId);
   const [selectedSensor, setSelectedSensor] = useState<SensorCode>("AIR_TEMP");
   const [selectedRange, setSelectedRange] = useState<ChartRange>("H24");
+  const [actionsVisible, setActionsVisible] = useState(false);
+  const [editVisible, setEditVisible] = useState(false);
+  const [releaseVisible, setReleaseVisible] = useState(false);
 
   const device = detailQuery.data;
   const readings = readingsQuery.data ?? device?.latestReadings ?? [];
   const chartQuery = useDeviceChart(deviceId, selectedSensor, selectedRange);
+  const updateDeviceMutation = useUpdateDeviceMutation();
+  const releaseDeviceMutation = useReleaseDeviceMutation();
   const isRefreshing = detailQuery.isRefetching || readingsQuery.isRefetching;
+  const farmLabel = useMemo(() => {
+    if (!device?.farmPlotId) return t("iot.common.noFarmMetadata");
+    const farm = farmsQuery.data?.find((item) => item.id === device.farmPlotId);
+    return farm?.name || farm?.code || t("iot.common.assigned");
+  }, [device?.farmPlotId, farmsQuery.data, t]);
+  const zoneLabel = useMemo(() => {
+    if (!device?.zoneId) return t("iot.common.noZoneMetadata");
+    for (const query of allZoneQueries) {
+      const zone = query.data?.find((item) => item.id === device.zoneId);
+      if (zone) return zone.zoneName || zone.zoneCode || t("iot.common.assigned");
+    }
+    return t("iot.common.assigned");
+  }, [allZoneQueries, device?.zoneId, t]);
+  const deviceTypeLabel = device?.deviceType?.trim() || t("iot.devices.defaultName");
+
+  const scrollToCharts = () => {
+    scrollRef.current?.scrollTo({ y: Math.max(chartSectionY.current - 12, 0), animated: true });
+  };
+
+  const captureChartSection = (event: LayoutChangeEvent) => {
+    chartSectionY.current = event.nativeEvent.layout.y;
+  };
 
   useEffect(() => {
     const firstSensor = readings[0]?.sensorCode;
@@ -103,6 +187,33 @@ export function DeviceDetailScreen() {
     }
     if (deviceId) {
       queryClient.invalidateQueries({ queryKey: iotKeys.deviceMedia(deviceId) });
+    }
+  };
+
+  const updateDevice = async (payload: UpdateDeviceRequest) => {
+    if (!deviceId) return;
+    try {
+      await updateDeviceMutation.mutateAsync({ deviceId, payload });
+      setEditVisible(false);
+      Alert.alert(t("iot.devices.edit.success"));
+      detailQuery.refetch();
+    } catch (error) {
+      throw new Error(getDeviceManagementError(error, t, "edit"));
+    }
+  };
+
+  const releaseDevice = async () => {
+    if (!deviceId) return;
+    try {
+      await releaseDeviceMutation.mutateAsync({ deviceId });
+      setReleaseVisible(false);
+      Alert.alert(t("iot.devices.release.success"));
+      router.replace("/iot");
+    } catch (error) {
+      Alert.alert(
+        t("iot.devices.release.error"),
+        getDeviceManagementError(error, t, "release"),
+      );
     }
   };
 
@@ -127,7 +238,7 @@ export function DeviceDetailScreen() {
     );
   }
 
-  if (detailQuery.isError || !device) {
+  if ((detailQuery.isError && !device) || !device) {
     return (
       <View style={styles.screen}>
         <Pressable style={styles.backButton} onPress={() => router.back()}>
@@ -147,6 +258,7 @@ export function DeviceDetailScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl
@@ -166,13 +278,22 @@ export function DeviceDetailScreen() {
         <View style={styles.heroHeader}>
           <View style={styles.heroText}>
             <Text style={styles.kicker}>{t("iot.devices.detail.kicker")}</Text>
-            <Text style={styles.title}>{device.deviceName || t("iot.devices.defaultName")}</Text>
+            <Text style={styles.title}>{device.deviceName || device.deviceCode || t("iot.common.selectedDevice")}</Text>
             <Text style={styles.code}>
-              {formatDeviceCode(device.deviceCode || device.deviceUid)}
+              {device.deviceCode ? formatDeviceCode(device.deviceCode) : t("iot.devices.noCode")}
             </Text>
           </View>
           <DeviceStatusBadge status={device.status} />
         </View>
+
+        <Pressable
+          accessibilityLabel={t("iot.devices.actions.more")}
+          onPress={() => setActionsVisible(true)}
+          style={styles.manageButton}
+        >
+          <MoreHorizontal color="#166534" size={20} />
+          <Text style={styles.manageButtonText}>{t("iot.devices.actions.more")}</Text>
+        </Pressable>
 
         {device.status !== "ONLINE" ? (
           <View style={styles.offlineGuideWrap}>
@@ -184,25 +305,29 @@ export function DeviceDetailScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t("iot.devices.detail.basicInfo")}</Text>
         <View style={styles.infoGrid}>
-          <InfoCard label={t("iot.devices.detail.type")} value={device.deviceType || t("iot.common.unknown")} />
+          <InfoCard
+            label={t("iot.devices.detail.type")}
+            value={deviceTypeLabel}
+          />
           <InfoCard
             label={t("iot.devices.detail.connection")}
             value={getProvisioningStatusLabel(device.provisioningStatus)}
           />
-          <InfoCard label={t("iot.common.farm")} value={device.farmPlotId || t("iot.common.unassigned")} />
-          <InfoCard label={t("iot.common.zone")} value={device.zoneId || t("iot.common.unassigned")} />
+          <InfoCard label={t("iot.common.farm")} value={farmLabel} />
+          <InfoCard label={t("iot.common.zone")} value={zoneLabel} />
+          <InfoCard label={t("iot.devices.detail.firmware")} value={device.firmwareVersion ?? t("iot.common.noData")} />
           <InfoCard label={t("iot.devices.detail.lastSeenAt")} value={formatDateTime(device.lastSeenAt)} />
         </View>
       </View>
 
-      <View style={styles.section}>
+      <View style={styles.section} onLayout={captureChartSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t("iot.devices.detail.latestReadings")}</Text>
           {readingsQuery.isFetching ? (
             <ActivityIndicator color="#15803d" size="small" />
           ) : null}
         </View>
-        {readingsQuery.isError ? (
+        {readingsQuery.isError && !readings.length ? (
           <View style={styles.warningBox}>
             <Text style={styles.warningText}>
               {t("iot.devices.detail.readingsLoadFailed")}
@@ -229,7 +354,7 @@ export function DeviceDetailScreen() {
         </View>
         <SensorChartCard
           chart={chartQuery.data}
-          error={chartQuery.isError}
+          error={chartQuery.isError && !chartQuery.data}
           loading={chartQuery.isFetching}
           range={selectedRange}
         />
@@ -255,6 +380,7 @@ export function DeviceDetailScreen() {
           icon={<BarChart3 color="#64748b" size={18} />}
           title={t("iot.devices.detail.chartAction")}
           subtitle={t("iot.devices.detail.chartActionDescription")}
+          onPress={scrollToCharts}
         />
         <PlaceholderAction
           icon={<Bell color="#64748b" size={18} />}
@@ -268,6 +394,33 @@ export function DeviceDetailScreen() {
           }
         />
       </View>
+      <DeviceActionsSheet
+        deviceLabel={getDeviceLabel(device, t("iot.common.selectedDevice"))}
+        onClose={() => setActionsVisible(false)}
+        onEdit={() => {
+          setActionsVisible(false);
+          setEditVisible(true);
+        }}
+        onRelease={() => {
+          setActionsVisible(false);
+          setReleaseVisible(true);
+        }}
+        visible={actionsVisible}
+      />
+      <EditDeviceSheet
+        device={device}
+        isSubmitting={updateDeviceMutation.isPending}
+        onClose={() => setEditVisible(false)}
+        onSubmit={updateDevice}
+        visible={editVisible}
+      />
+      <ReleaseDeviceConfirmDialog
+        deviceLabel={getDeviceLabel(device, t("iot.common.selectedDevice"))}
+        isSubmitting={releaseDeviceMutation.isPending}
+        onCancel={() => setReleaseVisible(false)}
+        onConfirm={releaseDevice}
+        visible={releaseVisible}
+      />
     </ScrollView>
   );
 }
@@ -301,11 +454,12 @@ function PlaceholderAction({
         pressed && styles.placeholderActionPressed,
       ]}
     >
-      {icon}
+      <View style={styles.placeholderIcon}>{icon}</View>
       <View style={styles.placeholderTextWrap}>
         <Text style={styles.placeholderTitle}>{title}</Text>
         <Text style={styles.placeholderSubtitle}>{subtitle}</Text>
       </View>
+      <ChevronRight color="#16a34a" size={18} />
     </Pressable>
   );
 }
@@ -415,22 +569,52 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 12,
   },
+  manageButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#dcfce7",
+    borderColor: "#bbf7d0",
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  manageButtonText: {
+    color: "#166534",
+    fontSize: 13,
+    fontWeight: "900",
+  },
   offlineGuideWrap: {
     marginTop: 16,
   },
   placeholderAction: {
     alignItems: "center",
-    backgroundColor: "#f1f5f9",
-    borderColor: "#e2e8f0",
+    backgroundColor: "#ffffff",
+    borderColor: "#bbf7d0",
     borderRadius: 16,
     borderWidth: 1,
     flexDirection: "row",
-    gap: 10,
-    opacity: 0.82,
+    gap: 12,
     padding: 14,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
   },
   placeholderActionPressed: {
-    opacity: 0.75,
+    opacity: 0.78,
+    transform: [{ scale: 0.99 }],
+  },
+  placeholderIcon: {
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    borderRadius: 12,
+    height: 38,
+    justifyContent: "center",
+    width: 38,
   },
   placeholderSubtitle: {
     color: "#64748b",
@@ -441,9 +625,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   placeholderTitle: {
-    color: "#334155",
-    fontSize: 14,
-    fontWeight: "800",
+    color: "#0f172a",
+    fontSize: 15,
+    fontWeight: "900",
   },
   retryButton: {
     alignSelf: "center",

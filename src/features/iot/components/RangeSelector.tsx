@@ -10,11 +10,10 @@ type RangeSelectorProps = {
 };
 
 const rangeLabelKeys: Record<ChartRange, string> = {
+  H1: "iot.metrics.ranges.H1",
   H24: "iot.metrics.ranges.H24",
-  D3: "iot.metrics.ranges.D3",
   D7: "iot.metrics.ranges.D7",
   D30: "iot.metrics.ranges.D30",
-  D90: "iot.metrics.ranges.D90",
 };
 
 export function RangeSelector({ value, onChange }: RangeSelectorProps) {

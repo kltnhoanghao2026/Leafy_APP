@@ -20,6 +20,13 @@ const chartWidth = 320;
 const chartHeight = 170;
 const padding = 28;
 
+const rangeLabelKeys: Record<ChartRange, string> = {
+  H1: "iot.metrics.ranges.H1",
+  H24: "iot.metrics.ranges.H24",
+  D7: "iot.metrics.ranges.D7",
+  D30: "iot.metrics.ranges.D30",
+};
+
 export function SensorChartCard({
   chart,
   range,
@@ -60,7 +67,7 @@ export function SensorChartCard({
               : t("iot.devices.detail.sensorChart")}
           </Text>
           <Text style={styles.subtitle}>
-            {t("iot.metrics.zone.rangeLabel", { range })}
+            {t("iot.metrics.zone.rangeLabel", { range: t(rangeLabelKeys[range]) })}
           </Text>
         </View>
         {loading ? <ActivityIndicator color="#15803d" /> : null}

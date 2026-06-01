@@ -1,7 +1,7 @@
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { collectorApi } from "../api/collector.api";
-import type { MyDevicesParams } from "../types";
+import type { MyDevicesParams, UpdateDeviceRequest } from "../types";
 
 export const iotKeys = {
   all: ["iot"] as const,
@@ -50,4 +50,42 @@ export const myDevicesQueryOptions = (params?: MyDevicesParams) =>
 
 export const useMyDevices = (params?: MyDevicesParams) => {
   return useQuery(myDevicesQueryOptions(params));
+};
+
+export const useUpdateDeviceMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      deviceId,
+      payload,
+    }: {
+      deviceId: string;
+      payload: UpdateDeviceRequest;
+    }) => collectorApi.updateDevice(deviceId, payload),
+    onSuccess: (_device, variables) => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.all });
+      queryClient.invalidateQueries({ queryKey: iotKeys.deviceDetail(variables.deviceId) });
+    },
+  });
+};
+
+export const useReleaseDeviceMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ deviceId }: { deviceId: string }) =>
+      collectorApi.releaseDevice(deviceId),
+    onSuccess: (device, variables) => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.all });
+      queryClient.invalidateQueries({ queryKey: iotKeys.deviceDetail(variables.deviceId) });
+      queryClient.invalidateQueries({ queryKey: iotKeys.deviceConfig(variables.deviceId) });
+      queryClient.invalidateQueries({ queryKey: iotKeys.deviceMedia(variables.deviceId) });
+      if (device.deviceUid) {
+        queryClient.invalidateQueries({
+          queryKey: iotKeys.deviceCameraSchedules(device.deviceUid),
+        });
+      }
+    },
+  });
 };

@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { Check, ChevronDown, X } from "lucide-react-native";
+import { useMemo, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { PickerModal } from "@/src/components/ui/PickerModal";
 import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
 import { useFarmPlots, useFarmZones } from "@/src/features/farm";
 import type { FarmPlotResponse, FarmZoneResponse } from "@/src/features/farm";
@@ -16,13 +19,31 @@ export type FarmZoneSelection = {
 type FarmZonePickerProps = {
   value: FarmZoneSelection;
   onChange: (value: FarmZoneSelection) => void;
+  title?: string;
 };
 
-export function FarmZonePicker({ value, onChange }: FarmZonePickerProps) {
+type ActivePicker = "farm" | "zone" | null;
+
+export function FarmZonePicker({
+  value,
+  onChange,
+  title,
+}: FarmZonePickerProps) {
   const { t } = useTranslation();
+  const [activePicker, setActivePicker] = useState<ActivePicker>(null);
   const profileQuery = useQuery(getMyProfileQueryOptions());
   const plotsQuery = useFarmPlots(profileQuery.data?.id);
   const zonesQuery = useFarmZones(value.farmPlotId);
+  const plots = plotsQuery.data ?? [];
+  const zones = zonesQuery.data ?? [];
+  const selectedPlot = useMemo(
+    () => plots.find((plot) => plot.id === value.farmPlotId),
+    [plots, value.farmPlotId],
+  );
+  const selectedZone = useMemo(
+    () => zones.find((zone) => zone.id === value.zoneId),
+    [value.zoneId, zones],
+  );
 
   const selectPlot = (plot: FarmPlotResponse) => {
     onChange({
@@ -41,91 +62,295 @@ export function FarmZonePicker({ value, onChange }: FarmZonePickerProps) {
     });
   };
 
+  const clearPlot = () => {
+    onChange({
+      farmPlotId: undefined,
+      farmPlotName: undefined,
+      zoneId: undefined,
+      zoneName: undefined,
+    });
+  };
+
+  const clearZone = () => {
+    onChange({
+      ...value,
+      zoneId: undefined,
+      zoneName: undefined,
+    });
+  };
+
+  const selectedFarmLabel =
+    selectedPlot?.name ??
+    value.farmPlotName ??
+    t("iot.devices.onboarding.selectFarm");
+  const selectedFarmMeta =
+    selectedPlot?.addressLine ||
+    selectedPlot?.code ||
+    t("iot.common.noFarmMetadata");
+  const selectedZoneLabel =
+    selectedZone?.zoneName ??
+    value.zoneName ??
+    t("iot.devices.onboarding.selectZone");
+  const selectedZoneMeta =
+    selectedZone?.cropType ||
+    selectedZone?.soilType ||
+    selectedZone?.zoneCode ||
+    t("iot.common.noZoneMetadata");
+
   return (
     <View style={styles.card}>
-      <Text style={styles.title}>{t("iot.devices.onboarding.locationTitle")}</Text>
+      <Text style={styles.title}>
+        {title ?? t("iot.devices.onboarding.locationTitle")}
+      </Text>
 
       <View style={styles.section}>
-        <Text style={styles.label}>{t("iot.devices.onboarding.selectFarm")}</Text>
+        <Text style={styles.label}>
+          {t("iot.devices.onboarding.selectFarm")}
+        </Text>
         {profileQuery.isLoading || plotsQuery.isLoading ? (
-          <Text style={styles.hint}>{t("iot.devices.onboarding.loadingFarms")}</Text>
+          <Text style={styles.hint}>
+            {t("iot.devices.onboarding.loadingFarms")}
+          </Text>
         ) : null}
         {profileQuery.isError || plotsQuery.isError ? (
-          <Text style={styles.error}>{t("iot.devices.onboarding.farmsLoadFailed")}</Text>
+          <Text style={styles.error}>
+            {t("iot.devices.onboarding.farmsLoadFailed")}
+          </Text>
         ) : null}
         {!plotsQuery.isLoading && !plotsQuery.data?.length ? (
           <Text style={styles.hint}>{t("iot.devices.onboarding.noFarms")}</Text>
         ) : null}
-        <View style={styles.optionWrap}>
-          {plotsQuery.data?.map((plot) => (
-            <OptionButton
-              key={plot.id}
-              active={value.farmPlotId === plot.id}
-              label={plot.name}
-              meta={plot.addressLine || plot.code || plot.id}
-              onPress={() => selectPlot(plot)}
-            />
-          ))}
-        </View>
+        <DropdownField
+          disabled={
+            profileQuery.isLoading || plotsQuery.isLoading || !plots.length
+          }
+          hasValue={Boolean(value.farmPlotId)}
+          label={selectedFarmLabel}
+          meta={
+            value.farmPlotId ? selectedFarmMeta : t("iot.common.searchFarm")
+          }
+          onClear={clearPlot}
+          onPress={() => setActivePicker("farm")}
+        />
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.label}>{t("iot.devices.onboarding.selectZone")}</Text>
+        <Text style={styles.label}>
+          {t("iot.devices.onboarding.selectZone")}
+        </Text>
         {!value.farmPlotId ? (
-          <Text style={styles.hint}>{t("iot.devices.onboarding.selectFarmFirst")}</Text>
+          <Text style={styles.hint}>
+            {t("iot.devices.onboarding.selectFarmFirst")}
+          </Text>
         ) : null}
         {value.farmPlotId && zonesQuery.isLoading ? (
-          <Text style={styles.hint}>{t("iot.devices.onboarding.loadingZones")}</Text>
+          <Text style={styles.hint}>
+            {t("iot.devices.onboarding.loadingZones")}
+          </Text>
         ) : null}
         {value.farmPlotId && zonesQuery.isError ? (
-          <Text style={styles.error}>{t("iot.devices.onboarding.zonesLoadFailed")}</Text>
+          <Text style={styles.error}>
+            {t("iot.devices.onboarding.zonesLoadFailed")}
+          </Text>
         ) : null}
-        {value.farmPlotId && !zonesQuery.isLoading && !zonesQuery.data?.length ? (
+        {value.farmPlotId &&
+        !zonesQuery.isLoading &&
+        !zonesQuery.data?.length ? (
           <Text style={styles.hint}>{t("iot.devices.onboarding.noZones")}</Text>
         ) : null}
-        <View style={styles.optionWrap}>
-          {zonesQuery.data?.map((zone) => (
-            <OptionButton
-              key={zone.id}
-              active={value.zoneId === zone.id}
-              label={zone.zoneName}
-              meta={zone.cropType || zone.soilType || zone.id}
-              onPress={() => selectZone(zone)}
-            />
-          ))}
-        </View>
+        <DropdownField
+          disabled={!value.farmPlotId || zonesQuery.isLoading || !zones.length}
+          hasValue={Boolean(value.zoneId)}
+          label={selectedZoneLabel}
+          meta={value.zoneId ? selectedZoneMeta : t("iot.common.searchZone")}
+          onClear={clearZone}
+          onPress={() => setActivePicker("zone")}
+        />
       </View>
+
+      <PickerModal
+        visible={activePicker === "farm"}
+        title={t("iot.devices.onboarding.selectFarm")}
+        items={plots}
+        selectedId={value.farmPlotId}
+        isLoading={profileQuery.isLoading || plotsQuery.isLoading}
+        searchPlaceholder={t("iot.common.searchFarm")}
+        emptyText={t("iot.common.noFarmsFound")}
+        keyExtractor={(plot) => plot.id}
+        labelExtractor={(plot) =>
+          plot.name || plot.code || t("iot.common.unknownFarm")
+        }
+        subtitleExtractor={(plot) =>
+          plot.addressLine || plot.code || t("iot.common.noFarmMetadata")
+        }
+        searchFields={[
+          (plot) => plot.name,
+          (plot) => plot.code,
+          (plot) => plot.addressLine,
+        ]}
+        onClose={() => setActivePicker(null)}
+        onSelect={(plotId) => {
+          const plot = plots.find((item) => item.id === plotId);
+          if (plot) selectPlot(plot);
+          setActivePicker(null);
+        }}
+        renderItem={(plot, isSelected) => (
+          <PickerOption
+            label={plot.name || plot.code || t("iot.common.unknownFarm")}
+            meta={
+              plot.addressLine || plot.code || t("iot.common.noFarmMetadata")
+            }
+            selected={isSelected}
+            onPress={() => {
+              selectPlot(plot);
+              setActivePicker(null);
+            }}
+          />
+        )}
+      />
+
+      <PickerModal
+        visible={activePicker === "zone"}
+        title={t("iot.devices.onboarding.selectZone")}
+        items={zones}
+        selectedId={value.zoneId}
+        isLoading={zonesQuery.isLoading}
+        searchPlaceholder={t("iot.common.searchZone")}
+        emptyText={t("iot.common.noZonesFound")}
+        keyExtractor={(zone) => zone.id}
+        labelExtractor={(zone) =>
+          zone.zoneName || zone.zoneCode || t("iot.common.unknownZone")
+        }
+        subtitleExtractor={(zone) =>
+          zone.cropType ||
+          zone.soilType ||
+          zone.zoneCode ||
+          t("iot.common.noZoneMetadata")
+        }
+        searchFields={[
+          (zone) => zone.zoneName,
+          (zone) => zone.zoneCode,
+          (zone) => zone.cropType,
+          (zone) => zone.soilType,
+        ]}
+        onClose={() => setActivePicker(null)}
+        onSelect={(zoneId) => {
+          const zone = zones.find((item) => item.id === zoneId);
+          if (zone) selectZone(zone);
+          setActivePicker(null);
+        }}
+        renderItem={(zone, isSelected) => (
+          <PickerOption
+            label={
+              zone.zoneName || zone.zoneCode || t("iot.common.unknownZone")
+            }
+            meta={
+              zone.cropType ||
+              zone.soilType ||
+              zone.zoneCode ||
+              t("iot.common.noZoneMetadata")
+            }
+            selected={isSelected}
+            onPress={() => {
+              selectZone(zone);
+              setActivePicker(null);
+            }}
+          />
+        )}
+      />
     </View>
   );
 }
 
-function OptionButton({
+function DropdownField({
   label,
   meta,
-  active,
+  hasValue,
+  disabled,
+  onClear,
   onPress,
 }: {
   label: string;
   meta?: string | null;
-  active: boolean;
+  hasValue: boolean;
+  disabled?: boolean;
+  onClear: () => void;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.dropdown,
+        disabled && styles.dropdownDisabled,
+        pressed && !disabled && styles.optionPressed,
+      ]}
+    >
+      <View style={styles.dropdownTextWrap}>
+        <Text
+          numberOfLines={1}
+          style={[
+            styles.dropdownLabel,
+            !hasValue && styles.dropdownPlaceholder,
+          ]}
+        >
+          {label}
+        </Text>
+        {meta ? <Text style={styles.dropdownMeta}>{meta}</Text> : null}
+      </View>
+      {hasValue ? (
+        <Pressable
+          hitSlop={8}
+          onPress={(event) => {
+            event.stopPropagation();
+            onClear();
+          }}
+          style={styles.clearIconButton}
+        >
+          <X color="#64748b" size={16} />
+        </Pressable>
+      ) : null}
+      <View
+        style={[styles.dropdownIcon, disabled && styles.dropdownIconDisabled]}
+      >
+        <ChevronDown color="#ffffff" size={20} />
+      </View>
+    </Pressable>
+  );
+}
+
+function PickerOption({
+  label,
+  meta,
+  selected,
+  onPress,
+}: {
+  label: string;
+  meta?: string | null;
+  selected: boolean;
   onPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.option,
-        active && styles.optionActive,
-        pressed && styles.optionPressed,
-      ]}
+      style={[styles.pickerOption, selected && styles.pickerOptionSelected]}
     >
-      <Text style={[styles.optionLabel, active && styles.optionLabelActive]}>
-        {label}
-      </Text>
-      {meta ? (
-        <Text style={[styles.optionMeta, active && styles.optionMetaActive]}>
-          {meta}
+      <View style={styles.dropdownTextWrap}>
+        <Text
+          style={[
+            styles.pickerOptionLabel,
+            selected && styles.pickerOptionLabelSelected,
+          ]}
+        >
+          {label}
         </Text>
+        {meta ? <Text style={styles.pickerOptionMeta}>{meta}</Text> : null}
+      </View>
+      {selected ? (
+        <View style={styles.checkBadge}>
+          <Check color="#ffffff" size={14} />
+        </View>
       ) : null}
     </Pressable>
   );
@@ -156,39 +381,105 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "900",
   },
-  option: {
+  checkBadge: {
+    alignItems: "center",
+    backgroundColor: "#16a34a",
+    borderRadius: 999,
+    height: 24,
+    justifyContent: "center",
+    width: 24,
+  },
+  clearIconButton: {
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    borderRadius: 999,
+    height: 28,
+    justifyContent: "center",
+    width: 28,
+  },
+  dropdown: {
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    borderColor: "#16a34a",
+    borderRadius: 16,
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 10,
+    minHeight: 64,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: "#14532d",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  dropdownDisabled: {
     backgroundColor: "#f8fafc",
     borderColor: "#e2e8f0",
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 12,
+    shadowOpacity: 0,
+    elevation: 0,
   },
-  optionActive: {
-    backgroundColor: "#dcfce7",
-    borderColor: "#22c55e",
+  dropdownIcon: {
+    alignItems: "center",
+    backgroundColor: "#16a34a",
+    borderRadius: 999,
+    height: 34,
+    justifyContent: "center",
+    width: 34,
   },
-  optionLabel: {
+  dropdownIconDisabled: {
+    backgroundColor: "#cbd5e1",
+  },
+  dropdownLabel: {
     color: "#0f172a",
-    fontSize: 14,
-    fontWeight: "800",
+    flexShrink: 1,
+    fontSize: 16,
+    fontWeight: "900",
   },
-  optionLabelActive: {
-    color: "#166534",
-  },
-  optionMeta: {
+  dropdownMeta: {
     color: "#64748b",
     fontSize: 12,
-    marginTop: 4,
+    lineHeight: 17,
+    marginTop: 3,
   },
-  optionMetaActive: {
-    color: "#15803d",
+  dropdownPlaceholder: {
+    color: "#64748b",
+  },
+  dropdownTextWrap: {
+    flex: 1,
+    minWidth: 0,
   },
   optionPressed: {
     opacity: 0.78,
+    transform: [{ scale: 0.99 }],
   },
-  optionWrap: {
-    gap: 8,
-    marginTop: 10,
+  pickerOption: {
+    alignItems: "center",
+    borderBottomColor: "rgba(148, 163, 184, 0.18)",
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 12,
+  },
+  pickerOptionLabel: {
+    color: "#0f172a",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  pickerOptionLabelSelected: {
+    color: "#166534",
+  },
+  pickerOptionMeta: {
+    color: "#64748b",
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  pickerOptionSelected: {
+    backgroundColor: "#f0fdf4",
   },
   section: {
     marginTop: 16,

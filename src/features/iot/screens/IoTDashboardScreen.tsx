@@ -95,7 +95,7 @@ export function IoTDashboardScreen() {
 
       {overviewQuery.isLoading ? (
         <LoadingBox text={t("iot.metrics.dashboard.loadingOverview")} />
-      ) : overviewQuery.isError ? (
+      ) : overviewQuery.isError && !overviewQuery.data ? (
         <View style={styles.errorBox}>
           <Text style={styles.errorText}>{t("iot.metrics.dashboard.overviewLoadFailed")}</Text>
           <Pressable style={styles.retryButton} onPress={() => overviewQuery.refetch()}>
@@ -167,6 +167,8 @@ function PlotOption({
   active: boolean;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <Pressable
       onPress={onPress}
@@ -176,7 +178,7 @@ function PlotOption({
         {plot.name}
       </Text>
       <Text style={[styles.optionMeta, active && styles.optionMetaActive]}>
-        {plot.addressLine || plot.code || plot.id}
+        {plot.addressLine || t("iot.common.noFarmMetadata")}
       </Text>
     </Pressable>
   );
@@ -189,11 +191,13 @@ function ZoneRow({
   zone: FarmZoneResponse;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
+
   return (
     <Pressable onPress={onPress} style={styles.zoneRow}>
       <View style={styles.zoneText}>
         <Text style={styles.zoneTitle}>{zone.zoneName}</Text>
-        <Text style={styles.zoneMeta}>{zone.cropType || zone.soilType || zone.id}</Text>
+        <Text style={styles.zoneMeta}>{zone.cropType || zone.soilType || t("iot.common.noZoneMetadata")}</Text>
       </View>
       <ChevronRight color="#94a3b8" size={20} />
     </Pressable>

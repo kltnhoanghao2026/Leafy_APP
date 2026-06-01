@@ -1,7 +1,10 @@
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { BarChart3, Plus } from "lucide-react-native";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -11,10 +14,20 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { useFarmPlots } from "@/src/features/farm";
+import { farmZonesQueryOptions } from "@/src/features/farm/hooks/useFarmZones";
+import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
+import { DeviceActionsSheet } from "../components/DeviceActionsSheet";
 import { DeviceCard } from "../components/DeviceCard";
 import { DeviceEmptyState } from "../components/DeviceEmptyState";
-import { useMyDevices } from "../hooks/useDevices";
-import type { DeviceResponse } from "../types";
+import { EditDeviceSheet } from "../components/EditDeviceSheet";
+import { ReleaseDeviceConfirmDialog } from "../components/ReleaseDeviceConfirmDialog";
+import {
+  useMyDevices,
+  useReleaseDeviceMutation,
+  useUpdateDeviceMutation,
+} from "../hooks/useDevices";
+import type { DeviceResponse, UpdateDeviceRequest } from "../types";
 
 const getFriendlyError = (error: unknown, t: ReturnType<typeof useTranslation>["t"]): string => {
   const status =
@@ -42,17 +55,73 @@ const getFriendlyError = (error: unknown, t: ReturnType<typeof useTranslation>["
   return t("iot.devices.list.errorNetwork");
 };
 
+const getDeviceLabel = (
+  device?: Pick<DeviceResponse, "deviceName" | "deviceCode"> | null,
+  fallback = "Selected device",
+) => device?.deviceName?.trim() || device?.deviceCode?.trim() || fallback;
+
+const getManagementError = (
+  error: unknown,
+  t: ReturnType<typeof useTranslation>["t"],
+  action: "edit" | "release",
+) => {
+  const status =
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof error.response === "object" &&
+    error.response !== null &&
+    "status" in error.response
+      ? error.response.status
+      : undefined;
+
+  if (status === 403) return t("iot.devices.release.forbidden");
+  if (status === 404) return t("iot.devices.edit.notFound");
+  if (status === 400) return t("iot.devices.edit.nameRequired");
+  return t(`iot.devices.${action}.error`);
+};
+
 export function DeviceListScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const profileQuery = useQuery(getMyProfileQueryOptions());
+  const farmsQuery = useFarmPlots(profileQuery.data?.id);
+  const allZoneQueries = useQueries({
+    queries:
+      farmsQuery.data?.map((farm) => ({
+        ...farmZonesQueryOptions(farm.id),
+        enabled: Boolean(farm.id),
+      })) ?? [],
+  });
+  const [actionsDevice, setActionsDevice] = useState<DeviceResponse | null>(null);
+  const [editingDevice, setEditingDevice] = useState<DeviceResponse | null>(null);
+  const [releasingDevice, setReleasingDevice] = useState<DeviceResponse | null>(null);
   const devicesQuery = useMyDevices({
     page: 0,
     size: 50,
     sortBy: "createdAt",
     sortDir: "desc",
   });
+  const updateDeviceMutation = useUpdateDeviceMutation();
+  const releaseDeviceMutation = useReleaseDeviceMutation();
 
   const devices = devicesQuery.data?.items ?? [];
+  const farmNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    farmsQuery.data?.forEach((farm) => {
+      map.set(farm.id, farm.name || farm.code);
+    });
+    return map;
+  }, [farmsQuery.data]);
+  const zoneNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    allZoneQueries.forEach((query) => {
+      query.data?.forEach((zone) => {
+        map.set(zone.id, zone.zoneName || zone.zoneCode);
+      });
+    });
+    return map;
+  }, [allZoneQueries]);
 
   const openDevice = (device: DeviceResponse) => {
     router.push({
@@ -70,7 +139,7 @@ export function DeviceListScreen() {
     );
   }
 
-  if (devicesQuery.isError) {
+  if (devicesQuery.isError && !devices.length) {
     return (
       <View style={styles.screen}>
         <View style={styles.header}>
@@ -90,8 +159,36 @@ export function DeviceListScreen() {
     );
   }
 
+  const updateDevice = async (payload: UpdateDeviceRequest) => {
+    if (!editingDevice) return;
+    try {
+      await updateDeviceMutation.mutateAsync({
+        deviceId: editingDevice.id,
+        payload,
+      });
+      setEditingDevice(null);
+      Alert.alert(t("iot.devices.edit.success"));
+      devicesQuery.refetch();
+    } catch (error) {
+      throw new Error(getManagementError(error, t, "edit"));
+    }
+  };
+
+  const releaseDevice = async () => {
+    if (!releasingDevice) return;
+    try {
+      await releaseDeviceMutation.mutateAsync({ deviceId: releasingDevice.id });
+      setReleasingDevice(null);
+      Alert.alert(t("iot.devices.release.success"));
+      devicesQuery.refetch();
+    } catch (error) {
+      Alert.alert(t("iot.devices.release.error"), getManagementError(error, t, "release"));
+    }
+  };
+
   return (
-    <FlatList
+    <>
+      <FlatList
       contentContainerStyle={styles.listContent}
       data={devices}
       keyExtractor={(item) => item.id}
@@ -130,8 +227,44 @@ export function DeviceListScreen() {
           tintColor="#15803d"
         />
       }
-      renderItem={({ item }) => <DeviceCard device={item} onPress={openDevice} />}
-    />
+      renderItem={({ item }) => (
+        <DeviceCard
+          device={item}
+          farmLabel={item.farmPlotId ? farmNameById.get(item.farmPlotId) : undefined}
+          zoneLabel={item.zoneId ? zoneNameById.get(item.zoneId) : undefined}
+          onMorePress={setActionsDevice}
+          onPress={openDevice}
+        />
+      )}
+      />
+      <DeviceActionsSheet
+        deviceLabel={getDeviceLabel(actionsDevice, t("iot.common.selectedDevice"))}
+        onClose={() => setActionsDevice(null)}
+        onEdit={() => {
+          setEditingDevice(actionsDevice);
+          setActionsDevice(null);
+        }}
+        onRelease={() => {
+          setReleasingDevice(actionsDevice);
+          setActionsDevice(null);
+        }}
+        visible={Boolean(actionsDevice)}
+      />
+      <EditDeviceSheet
+        device={editingDevice}
+        isSubmitting={updateDeviceMutation.isPending}
+        onClose={() => setEditingDevice(null)}
+        onSubmit={updateDevice}
+        visible={Boolean(editingDevice)}
+      />
+      <ReleaseDeviceConfirmDialog
+        deviceLabel={getDeviceLabel(releasingDevice, t("iot.common.selectedDevice"))}
+        isSubmitting={releaseDeviceMutation.isPending}
+        onCancel={() => setReleasingDevice(null)}
+        onConfirm={releaseDevice}
+        visible={Boolean(releasingDevice)}
+      />
+    </>
   );
 }
 

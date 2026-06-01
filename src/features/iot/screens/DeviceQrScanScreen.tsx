@@ -23,7 +23,7 @@ export function DeviceQrScanScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const usePayload = (rawValue: string) => {
-    const result = parseDeviceQrPayload(rawValue);
+    const result = parseDeviceQrPayload(rawValue, t);
     if (!result.ok) {
       setError(result.error);
       setScanned(false);
@@ -105,7 +105,7 @@ export function DeviceQrScanScreen() {
         <TextInput
           multiline
           onChangeText={setManualJson}
-          placeholder='{"deviceUid":"LEAFY-ESP32-001","deviceCode":"ESP32-001","deviceType":"ESP32_CAM_SENSOR","model":"Leafy IoT Module V1"}'
+          placeholder={t("iot.devices.onboarding.manualJsonPlaceholder")}
           placeholderTextColor="#94a3b8"
           style={styles.textArea}
           value={manualJson}

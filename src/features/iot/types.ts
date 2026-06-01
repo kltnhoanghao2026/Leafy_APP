@@ -18,7 +18,7 @@ export type ProvisioningStatus =
 
 export type SortDirection = "asc" | "desc";
 
-export type ChartRange = "H24" | "D3" | "D7" | "D30" | "D90";
+export type ChartRange = "H1" | "H24" | "D7" | "D30";
 
 export type SensorCode =
   | "AIR_TEMP"
@@ -157,11 +157,23 @@ export type ClaimDeviceRequest = {
   zoneId: string;
 };
 
+export type UpdateDeviceRequest = {
+  deviceName?: string;
+  farmPlotId?: string;
+  zoneId?: string;
+  active?: boolean;
+};
+
 export type DeviceQrPayload = {
+  type?: "LEAFY_IOT_DEVICE";
+  version?: 1;
   deviceUid: string;
   deviceCode: string;
   deviceType: string;
   model?: string;
+  firmwareVersion?: string;
+  setupApSsid?: string;
+  setupPortalUrl?: string;
 };
 
 export type LatestReadingItemResponse = {
@@ -223,6 +235,7 @@ export type DeviceMediaAnalysis = {
 
 export type DeviceMediaEvent = {
   id: string;
+  mediaEventId?: string | null;
   requestId?: string | null;
   deviceId?: string | null;
   deviceUid?: string | null;
@@ -334,6 +347,7 @@ export type AlertEventItemResponse = {
   id: string;
   deviceId?: string | null;
   deviceName?: string | null;
+  deviceCode?: string | null;
   zoneId?: string | null;
   farmPlotId?: string | null;
   sensorTypeId?: string | null;
@@ -366,6 +380,9 @@ export type AlertRule = {
   name?: string | null;
   sensorType: string;
   sensorTypeId?: string | null;
+  sensorTypeCode?: string | null;
+  sensorTypeName?: string | null;
+  sensorTypeUnit?: string | null;
   deviceId?: string | null;
   zoneId?: string | null;
   farmPlotId?: string | null;
@@ -466,4 +483,154 @@ export type DeviceDetailResponse = {
   config?: DeviceConfigSummary | null;
   alertSummary?: AlertSummary | null;
   latestMedia?: DeviceMediaEvent | null;
+};
+
+export type DisplayTechnicalIds = {
+  id?: string;
+  deviceId?: string;
+  deviceUid?: string;
+  zoneId?: string;
+  farmPlotId?: string;
+  scheduleId?: string;
+  alertId?: string;
+  mediaEventId?: string;
+  requestId?: string;
+  fileId?: string;
+  ruleId?: string;
+  endpoint?: string;
+};
+
+export type DisplayMediaAnalysis = {
+  status: string;
+  statusLabel: string;
+  disease: string;
+  diseaseLabel: string;
+  severity: string;
+  severityLabel: string;
+  confidence: string;
+  summary: string;
+  alertBadge: string;
+  analyzedAt: string;
+  analyzedTime: string;
+  analyzedRelative: string;
+};
+
+export type DisplayDeviceMediaEvent = DeviceMediaEvent & {
+  display: {
+    status: string;
+    statusLabel: string;
+    triggerType: string;
+    triggerTypeLabel: string;
+    timestamp: string;
+    timestampLabel: string;
+    timestampTime: string;
+    timestampRelative: string;
+    requestedAt: string;
+    uploadedAt: string;
+    capturedAt: string;
+    resolution: string;
+    resolutionLabel: string;
+    quality: string;
+    qualityLabel: string;
+    size: string;
+    sizeLabel: string;
+    endpoint: string;
+    endpointTooltip?: string;
+    fallbackMessage: string;
+    analysis: DisplayMediaAnalysis;
+    technical: DisplayTechnicalIds;
+  };
+};
+
+export type DisplayCameraSchedule = Omit<DeviceCameraSchedule, "lastMediaEvent"> & {
+  lastMediaEvent?: (DeviceMediaEvent & Partial<DisplayDeviceMediaEvent>) | null;
+  display: {
+    device: string;
+    deviceLabel: string;
+    timeOfDay: string;
+    timeLabel: string;
+    recurrence: string;
+    recurrenceLabel: string;
+    enabled: string;
+    enabledLabel: string;
+    status: string;
+    statusLabel: string;
+    resolution: string;
+    resolutionLabel: string;
+    quality: string;
+    qualityLabel: string;
+    endpoint: string;
+    endpointLabel: string;
+    endpointTooltip?: string;
+    nextRunAt: string;
+    nextRunLabel: string;
+    nextRunTime: string;
+    nextRunRelative: string;
+    lastRunAt: string;
+    lastRunLabel: string;
+    lastRunTime: string;
+    lastRunRelative: string;
+    lastMediaStatus: string;
+    lastMediaStatusLabel: string;
+    technical: DisplayTechnicalIds;
+  };
+};
+
+export type DisplayDeviceCameraSchedule = DisplayCameraSchedule;
+
+export type DisplayAlertEvent<T extends AlertEventItemResponse = AlertEventItemResponse> = T & {
+  display: {
+    type: string;
+    title: string;
+    message: string;
+    sensor: string;
+    sensorLabel: string;
+    value: string;
+    valueLabel: string;
+    threshold: string;
+    thresholdLabel: string;
+    device: string;
+    deviceLabel: string;
+    zone: string;
+    zoneLabel: string;
+    farm: string;
+    farmLabel: string;
+    severity: string;
+    severityLabel: string;
+    status: string;
+    statusLabel: string;
+    createdAt: string;
+    createdTime: string;
+    createdRelative: string;
+    openedAt: string;
+    openedAtLabel: string;
+    openedTime: string;
+    openedRelative: string;
+    acknowledgedAt: string;
+    acknowledgedAtLabel: string;
+    resolvedAt: string;
+    resolvedAtLabel: string;
+    technical: DisplayTechnicalIds;
+  };
+};
+
+export type DisplayAlertRule = AlertRuleResponse & {
+  display: {
+    name: string;
+    sensor: string;
+    sensorLabel: string;
+    severity: string;
+    severityLabel: string;
+    enabled: string;
+    enabledLabel: string;
+    threshold: string;
+    thresholdLabel: string;
+    lastTriggeredAt: string;
+    lastTriggeredLabel: string;
+    lastTriggeredTime: string;
+    lastTriggeredRelative: string;
+    createdAt: string;
+    updatedAt: string;
+    technical: DisplayTechnicalIds;
+  };
 };

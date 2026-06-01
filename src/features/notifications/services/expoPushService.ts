@@ -5,6 +5,10 @@ import { Platform } from "react-native";
 import type { NotificationPlatform } from "../types";
 import { isIotAlertNotification } from "@/src/features/iot/utils/alertNotification";
 
+const NATIVE_FCM_REQUIREMENT =
+  "Native FCM push requires a development or production build with valid Firebase native configuration. " +
+  "Expo Go is not supported for this push flow.";
+
 /**
  * Configure how incoming push notifications appear while the app is
  * in the foreground. Call this once at app startup (before rendering).
@@ -55,7 +59,10 @@ export function isPhysicalDevice(): boolean {
  */
 export async function getDevicePushToken(): Promise<string | null> {
   if (!Device.isDevice) {
-    console.log("[ExpoPush] Skipping — not a physical device (simulator/emulator).");
+    console.log(
+      "[ExpoPush] Native FCM token sync skipped: this is not a physical device. " +
+        "Use an Android/iOS physical device for IoT alert push QA.",
+    );
     return null;
   }
 
@@ -66,8 +73,7 @@ export async function getDevicePushToken(): Promise<string | null> {
 
   if (isExpoGo) {
     console.log(
-      "[ExpoPush] Skipping — running in Expo Go without FCM credentials. " +
-      "Build a dev client (expo run:android) or configure google-services.json to enable push.",
+      `[ExpoPush] Native FCM token sync skipped: running in Expo Go. ${NATIVE_FCM_REQUIREMENT}`,
     );
     return null;
   }
@@ -76,7 +82,13 @@ export async function getDevicePushToken(): Promise<string | null> {
     const result = await Notifications.getDevicePushTokenAsync();
     return result.data; // Native FCM token (or APNs token on iOS)
   } catch (err) {
-    console.warn("[ExpoPush] Failed to get device push token:", err);
+    console.warn(
+      "[ExpoPush] Failed to get native device push token. " +
+        `${NATIVE_FCM_REQUIREMENT} ` +
+        "For Android, verify Leafy_APP/google-services.json exists and matches expo.android.package. " +
+        "For iOS, verify Firebase/APNs setup returns an FCM-compatible token.",
+      err,
+    );
     return null;
   }
 }

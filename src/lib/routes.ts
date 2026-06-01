@@ -134,6 +134,8 @@ export const API_ENDPOINTS = {
   IOT: {
     DEVICES: {
       ME: "/iot/devices/me",
+      ITEM: (deviceId: string) => `/iot/devices/${deviceId}`,
+      RELEASE: (deviceId: string) => `/iot/devices/${deviceId}/release`,
       DETAIL: (deviceId: string) => `/iot/devices/${deviceId}/detail`,
       LATEST_READINGS: (deviceId: string) =>
         `/iot/devices/${deviceId}/latest-readings`,

@@ -1,6 +1,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { collectorApi } from "../api/collector.api";
+import { withMediaDisplay } from "../utils/iotDisplay";
 import { iotKeys } from "./useDevices";
 
 export const dashboardOverviewQueryOptions = (farmPlotId?: string) =>
@@ -24,5 +25,11 @@ export const useDashboardOverview = (farmPlotId?: string) => {
 };
 
 export const useZoneOverview = (zoneId?: string) => {
-  return useQuery(zoneOverviewQueryOptions(zoneId));
+  return useQuery({
+    ...zoneOverviewQueryOptions(zoneId),
+    select: (overview) => ({
+      ...overview,
+      latestMedia: overview.latestMedia ? withMediaDisplay(overview.latestMedia) : overview.latestMedia,
+    }),
+  });
 };

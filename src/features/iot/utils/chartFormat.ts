@@ -13,11 +13,10 @@ export const DEFAULT_SENSOR_CODES: SensorCode[] = [
 ];
 
 export const CHART_RANGES: Array<{ value: ChartRange; label: string }> = [
-  { value: "H24", label: "24 giờ" },
-  { value: "D3", label: "3 ngày" },
+  { value: "H1", label: "1 giờ" },
+  { value: "H24", label: "1 ngày" },
   { value: "D7", label: "7 ngày" },
-  { value: "D30", label: "30 ngày" },
-  { value: "D90", label: "90 ngày" },
+  { value: "D30", label: "1 tháng" },
 ];
 
 export type NormalizedChartPoint = {
@@ -50,14 +49,14 @@ export const formatChartTimestamp = (
     return timestamp;
   }
 
-  if (range === "H24") {
+  if (range === "H1" || range === "H24") {
     return new Intl.DateTimeFormat("vi-VN", {
       hour: "2-digit",
       minute: "2-digit",
     }).format(date);
   }
 
-  if (range === "D3" || range === "D7") {
+  if (range === "D7") {
     return new Intl.DateTimeFormat("vi-VN", {
       day: "2-digit",
       month: "2-digit",

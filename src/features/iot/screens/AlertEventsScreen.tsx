@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, BellRing, RefreshCw } from "lucide-react-native";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,14 +14,19 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { useFarmPlots, useFarmZones } from "@/src/features/farm";
+import { farmZonesQueryOptions } from "@/src/features/farm/hooks/useFarmZones";
+import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
 import { AlertEventCard } from "../components/AlertEventCard";
 import {
   AlertFilters,
   type AlertTimeRange,
 } from "../components/AlertFilters";
 import { useAlertEvents } from "../hooks/useAlerts";
+import { useMyDevices } from "../hooks/useDevices";
 import type { AlertEventsParams, AlertEventItemResponse, AlertSeverity, AlertStatus } from "../types";
 import { getAlertTimeRange } from "../utils/alertLabels";
+import { withAlertContextDisplay } from "../utils/iotDisplay";
 
 const getParamValue = (value?: string | string[]): string | undefined => {
   if (Array.isArray(value)) {
@@ -48,9 +54,21 @@ export function AlertEventsScreen() {
   );
   const [deviceId, setDeviceId] = useState(getParamValue(params.deviceId) ?? "");
   const [zoneId, setZoneId] = useState(getParamValue(params.zoneId) ?? "");
+  const [farmPlotId, setFarmPlotId] = useState("");
   const [timeRange, setTimeRange] = useState<AlertTimeRange>("D7");
   const highlightedAlertId = getParamValue(params.highlightAlertId);
   const listRef = useRef<FlatListType<AlertEventItemResponse>>(null);
+  const profileQuery = useQuery(getMyProfileQueryOptions());
+  const devicesQuery = useMyDevices({ page: 0, size: 100 });
+  const farmsQuery = useFarmPlots(profileQuery.data?.id);
+  const zonesQuery = useFarmZones(farmPlotId || undefined);
+  const allZoneQueries = useQueries({
+    queries:
+      farmsQuery.data?.map((farm) => ({
+        ...farmZonesQueryOptions(farm.id),
+        enabled: Boolean(farm.id),
+      })) ?? [],
+  });
 
   const queryParams = useMemo<AlertEventsParams>(() => {
     const time = getAlertTimeRange(timeRange);
@@ -69,7 +87,25 @@ export function AlertEventsScreen() {
   }, [deviceId, severity, status, timeRange, zoneId]);
 
   const alertsQuery = useAlertEvents(queryParams);
-  const alerts = alertsQuery.data?.items ?? [];
+  const zones = useMemo(() => {
+    const byId = new Map<string, NonNullable<typeof zonesQuery.data>[number]>();
+    zonesQuery.data?.forEach((zone) => byId.set(zone.id, zone));
+    allZoneQueries.forEach((query) => {
+      query.data?.forEach((zone) => byId.set(zone.id, zone));
+    });
+    return Array.from(byId.values());
+  }, [allZoneQueries, zonesQuery.data]);
+  const alerts = useMemo(
+    () =>
+      (alertsQuery.data?.items ?? []).map((alert) =>
+        withAlertContextDisplay(alert, {
+          devices: devicesQuery.data?.items,
+          farms: farmsQuery.data,
+          zones,
+        }),
+      ),
+    [alertsQuery.data?.items, devicesQuery.data?.items, farmsQuery.data, zones],
+  );
   const highlightedIndex = highlightedAlertId
     ? alerts.findIndex((alert) => alert.id === highlightedAlertId)
     : -1;
@@ -131,15 +167,20 @@ export function AlertEventsScreen() {
           </Pressable>
           <AlertFilters
             deviceId={deviceId}
+            devices={devicesQuery.data?.items ?? []}
+            farmPlotId={farmPlotId}
+            farms={farmsQuery.data ?? []}
             severity={severity}
             status={status}
             timeRange={timeRange}
             zoneId={zoneId}
+            zones={farmPlotId ? zonesQuery.data ?? [] : zones}
             onChange={(next) => {
               setStatus(next.status);
               setSeverity(next.severity);
               setDeviceId(next.deviceId ?? "");
               setZoneId(next.zoneId ?? "");
+              setFarmPlotId(next.farmPlotId ?? "");
               setTimeRange(next.timeRange);
             }}
           />
@@ -149,7 +190,7 @@ export function AlertEventsScreen() {
               <Text style={styles.hint}>{t("iot.alerts.loading")}</Text>
             </View>
           ) : null}
-          {alertsQuery.isError ? (
+          {alertsQuery.isError && !alerts.length ? (
             <View style={styles.errorBox}>
               <Text style={styles.errorText}>{t("iot.alerts.loadFailed")}</Text>
               <Pressable style={styles.retryButton} onPress={() => alertsQuery.refetch()}>
@@ -160,6 +201,7 @@ export function AlertEventsScreen() {
           ) : null}
         </View>
       }
+      ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
       refreshControl={
         <RefreshControl
           onRefresh={alertsQuery.refetch}
@@ -235,11 +277,14 @@ const styles = StyleSheet.create({
   },
   headerWrap: {
     gap: 16,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   hint: {
     color: "#64748b",
     fontSize: 13,
+  },
+  itemSeparator: {
+    height: 16,
   },
   kicker: {
     color: "#15803d",
