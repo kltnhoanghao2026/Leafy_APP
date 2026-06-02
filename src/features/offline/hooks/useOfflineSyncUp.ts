@@ -4,6 +4,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { farmApi } from '@/src/features/farm';
 import { plantApi } from '@/src/features/plant';
 import { plantEventApi } from '@/src/features/plant-event';
+import { apiClient } from '@/src/lib/axios';
+import { API_ENDPOINTS } from '@/src/lib/routes';
 import {
   getPendingItems,
   markItemDone,
@@ -12,7 +14,7 @@ import {
   getPendingCount,
 } from '../services/sync-queue.service';
 import { getDbAsync } from '../services/offline-database';
-import type { PendingSyncItem } from '../services/sync-queue.service';
+import { getServerId, rewriteIdsDeep, upsertIdMapping } from '../services/id-map.service';
 
 export interface SyncUpResult {
   success: number;
@@ -26,137 +28,102 @@ export interface SyncUpResult {
  */
 const processSyncQueue = async (): Promise<SyncUpResult> => {
   const items = await getPendingItems();
+  if (items.length === 0) return { success: 0, failed: 0, total: 0 };
+
+  // Hydrate mapping from persistent store into memory for fast rewriting.
+  const idMap = new Map<string, string>();
+  for (const item of items) {
+    if (!idMap.has(item.recordId)) {
+      const mapped = await getServerId(item.recordId);
+      if (mapped) idMap.set(item.recordId, mapped);
+    }
+  }
+
+  // Build batch request in the backend DTO shape.
+  const mutations = items.map((item) => {
+    const rawPayload = JSON.parse(item.payload);
+    const rewritten = rewriteIdsDeep(rawPayload, idMap) as any;
+
+    // Sanitize dates for backend compatibility (append T00:00:00 to YYYY-MM-DD strings)
+    for (const key of ['plantingDate', 'startDate', 'endDate', 'calculatedStartDate', 'calculatedEndDate']) {
+      if (typeof rewritten?.[key] === 'string' && rewritten[key].trim().length === 10) {
+        rewritten[key] = `${rewritten[key].trim()}T00:00:00`;
+      }
+    }
+
+    return {
+      id: item.id,
+      tableName: item.tableName,
+      recordId: item.recordId,
+      operation: item.operation,
+      payload: JSON.stringify(rewritten),
+      createdAt: item.createdAt,
+    };
+  });
+
+  const pushRes = await apiClient.post(API_ENDPOINTS.SYNC.PUSH, {
+    deviceId: 'mobile',
+    mutations,
+    knownIdMappings: Array.from(idMap.entries()).map(([localId, serverId]) => ({
+      localId,
+      serverId,
+      entityType: 'unknown',
+    })),
+  });
+
+  const pushData = pushRes.data?.data;
+  const mappings: Array<{ localId: string; serverId: string; entityType?: string }> = pushData?.idMappings ?? [];
+
+  // Persist returned mappings + update local DB IDs and pending queue references.
+  const db = await getDbAsync();
+  for (const m of mappings) {
+    if (!m?.localId || !m?.serverId) continue;
+    idMap.set(m.localId, m.serverId);
+    await upsertIdMapping({
+      localId: m.localId,
+      serverId: m.serverId,
+      entityType: (m.entityType as any) ?? 'plants',
+    });
+
+    // Update entity tables if the localId exists there.
+    for (const table of ['plants', 'plant_events', 'farm_plots', 'farm_zones']) {
+      try {
+        await db.runAsync(`UPDATE ${table} SET id = ?, _dirty = 0 WHERE id = ?`, [m.serverId, m.localId]);
+      } catch {}
+    }
+
+    // Reconcile queue recordId + payload (payload is JSON string; we replace only exact id values later via rewrite, but keep this as a safety net)
+    await db.runAsync(`UPDATE pending_sync_queue SET recordId = ? WHERE recordId = ?`, [m.serverId, m.localId]);
+    await db.runAsync(
+      `UPDATE pending_sync_queue SET payload = REPLACE(payload, ?, ?) WHERE payload LIKE ?`,
+      [m.localId, m.serverId, `%${m.localId}%`],
+    );
+  }
+
+  // Mark all mutations as done/failed based on server results.
+  const results: Array<{ mutationId: string; applied: boolean; errorMessage?: string }> = pushData?.results ?? [];
+  const resultById = new Map(results.map((r) => [r.mutationId, r] as const));
+
   let success = 0;
   let failed = 0;
-
-  // ID Reconciliation Map (old UUID -> new ObjectId)
-  const idMap = new Map<string, string>();
-
   for (const item of items) {
-    try {
-      // 1. Reconcile Payload (replace any old UUIDs with new ObjectIds)
-      let payloadStr = item.payload;
-      for (const [oldId, newId] of idMap.entries()) {
-        payloadStr = payloadStr.replaceAll(oldId, newId);
-      }
-      
-      const payload = JSON.parse(payloadStr);
-      
-      // 2. Reconcile Record ID
-      const currentRecordId = idMap.get(item.recordId) ?? item.recordId;
-      
-      // Sanitize dates for backend compatibility (append T00:00:00 to YYYY-MM-DD strings)
-      for (const key of ['plantingDate', 'startDate', 'endDate', 'calculatedStartDate', 'calculatedEndDate']) {
-        if (typeof payload[key] === 'string' && payload[key].trim().length === 10) {
-          payload[key] = `${payload[key].trim()}T00:00:00`;
-        }
-      }
-
-      let serverResponse: any = null;
-
-      switch (item.tableName) {
-        case 'farm_plots':
-          if (item.operation === 'CREATE') {
-            const { id: _tempId, ...body } = payload;
-            const res = await farmApi.createPlot(body);
-            serverResponse = res.data.data;
-          } else if (item.operation === 'UPDATE') {
-            const { id, ...body } = payload;
-            await farmApi.updatePlot(currentRecordId, body);
-          } else if (item.operation === 'DELETE') {
-            await farmApi.deletePlot(currentRecordId);
-          }
-          break;
-
-        case 'farm_zones':
-          if (item.operation === 'CREATE') {
-            const { id: _tempId, farmPlotId, ...body } = payload;
-            const res = await farmApi.createZone(farmPlotId, body);
-            serverResponse = res.data.data;
-          } else if (item.operation === 'UPDATE') {
-            const { id, ...body } = payload;
-            await farmApi.updateZone(currentRecordId, body);
-          } else if (item.operation === 'DELETE') {
-            await farmApi.deleteZone(currentRecordId);
-          }
-          break;
-
-        case 'plants':
-          if (item.operation === 'CREATE') {
-            const { id: _tempId, ownerProfileId: _opi, ...body } = payload;
-            const res = await plantApi.createPlant(body);
-            serverResponse = res.data.data;
-          } else if (item.operation === 'UPDATE') {
-            const { id, ...body } = payload;
-            await plantApi.updatePlant(currentRecordId, body);
-          } else if (item.operation === 'DELETE') {
-            await plantApi.deletePlant(currentRecordId);
-          }
-          break;
-
-        case 'plant_events':
-          if (item.operation === 'CREATE') {
-            const { id: _tempId, ...body } = payload;
-            const res = await plantEventApi.createEvent(body);
-            serverResponse = res.data.data;
-          } else if (item.operation === 'UPDATE') {
-            const { id, ...body } = payload;
-            await plantEventApi.updateEvent(currentRecordId, body);
-          } else if (item.operation === 'DELETE') {
-            await plantEventApi.deleteEvent(currentRecordId);
-          }
-          break;
-      }
-
-      // If server assigned a new ID (CREATE), update the local record
-      if (item.operation === 'CREATE' && serverResponse?.id && serverResponse.id !== currentRecordId) {
-        const newId = serverResponse.id;
-        idMap.set(currentRecordId, newId);
-
-        try {
-          const db = await getDbAsync();
-          const table = item.tableName;
-          
-          // 1. Update the actual entity table
-          await db.runAsync(
-            `UPDATE ${table} SET id = ?, _dirty = 0 WHERE id = ?`,
-            [newId, currentRecordId]
-          );
-
-          // 2. Aggressively rewrite pending queue items that reference this UUID
-          // This ensures that if the sync crashes, the database is already reconciled for the next attempt.
-          await db.runAsync(
-            `UPDATE pending_sync_queue SET recordId = ? WHERE recordId = ?`,
-            [newId, currentRecordId]
-          );
-          
-          await db.runAsync(
-            `UPDATE pending_sync_queue SET payload = REPLACE(payload, ?, ?) WHERE payload LIKE ?`,
-            [currentRecordId, newId, `%${currentRecordId}%`]
-          );
-
-        } catch (e) {
-          console.warn('[SyncUp] Could not reconcile server ID', e);
-        }
-      } else if (item.operation !== 'DELETE') {
-        // Mark local record as clean
-        try {
-          const db = await getDbAsync();
-          await db.runAsync(
-            `UPDATE ${item.tableName} SET _dirty = 0 WHERE id = ?`,
-            [currentRecordId]
-          );
-        } catch {}
-      }
-
-      await markItemDone(item.id);
-      success++;
-    } catch (err: any) {
-      const errMsg = err?.response?.data?.message ?? err?.message ?? 'Unknown error';
-      console.error(`[SyncUp] Failed to sync ${item.tableName}/${item.recordId}`, errMsg);
-      await markItemFailed(item.id, errMsg);
+    const r = resultById.get(item.id);
+    if (r?.applied === false) {
+      await markItemFailed(item.id, r.errorMessage ?? 'Sync failed');
       failed++;
+      continue;
     }
+
+    // Mark local record as clean for non-deletes.
+    if (item.operation !== 'DELETE') {
+      try {
+        const currentRecordId = idMap.get(item.recordId) ?? item.recordId;
+        await db.runAsync(`UPDATE ${item.tableName} SET _dirty = 0 WHERE id = ?`, [currentRecordId]);
+      } catch {}
+    }
+
+    await markItemDone(item.id);
+    success++;
   }
 
   await clearDoneItems();

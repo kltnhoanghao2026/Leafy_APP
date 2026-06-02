@@ -1,7 +1,7 @@
-import { Stack } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import Colors from '@/src/constants/Colors';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
+import React from 'react';
+import { Stack } from 'expo-router';
 
 type ScreenConfig = {
   name: string;
@@ -12,7 +12,6 @@ type ScreenConfig = {
 // ── Layout ────────────────────────────────────────────────────────────────────
 
 export default function IotLayout() {
-  const { t } = useTranslation();
   const scheme = useColorScheme() ?? 'light';
   const palette = Colors[scheme];
 

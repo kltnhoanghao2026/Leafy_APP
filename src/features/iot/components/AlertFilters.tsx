@@ -32,14 +32,14 @@ type AlertFiltersProps = {
   ) => void;
 };
 
-const statusOptions: Array<{ labelKey: string; value?: AlertStatus }> = [
+const statusOptions: { labelKey: string; value?: AlertStatus }[] = [
   { labelKey: "iot.common.all" },
   { labelKey: "iot.alerts.status.OPEN", value: "OPEN" },
   { labelKey: "iot.alerts.status.ACKNOWLEDGED", value: "ACKNOWLEDGED" },
   { labelKey: "iot.alerts.status.RESOLVED", value: "RESOLVED" },
 ];
 
-const severityOptions: Array<{ labelKey: string; value?: AlertSeverity }> = [
+const severityOptions: { labelKey: string; value?: AlertSeverity }[] = [
   { labelKey: "iot.common.all" },
   { labelKey: "iot.alerts.severity.LOW", value: "LOW" },
   { labelKey: "iot.alerts.severity.MEDIUM", value: "MEDIUM" },
@@ -47,7 +47,7 @@ const severityOptions: Array<{ labelKey: string; value?: AlertSeverity }> = [
   { labelKey: "iot.alerts.severity.CRITICAL", value: "CRITICAL" },
 ];
 
-const timeOptions: Array<{ labelKey: string; value: AlertTimeRange }> = [
+const timeOptions: { labelKey: string; value: AlertTimeRange }[] = [
   { labelKey: "iot.alerts.time.H24", value: "H24" },
   { labelKey: "iot.alerts.time.D7", value: "D7" },
   { labelKey: "iot.alerts.time.D30", value: "D30" },
@@ -193,7 +193,7 @@ function SelectDropdown<T extends string>({
 }: {
   label: string;
   value?: T;
-  options: Array<{ label: string; value?: T }>;
+  options: { label: string; value?: T }[];
   onSelect: (value?: T) => void;
 }) {
   const [open, setOpen] = useState(false);

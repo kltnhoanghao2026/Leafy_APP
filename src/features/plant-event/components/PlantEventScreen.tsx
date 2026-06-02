@@ -24,7 +24,6 @@ import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/src/components/ui/EmptyState";
 import { SearchInput } from "@/src/components/ui/SearchInput";
 import { LoadingView } from "@/src/components/ui/LoadingView";
-import { StatusBadge } from "@/src/components/ui/StatusBadge";
 import { usePaginatedList } from "@/src/hooks/usePaginatedList";
 import { useFilteredList } from "@/src/hooks/useFilteredList";
 import type { EventTargetType, PlantEventResponse } from "./plant-event.types";
@@ -399,12 +398,14 @@ export function PlantEventScreen() {
 
   // If no target selected, show target type tabs + picker
   if (!selectedId) {
-    const pickerQuery =
-      targetType === "PLANT"
-        ? plantsQuery
-        : targetType === "FARM_ZONE" && selectedPlotIdForZones
-          ? farmZonesQuery
-          : farmPlotsQuery;
+    // Select appropriate query based on target type
+    if (targetType === "PLANT") {
+      // use plantsQuery
+    } else if (targetType === "FARM_ZONE" && selectedPlotIdForZones) {
+      // use farmZonesQuery
+    } else {
+      // use farmPlotsQuery
+    }
 
     return (
       <ScrollView
@@ -853,11 +854,29 @@ export function PlantEventScreen() {
         }
       >
         {/* Subtitle below sticky header */}
-        <View className="mb-6 mt-2 px-1">
+        <View className="mb-3 mt-2 px-1">
           <Text className="text-[15px] leading-6 text-slate-500 dark:text-slate-400">
             {subtitle}
           </Text>
         </View>
+
+        {/* ── Filter bar (collapseable inside scroll) ───────────────── */}
+        <PlantEventHubFilterBar
+          filter={activeFilter}
+          onApply={(f) => {
+            setActiveFilter(f);
+            setPage(0);
+            setEventsCache([]);
+          }}
+          data={{
+            applies: appliesQuery.data?.content ?? [],
+            farmPlots: farmPlotsQuery.data ?? [],
+            plants: plantsQuery.data?.content ?? [],
+            farmZonesData: farmZonesQueryForFilter.data ?? [],
+            farmZonesLoading: farmZonesQueryForFilter.isLoading,
+            primaryColor: palette.primary,
+          }}
+        />
 
         <View className="mb-6 flex-row items-center gap-3">
           <SearchInput
@@ -942,24 +961,6 @@ export function PlantEventScreen() {
       </View>
 
       </ScrollView>
-
-      {/* ── Filter bar ───────────────────────────────────────────────── */}
-      <PlantEventHubFilterBar
-        filter={activeFilter}
-        onApply={(f) => {
-          setActiveFilter(f);
-          setPage(0);
-          setEventsCache([]);
-        }}
-        data={{
-          applies: appliesQuery.data?.content ?? [],
-          farmPlots: farmPlotsQuery.data ?? [],
-          plants: plantsQuery.data?.content ?? [],
-          farmZonesData: farmZonesQueryForFilter.data ?? [],
-          farmZonesLoading: farmZonesQueryForFilter.isLoading,
-          primaryColor: palette.primary,
-        }}
-      />
     </View>
   );
 }

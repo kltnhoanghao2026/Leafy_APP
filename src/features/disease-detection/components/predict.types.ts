@@ -1,5 +1,3 @@
-import type { LeafDetection } from "@/src/features/disease-detection/api/disease-detection.api";
-
 export type Step = "pick" | "detect" | "result";
 
 export type PredictMode = "api" | "local-capture" | "local-realtime";

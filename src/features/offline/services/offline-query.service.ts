@@ -5,7 +5,6 @@ import type { FarmPlotResponse, FarmZoneResponse, CreateFarmPlotRequest, UpdateF
 import type { PlantResponse, PlantCreateRequest, PlantUpdateRequest, SpeciesResponse, PageResponse } from '@/src/features/plant';
 import type { PlantEventResponse, PlantEventCreateRequest, PlantEventUpdateRequest } from '@/src/features/plant-event';
 import { enqueueMutation } from './sync-queue.service';
-
 // Polyfill-safe UUID generator
 const generateUUID = (): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') return crypto.randomUUID();
@@ -132,37 +131,105 @@ export const getOfflinePlantEvents = async (params: {
   farmPlotId?: string;
   farmZoneId?: string;
   plantId?: string;
+  planApplyId?: string;
+  eventType?: string;
+  targetType?: string;
+  startDate?: string; // YYYY-MM-DD
+  endDate?: string; // YYYY-MM-DD
 }): Promise<PlantEventResponse[]> => {
   if (Platform.OS === 'web') return [];
   const db = await getDbAsync();
+
+  const parseJson = <T,>(value: any, fallback: T): T => {
+    if (!value || typeof value !== 'string') return fallback;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const mapRow = (row: any): PlantEventResponse => {
+    const attachmentIds = parseJson<string[] | null>(row.attachmentIds, null);
+
+    return {
+      ...row,
+      planned: row.planned === 1,
+      completed: row.completed === 1,
+      active: row.active !== 0,
+      excludedPlantIds: parseJson<string[] | null>(row.excludedPlantIds, null),
+      excludedFarmZoneIds: parseJson<string[] | null>(row.excludedFarmZoneIds, null),
+      tasks: parseJson<any[] | null>(row.tasks, null) as any,
+      attachmentIds,
+      children: [],
+    } as PlantEventResponse;
+  };
+
+  const loadChildren = async (parentId: string): Promise<PlantEventResponse[]> => {
+    const childRows = (await db.getAllAsync(
+      `SELECT * FROM plant_events WHERE _deleted = 0 AND parentPlantEventId = ? ORDER BY calculatedStartDate ASC`,
+      [parentId],
+    )) as any[];
+
+    const children = childRows.map(mapRow);
+    for (const child of children) {
+      child.children = await loadChildren(child.id);
+    }
+    return children;
+  };
+
   try {
+    // Base query: parent-level events
     let query = `SELECT * FROM plant_events WHERE _deleted = 0 AND parentPlantEventId IS NULL`;
     const queryParams: any[] = [];
 
+    // Scope filters (match server-side calendar semantics)
     if (params.plantId) {
       query += ` AND plantId = ?`;
       queryParams.push(params.plantId);
-    } else if (params.farmZoneId) {
+    }
+    if (params.farmZoneId) {
       query += ` AND farmZoneId = ?`;
       queryParams.push(params.farmZoneId);
-    } else if (params.farmPlotId) {
+    }
+    if (params.farmPlotId) {
       query += ` AND farmPlotId = ?`;
       queryParams.push(params.farmPlotId);
     }
 
+    if (params.planApplyId) {
+      query += ` AND planApplyId = ?`;
+      queryParams.push(params.planApplyId);
+    }
+
+    if (params.eventType) {
+      query += ` AND eventType = ?`;
+      queryParams.push(params.eventType);
+    }
+
+    if (params.targetType) {
+      query += ` AND targetType = ?`;
+      queryParams.push(params.targetType);
+    }
+
+    // Date-range overlap filter (inclusive)
+    if (params.startDate && params.endDate) {
+      // overlap condition: start <= rangeEnd AND end >= rangeStart
+      query += ` AND calculatedStartDate <= ? AND COALESCE(calculatedEndDate, calculatedStartDate) >= ?`;
+      queryParams.push(params.endDate, params.startDate);
+    }
+
     query += ` ORDER BY calculatedStartDate DESC`;
 
-    const rows = await db.getAllAsync(query, queryParams) as any[];
-    
-    return rows.map(row => ({
-      ...row,
-      planned: row.planned === 1,
-      completed: row.completed === 1,
-      excludedPlantIds: row.excludedPlantIds ? JSON.parse(row.excludedPlantIds) : null,
-      excludedFarmZoneIds: row.excludedFarmZoneIds ? JSON.parse(row.excludedFarmZoneIds) : null,
-      tasks: row.tasks ? JSON.parse(row.tasks) : null,
-      children: [], // For simplicity in offline mode, we don't eager-load the full recursive tree
-    })) as PlantEventResponse[];
+    const rows = (await db.getAllAsync(query, queryParams)) as any[];
+    const parents = rows.map(mapRow);
+
+    // Eager-load full tree so progress and UI parity match online
+    for (const parent of parents) {
+      parent.children = await loadChildren(parent.id);
+    }
+
+    return parents;
   } catch (error) {
     console.error('[OfflineQuery] getOfflinePlantEvents failed', error);
     return [];
@@ -172,21 +239,94 @@ export const getOfflinePlantEvents = async (params: {
 export const getOfflinePlantEventById = async (id: string): Promise<PlantEventResponse | null> => {
   if (Platform.OS === 'web') return null;
   const db = await getDbAsync();
-  try {
-    const row = await db.getFirstAsync(`SELECT * FROM plant_events WHERE id = ? AND _deleted = 0`, [id]) as any;
-    if (!row) return null;
+
+  const parseJson = <T,>(value: any, fallback: T): T => {
+    if (!value || typeof value !== 'string') return fallback;
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
+  };
+
+  const mapRow = (row: any): PlantEventResponse => {
+    const attachmentIds = parseJson<string[] | null>(row.attachmentIds, null);
     return {
       ...row,
       planned: row.planned === 1,
       completed: row.completed === 1,
-      excludedPlantIds: row.excludedPlantIds ? JSON.parse(row.excludedPlantIds) : null,
-      excludedFarmZoneIds: row.excludedFarmZoneIds ? JSON.parse(row.excludedFarmZoneIds) : null,
-      tasks: row.tasks ? JSON.parse(row.tasks) : null,
-      children: [], 
+      active: row.active !== 0,
+      excludedPlantIds: parseJson<string[] | null>(row.excludedPlantIds, null),
+      excludedFarmZoneIds: parseJson<string[] | null>(row.excludedFarmZoneIds, null),
+      tasks: parseJson<any[] | null>(row.tasks, null) as any,
+      attachmentIds,
+      children: [],
     } as PlantEventResponse;
+  };
+
+  const loadChildren = async (parentId: string): Promise<PlantEventResponse[]> => {
+    const childRows = (await db.getAllAsync(
+      `SELECT * FROM plant_events WHERE _deleted = 0 AND parentPlantEventId = ? ORDER BY calculatedStartDate ASC`,
+      [parentId],
+    )) as any[];
+
+    const children = childRows.map(mapRow);
+    for (const child of children) {
+      child.children = await loadChildren(child.id);
+    }
+    return children;
+  };
+
+  try {
+    const row = (await db.getFirstAsync(
+      `SELECT * FROM plant_events WHERE id = ? AND _deleted = 0`,
+      [id],
+    )) as any;
+    if (!row) return null;
+
+    const event = mapRow(row);
+    event.children = await loadChildren(event.id);
+    return event;
   } catch (error) {
     console.error('[OfflineQuery] getOfflinePlantEventById failed', error);
     return null;
+  }
+};
+
+export const toggleOfflinePlantEventTask = async (
+  eventId: string,
+  taskIndex: number,
+): Promise<void> => {
+  if (Platform.OS === 'web') return;
+  const db = await getDbAsync();
+  const now = new Date().toISOString();
+
+  try {
+    const row = (await db.getFirstAsync(
+      `SELECT tasks FROM plant_events WHERE id = ? AND _deleted = 0`,
+      [eventId],
+    )) as any;
+
+    const tasksRaw = row?.tasks as string | null;
+    const tasks = tasksRaw ? (JSON.parse(tasksRaw) as any[]) : [];
+    if (!Array.isArray(tasks) || !tasks[taskIndex]) return;
+
+    tasks[taskIndex] = {
+      ...tasks[taskIndex],
+      completed: !tasks[taskIndex].completed,
+    };
+
+    await db.runAsync(
+      `UPDATE plant_events SET tasks = ?, lastModifiedAt = ?, _dirty = 1 WHERE id = ?`,
+      [JSON.stringify(tasks), now, eventId],
+    );
+
+    await enqueueMutation('plant_events', eventId, 'UPDATE', {
+      id: eventId,
+      tasks,
+    });
+  } catch (error) {
+    console.error('[OfflineQuery] toggleOfflinePlantEventTask failed', error);
   }
 };
 

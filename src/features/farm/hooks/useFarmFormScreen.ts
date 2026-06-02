@@ -35,7 +35,7 @@ const toOptionalNumber = (value?: string) => {
   return Number.isFinite(numeric) ? numeric : undefined;
 };
 
-const formFieldNames: Array<keyof AddFarmFormValues> = [
+const formFieldNames: (keyof AddFarmFormValues)[] = [
   "name",
   "description",
   "areaM2",

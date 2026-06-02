@@ -3,10 +3,8 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { Calendar, type DateData } from "react-native-calendars";
 import { format, subMonths, addMonths } from "date-fns";
-import { useTranslation } from "react-i18next";
 import { CATEGORY_DOT_COLORS } from "../../calendarConstants";
 import type { PlantEventResponse } from "../../plant-event.types";
-import { getEventCategory } from "../../plant-event.types";
 import { EventGroupedList } from "@/src/features/shared/components/EventGroupedList";
 
 const SELECTED_DAY_COLOR = "#2F7F34";

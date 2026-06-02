@@ -10,7 +10,6 @@ export type {
 } from "./components/farm.types";
 export { farmApi } from "./api/farm.api";
 export {
-  farmKeys,
   useFarmPlotsByOwner,
   useFarmZonesByPlot,
   useFarmPlotById,

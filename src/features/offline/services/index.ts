@@ -10,5 +10,8 @@ export * from './offline-query.service';
 // Sync orchestrator (backend → SQLite, full pull)
 export * from './offline-sync.service';
 
-// Pending sync queue (future: SQLite → backend push)
+// Pending sync queue (SQLite → backend push)
 export * from './sync-queue.service';
+
+// Local ID mapping (UUID → server ObjectId)
+export * from './id-map.service';

@@ -2,15 +2,13 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, ActivityIndicator, TouchableOpacity, RefreshControl } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { CloudOff, RefreshCw, AlertCircle, Calendar, Map, Sprout, ScanLine, ChevronRight } from 'lucide-react-native';
+import { AlertCircle, Calendar, Map, Sprout, ScanLine, ChevronRight, Sparkles } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOfflineDataContext } from '../context/OfflineDataContext';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import Colors from '@/src/constants/Colors';
 import { formatDistanceToNow } from 'date-fns';
 import { MotiView } from 'moti';
-import { Sparkles } from 'lucide-react-native';
 import { StatsGrid } from '../../home/components/StatsGrid';
 import { OverviewCompletionCard } from '../../home/components/OverviewCompletionCard';
 import { OfflineTodayTasksSection } from './OfflineTodayTasksSection';
@@ -22,7 +20,6 @@ export function OfflineDashboard() {
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { data: stats, isLoading: statsLoading } = useOfflineAgricultureStats();
   const queryClient = useQueryClient();
 

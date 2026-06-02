@@ -42,7 +42,7 @@ export function ProfileScreen() {
   const { colorScheme: nativeWindColorScheme, setColorScheme } =
     useNativeWindColorScheme();
   const { logoutLocal } = useAuthContext();
-  const { isForceOffline, toggleForceOffline } = useNetworkContext();
+  const { toggleForceOffline } = useNetworkContext();
   const scheme = colorScheme ?? "light";
   const palette = Colors[scheme];
   const {

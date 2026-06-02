@@ -22,7 +22,7 @@ export const STATUS_CHIP_CONFIG: Array<{
   { value: "CANCELLED", labelKey: "plan.status.CANCELLED" },
 ];
 
-export const SOURCE_TYPE_CHIPS: Array<{ value: PlanSourceType | ""; labelKey: string }> = [
+export const SOURCE_TYPE_CHIPS: { value: PlanSourceType | ""; labelKey: string }[] = [
   { value: "", labelKey: "plan.filter.sourceAll" },
   { value: "USER_CREATED", labelKey: "plan.filter.sourceUserCreated" },
   { value: "RAG_GEN", labelKey: "plan.filter.sourceRagGen" },

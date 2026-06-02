@@ -12,7 +12,7 @@ export const DEFAULT_SENSOR_CODES: SensorCode[] = [
   "LIGHT_INTENSITY",
 ];
 
-export const CHART_RANGES: Array<{ value: ChartRange; label: string }> = [
+export const CHART_RANGES: { value: ChartRange; label: string }[] = [
   { value: "H1", label: "1 giờ" },
   { value: "H24", label: "1 ngày" },
   { value: "D7", label: "7 ngày" },

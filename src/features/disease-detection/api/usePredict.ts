@@ -8,8 +8,13 @@ import {
 } from "./disease-detection.api";
 
 export const useDetectLeaf = () => {
-  return useMutation<LeafDetectionResponse, Error, ImagePickerAsset>({
-    mutationFn: (asset) => diseaseDetectionApi.detectLeaf(asset),
+  return useMutation<
+    LeafDetectionResponse,
+    Error,
+    { asset: ImagePickerAsset; plantId?: string; farmPlotId?: string; farmZoneId?: string }
+  >({
+    mutationFn: ({ asset, plantId, farmPlotId, farmZoneId }) =>
+      diseaseDetectionApi.detectLeaf(asset, { plantId, farmPlotId, farmZoneId }),
   });
 };
 
@@ -17,9 +22,9 @@ export const usePredict = () => {
   return useMutation<
     PredictionResponse,
     Error,
-    { uri: string; filename: string }
+    { uri: string; filename: string; plantId?: string; farmPlotId?: string; farmZoneId?: string }
   >({
-    mutationFn: ({ uri, filename }) =>
-      diseaseDetectionApi.predictFromUri(uri, filename),
+    mutationFn: ({ uri, filename, plantId, farmPlotId, farmZoneId }) =>
+      diseaseDetectionApi.predictFromUri(uri, filename, { plantId, farmPlotId, farmZoneId }),
   });
 };

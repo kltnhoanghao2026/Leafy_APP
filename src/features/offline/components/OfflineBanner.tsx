@@ -1,16 +1,12 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import { WifiOff } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useNetworkContext } from '@/src/providers/NetworkProvider';
-import { useColorScheme } from '@/src/hooks/useColorScheme';
-import Colors from '@/src/constants/Colors';
 
 export function OfflineBanner() {
   const { t } = useTranslation();
-  const { toggleForceOffline } = useNetworkContext();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? 'light'];
+  useNetworkContext();
 
   return (
     <View className="flex-row items-center justify-between bg-amber-100 px-4 py-3 dark:bg-amber-900/30">

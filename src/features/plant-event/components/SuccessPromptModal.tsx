@@ -1,12 +1,9 @@
 import React, { useState } from "react";
 import {
-  AlertCircle,
   CheckCircle2,
   Modal,
-  Pressable,
   Text,
   TouchableOpacity,
-  useWindowDimensions,
   View,
   ActivityIndicator,
 } from "react-native";
@@ -14,8 +11,6 @@ import { Trophy, XCircle } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
 import { useCompleteApplyMutation } from "../../plan/queries/plan.queries";
-import { useColorScheme } from "@/src/hooks/useColorScheme";
-import Colors from "@/src/constants/Colors";
 
 interface SuccessPromptModalProps {
   visible: boolean;
@@ -34,8 +29,6 @@ export function SuccessPromptModal({
 }: SuccessPromptModalProps) {
   const { t } = useTranslation();
   const { height: viewportHeight } = useWindowDimensions();
-  const scheme = useColorScheme() ?? "light";
-  const palette = Colors[scheme];
   const completeMutation = useCompleteApplyMutation();
 
   const [result, setResult] = useState<"success" | "failure" | null>(null);

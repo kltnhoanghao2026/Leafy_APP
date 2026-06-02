@@ -8,8 +8,14 @@ import {
   View,
 } from "react-native";
 import {
+  CalendarDays,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
+  Layers,
+  Leaf,
+  LayoutGrid,
+  MapPin,
   SlidersHorizontal,
   X,
 } from "lucide-react-native";
@@ -48,10 +54,22 @@ type FilterBarProps = {
   };
 };
 
+type ChipIconKey = "MapPin" | "ClipboardList" | "LayoutGrid" | "Layers" | "Leaf" | "CalendarDays";
+
 type ActiveChip = {
   key: string;
   label: string;
+  iconKey: ChipIconKey;
   onClear: () => void;
+};
+
+const CHIP_ICONS: Record<ChipIconKey, typeof MapPin> = {
+  MapPin,
+  ClipboardList,
+  LayoutGrid,
+  Layers,
+  Leaf,
+  CalendarDays,
 };
 
 const SCOPE_OPTIONS = [
@@ -70,7 +88,8 @@ function buildActiveChips(
     const scopeLabel = SCOPE_OPTIONS.find((s) => s.value === filter.targetType)?.label ?? filter.targetType;
     chips.push({
       key: "targetType",
-      label: `📍 ${scopeLabel}`,
+      label: scopeLabel,
+      iconKey: "MapPin",
       onClear: () => onClear("targetType", ""),
     });
   }
@@ -78,34 +97,39 @@ function buildActiveChips(
     chips.push({
       key: "eventType",
       label: EVENT_TYPE_LABELS[filter.eventType as EventType] ?? filter.eventType,
+      iconKey: "CalendarDays",
       onClear: () => onClear("eventType", ""),
     });
   }
   if (filter.selectedApplyId) {
     chips.push({
       key: "selectedApplyId",
-      label: "📋 Kế hoạch",
+      label: "Kế hoạch",
+      iconKey: "ClipboardList",
       onClear: () => onClear("selectedApplyId", ""),
     });
   }
   if (filter.farmPlotId) {
     chips.push({
       key: "farmPlotId",
-      label: "🗺️ Vườn",
+      label: "Vườn",
+      iconKey: "LayoutGrid",
       onClear: () => onClear("farmPlotId", ""),
     });
   }
   if (filter.farmZoneId) {
     chips.push({
       key: "farmZoneId",
-      label: "🗂️ Khu vực",
+      label: "Khu vực",
+      iconKey: "Layers",
       onClear: () => onClear("farmZoneId", ""),
     });
   }
   if (filter.plantId) {
     chips.push({
       key: "plantId",
-      label: "🌱 Cây",
+      label: "Cây",
+      iconKey: "Leaf",
       onClear: () => onClear("plantId", ""),
     });
   }
@@ -202,7 +226,7 @@ export function PlantEventHubFilterBar({
     : t("common.all", "Tất cả cây");
 
   return (
-    <View className="mx-4 mb-3 overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
+    <View className="mb-3 overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-sm">
       {/* ── Collapsed: quick chip strip ────────────────────────────────── */}
       <TouchableOpacity
         className="flex-row items-center justify-between px-3 py-2.5"
@@ -230,25 +254,29 @@ export function PlantEventHubFilterBar({
             className="flex-1 ml-2"
             contentContainerStyle={{ gap: 4, alignItems: "center" }}
           >
-            {chips.map((chip) => (
-              <Pressable
-                key={chip.key}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  chip.onClear();
-                }}
-                className="flex-row items-center gap-1 rounded-full px-2 py-0.5"
-                style={{ backgroundColor: primaryColor + "18" }}
-              >
-                <Text
-                  className="text-[10px] font-semibold"
-                  style={{ color: primaryColor }}
-                >
-                  {chip.label}
-                </Text>
-                <X size={8} color={primaryColor} />
-              </Pressable>
-            ))}
+            {chips.map((chip) => {
+                const ChipIcon = CHIP_ICONS[chip.iconKey];
+                return (
+                  <Pressable
+                    key={chip.key}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      chip.onClear();
+                    }}
+                    className="flex-row items-center gap-1 rounded-full px-2 py-0.5"
+                    style={{ backgroundColor: primaryColor + "18" }}
+                  >
+                    <ChipIcon size={9} color={primaryColor} />
+                    <Text
+                      className="text-[10px] font-semibold"
+                      style={{ color: primaryColor }}
+                    >
+                      {chip.label}
+                    </Text>
+                    <X size={8} color={primaryColor} />
+                  </Pressable>
+                );
+              })}
           </ScrollView>
         </View>
 

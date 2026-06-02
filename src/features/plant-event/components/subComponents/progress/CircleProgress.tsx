@@ -14,12 +14,6 @@ export function CircleProgress({
   strokeWidth = 6,
   color,
 }: CircleProgressProps) {
-  const r = (size - strokeWidth) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
-  const cx = size / 2;
-  const cy = size / 2;
-
   return (
     <View style={{ width: size, height: size, position: "relative" }}>
       {/* Background ring */}

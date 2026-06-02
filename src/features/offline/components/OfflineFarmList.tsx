@@ -13,7 +13,7 @@ import { OfflineFarmZoneList } from './OfflineFarmZoneList';
 import type { FarmPlotResponse } from '@/src/features/farm';
 
 export function OfflineFarmList() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { profileId } = useAuthContext();
   const { data: farms, isLoading, refetch } = useOfflineFarms(profileId || undefined);
   const { data: pendingCount } = useOfflinePendingCount();

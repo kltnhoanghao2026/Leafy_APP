@@ -4,7 +4,6 @@ import {
   Pressable,
   ScrollView,
   Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -12,25 +11,16 @@ import {
 } from "react-native";
 import {
   CheckCircle2,
-  ChevronDown,
-  ChevronRight,
   Circle,
-  Clock,
-  LayoutGrid,
-  Leaf,
-  MapPin,
-  X,
-  Sprout,
-  GitBranch,
   Pencil,
+  Sprout,
   Trash2,
+  X,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
 
-import type { PlantEventResponse, EventProgressResponse } from "./plant-event.types";
+import type { PlantEventResponse } from "./plant-event.types";
 import {
-  getEventCategoryColors,
   getEventCategory,
   getEventTypeIcon,
 } from "./plant-event.types";
@@ -40,19 +30,11 @@ import {
   useToggleTaskMutation,
   useDeletePlantEventMutation,
   usePlantEventById,
-  useEventProgress,
-  useUpdateEventProgressMutation,
 } from "../queries";
-import { useColorScheme } from "@/src/hooks/useColorScheme";
-import Colors from "@/src/constants/Colors";
+import { useNetworkContext } from "@/src/providers/NetworkProvider";
+import { useOfflinePlantEventById } from "@/src/features/offline/hooks/useOfflineQueries";
 import { CircleProgress, ProgressRow, ChildEventNode } from "./subComponents/progress";
 import { hexToRgb } from "../utils/colors";
-
-const TARGET_TYPE_ICONS = {
-  FARM: MapPin,
-  FARM_ZONE: LayoutGrid,
-  PLANT: Leaf,
-};
 
 // ── Main Modal ────────────────────────────────────────────────────────────────
 
@@ -79,26 +61,24 @@ export function PlantEventProgressModal({
 
   const { t } = useTranslation();
   const { height: viewportHeight } = useWindowDimensions();
-  const scheme = useColorScheme() ?? "light";
-  const palette = Colors[scheme];
+
+  const { isOffline } = useNetworkContext();
 
   // Live data refetch — re-fetch every 10s while modal is open to keep progress current
-  const { data: liveEvent } = usePlantEventById(initialEvent.id, visible ? 10_000 : undefined);
-
-  // Progress tracking entries
-  const { data: progressEntries = [] } = useEventProgress(
+  const { data: liveEventOnline } = usePlantEventById(
     initialEvent.id,
-    { size: 100 },
-    visible,
+    visible && !isOffline ? 10_000 : undefined,
+  );
+  const { data: liveEventOffline } = useOfflinePlantEventById(
+    visible && isOffline ? initialEvent.id : "",
   );
 
   const updateEventMutation = useUpdatePlantEventMutation();
   const toggleTaskMutation = useToggleTaskMutation();
   const deleteEventMutation = useDeletePlantEventMutation();
-  const updateProgressMutation = useUpdateEventProgressMutation();
 
   // Use live event data for display; fall back to local state for optimistic updates
-  const displayEvent = liveEvent ?? event;
+  const displayEvent = (isOffline ? liveEventOffline : liveEventOnline) ?? event;
 
   const handleToggleComplete = (eventId: string, completed: boolean) => {
     const mutationsToFire: { id: string; completed: boolean }[] = [];
@@ -204,8 +184,6 @@ export function PlantEventProgressModal({
   const hasChildren = displayEvent.children && displayEvent.children.length > 0;
   const childrenDone = hasChildren ? displayEvent.children.filter((c) => c.completed).length : 0;
   const childrenPct = hasChildren ? Math.round((childrenDone / displayEvent.children.length) * 100) : 0;
-
-  const fmtDate = (d?: string | null) => d ? format(new Date(d), "dd/MM/yyyy") : "—";
 
   return (
     <Modal
@@ -337,36 +315,6 @@ export function PlantEventProgressModal({
                   </View>
                 )}
               </View>
-
-              {/* Progress Tracking Entries */}
-              {progressEntries.length > 0 && (
-                <View className="mb-6">
-                  <Text className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                    {t("plantEvent.progress.progressTracking", { count: progressEntries.length })}
-                  </Text>
-                  {progressEntries.map((entry) => (
-                    <ProgressRow
-                      key={entry.id}
-                      entry={entry}
-                      onToggle={() =>
-                        updateProgressMutation.mutate({
-                          eventId: initialEvent.id,
-                          progressId: entry.id,
-                          body: { completed: !entry.completed },
-                        })
-                      }
-                      onNoteChange={(note) =>
-                        updateProgressMutation.mutate({
-                          eventId: initialEvent.id,
-                          progressId: entry.id,
-                          body: { completed: entry.completed, note },
-                        })
-                      }
-                      dotColor={dotColor}
-                    />
-                  ))}
-                </View>
-              )}
 
               {/* Tasks */}
               {tasks.length > 0 && (

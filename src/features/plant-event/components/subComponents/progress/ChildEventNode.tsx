@@ -45,23 +45,12 @@ export function ChildEventNode({
 }: ChildEventNodeProps) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(depth === 0);
-  const [hovered, setHovered] = useState(false);
   const hasChildren = event.children && event.children.length > 0;
   const targetIcon = event.targetType ? TARGET_TYPE_ICONS[event.targetType] : null;
   const TargetIconCmp = targetIcon ?? Sprout;
 
-  // Date formatting
-  const fmtDate = (d?: string | null) => {
-    if (!d) return null;
-    const [y, m, day] = d.split('-');
-    return `${day}/${m}`;
-  };
-  const startStr = fmtDate(event.calculatedStartDate);
-  const endStr = fmtDate(event.calculatedEndDate);
-  const dateLabel = startStr && endStr && startStr !== endStr ? `${startStr} → ${endStr}` : startStr;
-
   return (
-    <View className="mb-2" onTouchStart={() => setHovered(true)}>
+    <View className="mb-2">
       <View className="flex-row items-start gap-3 rounded-xl px-2 py-2.5">
         <TouchableOpacity
           className="mt-1"

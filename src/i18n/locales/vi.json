@@ -201,7 +201,7 @@
       "posting": "Đang đăng...",
       "visibility": "Hiển thị",
       "visibilityAll": "Công khai",
-      "visibilityFriend": "Bạn bè",
+      "visibilityFollower": "Người theo dõi",
       "visibilityOnlyMe": "Chỉ mình tôi",
       "postSuccess": "Đăng bài thành công!",
       "postError": "Đăng bài thất bại. Vui lòng thử lại.",
@@ -296,6 +296,8 @@
       "experts": "Danh sách chuyên gia",
       "systemAlerts": "Cảnh báo hệ thống",
       "predict": "Phát hiện bệnh",
+      "iotDevices": "Thiết bị IoT",
+      "iotAlerts": "Cảnh báo IoT",
       "more": "Tùy chọn khác",
       "notifications": "Thông báo",
       "viewAllNotifications": "Xem tất cả thông báo"

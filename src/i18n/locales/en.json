@@ -201,7 +201,7 @@
       "posting": "Posting...",
       "visibility": "Visibility",
       "visibilityAll": "Public",
-      "visibilityFriend": "Friends",
+      "visibilityFollower": "Followers",
       "visibilityOnlyMe": "Only me",
       "postSuccess": "Post created successfully!",
       "postError": "Failed to create post. Please try again.",
@@ -296,6 +296,8 @@
       "experts": "Expert Directory",
       "systemAlerts": "System alerts",
       "predict": "Disease Detection",
+      "iotDevices": "IoT Devices",
+      "iotAlerts": "IoT Alerts",
       "more": "More options",
       "notifications": "Notifications",
       "viewAllNotifications": "View all notifications"

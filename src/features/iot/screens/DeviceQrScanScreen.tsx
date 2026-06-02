@@ -22,7 +22,7 @@ export function DeviceQrScanScreen() {
   const [manualJson, setManualJson] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const usePayload = (rawValue: string) => {
+  const processPayload = (rawValue: string) => {
     const result = parseDeviceQrPayload(rawValue, t);
     if (!result.ok) {
       setError(result.error);
@@ -43,7 +43,7 @@ export function DeviceQrScanScreen() {
     }
 
     setScanned(true);
-    usePayload(result.data);
+    processPayload(result.data);
   };
 
   const hasPermission = permission?.granted;
@@ -110,7 +110,7 @@ export function DeviceQrScanScreen() {
           style={styles.textArea}
           value={manualJson}
         />
-        <Pressable style={styles.secondaryButton} onPress={() => usePayload(manualJson)}>
+        <Pressable style={styles.secondaryButton} onPress={() => processPayload(manualJson)}>
           <Text style={styles.secondaryButtonText}>{t("iot.devices.onboarding.useThisContent")}</Text>
         </Pressable>
       </View>

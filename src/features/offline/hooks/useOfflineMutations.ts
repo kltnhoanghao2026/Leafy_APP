@@ -6,6 +6,7 @@ import {
   createOfflineFarmZone, updateOfflineFarmZone, deleteOfflineFarmZone,
   createOfflinePlantEvent, updateOfflinePlantEvent, deleteOfflinePlantEvent,
   toggleOfflinePlantEventCompleted,
+  toggleOfflinePlantEventTask,
 } from '../services/offline-query.service';
 import { offlineKeys } from './useOfflineQueries';
 import type { PlantCreateRequest, PlantUpdateRequest } from '@/src/features/plant';
@@ -156,6 +157,19 @@ export const useOfflineTogglePlantEventCompleted = () => {
   return useMutation({
     mutationFn: (id: string) => toggleOfflinePlantEventCompleted(id),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['offline', 'plantEvents'] });
+      queryClient.invalidateQueries({ queryKey: offlineKeys.stats() });
+    },
+  });
+};
+
+export const useOfflineTogglePlantEventTask = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ eventId, taskIndex }: { eventId: string; taskIndex: number }) =>
+      toggleOfflinePlantEventTask(eventId, taskIndex),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: offlineKeys.plantEvent(variables.eventId) });
       queryClient.invalidateQueries({ queryKey: ['offline', 'plantEvents'] });
       queryClient.invalidateQueries({ queryKey: offlineKeys.stats() });
     },

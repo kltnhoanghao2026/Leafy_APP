@@ -309,11 +309,6 @@ export interface UnreadAnchorResponse {
   unreadCount: number;
 }
 
-export interface JoinGroupPreviewMember {
-  name: string;
-  avatar: string | null;
-}
-
 export interface JoinGroupPreviewResponse {
   conversationId: string;
   groupName: string;

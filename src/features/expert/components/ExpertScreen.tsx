@@ -21,7 +21,6 @@ export function ExpertScreen() {
     isError,
     isRefetching,
     isFetchingNextPage,
-    hasNextPage,
     onRefresh,
     onSearch,
     searchTerm,

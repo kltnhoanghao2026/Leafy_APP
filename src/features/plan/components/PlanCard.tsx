@@ -3,13 +3,9 @@ import {
   BarChart2,
   Bot,
   CheckCircle,
-  ClipboardList,
   DollarSign,
   Globe,
-  Lock,
-  MapPin,
   Play,
-  Sprout,
   Trash2,
   User,
   UserCheck,
@@ -17,7 +13,7 @@ import {
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "@/src/utils/date";
-import type { PlanResponse, PlanSourceType } from "../schemas/plan.schema";
+import type { PlanResponse } from "../schemas/plan.schema";
 import {
   SEVERITY_STYLE,
   SOURCE_STYLE,

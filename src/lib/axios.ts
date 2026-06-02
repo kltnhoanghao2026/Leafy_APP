@@ -5,9 +5,8 @@ import axios, {
 } from "axios";
 import * as SecureStore from "expo-secure-store";
 import { getDeviceId } from "../utils/device";
-import { API_ENDPOINTS, ROUTES } from "./routes";
 import { type ApiResponse } from "../shared/api";
-import { ERROR_CODES } from "./routes";
+import { API_ENDPOINTS, ERROR_CODES, ROUTES } from "./routes";
 import { authEvents } from "./auth-event";
 
 export type { ApiResponse };
@@ -158,14 +157,14 @@ const isAuthEndpoint = (url?: string): boolean => {
 
 const http = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 30000,
+  timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
 let isRefreshing = false;
-let refreshSubscribers: Array<(token: string | null) => void> = [];
+let refreshSubscribers: ((token: string | null) => void)[] = [];
 
 const subscribeRefresh = (callback: (token: string | null) => void): void => {
   refreshSubscribers.push(callback);

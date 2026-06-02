@@ -38,6 +38,13 @@ export type PlantResponse = {
   totalYieldKg?: number | null;
   speciesId: string;
   farmPlotId: string;
+  farmZoneId?: string | null;
+  ownerProfileId?: string | null;
+  createdAt?: string | null;
+  lastModifiedAt?: string | null;
+  createdBy?: string | null;
+  lastModifiedBy?: string | null;
+  active?: boolean | null;
 };
 
 export type PlantCreateRequest = {

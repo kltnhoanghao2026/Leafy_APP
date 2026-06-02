@@ -63,12 +63,14 @@ export type DrawerMenuItem = {
 export const DRAWER_MENU_ITEMS: DrawerMenuItem[] = [
   { labelKey: 'mainNav.drawer.manageFarm', path: '/(main)/farm', icon: null },
   { labelKey: 'mainNav.drawer.managePlants', path: '/(main)/plants', icon: null },
-  { labelKey: 'mainNav.drawer.managePlans', path: '/(main)/plans', icon: null, label: 'Quản lý kế hoạch' },
+  { labelKey: 'mainNav.drawer.managePlans', path: '/(main)/plans', icon: null },
   { labelKey: 'mainNav.drawer.manageEvents', path: '/(main)/plant-events', icon: null },
   { labelKey: 'mainNav.drawer.eventCalendar', path: '/(main)/plant-events/calendar', icon: null },
+  { labelKey: 'mainNav.drawer.iotDevices', path: '/(main)/iot', icon: null },
+  { labelKey: 'mainNav.drawer.iotAlerts', path: '/(main)/iot/alerts', icon: null },
   { labelKey: 'mainNav.drawer.experts', path: '/(main)/experts', icon: null },
-  { labelKey: 'offline.sync.title', path: '/(main)/sync', icon: null, label: 'Sync Data' },
-  { labelKey: 'mainNav.drawer.predict', path: '/(main)/predict', icon: null, label: 'Disease Detection' },
+  { labelKey: 'offline.sync.title', path: '/(main)/sync', icon: null },
+  { labelKey: 'mainNav.drawer.predict', path: '/(main)/predict', icon: null },
   { labelKey: 'mainNav.drawer.more', path: '/(main)/community', icon: null },
 ];
 

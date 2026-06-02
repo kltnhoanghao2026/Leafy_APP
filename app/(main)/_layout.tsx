@@ -9,6 +9,13 @@ import {
   Bell,
   ClipboardList,
   ShieldAlert,
+  Flower2,
+  CalendarDays,
+  Calendar,
+  GraduationCap,
+  RefreshCw,
+  HeartPulse,
+  MoreHorizontal,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +27,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Drawer } from 'react-native-drawer-layout';
+import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useNotificationState,
@@ -136,25 +144,36 @@ export default function MainLayout() {
       case 'mainNav.drawer.manageFarm':
         return <Home {...iconProps} />;
       case 'mainNav.drawer.managePlants':
-        return <Users {...iconProps} />;
+        return <Flower2 {...iconProps} />;
       case 'mainNav.drawer.managePlans':
         return <ClipboardList {...iconProps} />;
       case 'mainNav.drawer.manageEvents':
+        return <CalendarDays {...iconProps} />;
       case 'mainNav.drawer.eventCalendar':
-        return <Bell {...iconProps} />;
-      case 'offline.sync.title':
-      case 'mainNav.drawer.predict':
-        return <Activity {...iconProps} />;
-      case 'mainNav.drawer.experts':
-        return <Users {...iconProps} />;
-      case 'mainNav.drawer.systemAlerts':
+        return <Calendar {...iconProps} />;
+      case 'mainNav.drawer.iotDevices':
+        return <RadioTower {...iconProps} />;
+      case 'mainNav.drawer.iotAlerts':
         return <ShieldAlert {...iconProps} />;
+      case 'mainNav.drawer.experts':
+        return <GraduationCap {...iconProps} />;
+      case 'offline.sync.title':
+        return <RefreshCw {...iconProps} />;
+      case 'mainNav.drawer.predict':
+        return <HeartPulse {...iconProps} />;
       case 'mainNav.drawer.more':
-        return <Users {...iconProps} />;
+        return <MoreHorizontal {...iconProps} />;
       default:
         return <Bell {...iconProps} />;
     }
   };
+
+  // ── Alert count (needed by both drawer content) ──────────────────────────────
+  const openAlertCount =
+    openAlertsQuery.data?.totalItems ??
+    openAlertsQuery.data?.totalElements ??
+    openAlertsQuery.data?.items?.length ??
+    0;
 
   // ── Drawer Content ───────────────────────────────────────────────────────────
 
@@ -345,12 +364,6 @@ export default function MainLayout() {
     transitionSpec: { animation: 'timing' as const, config: { duration: 220 } },
   };
 
-  const openAlertCount =
-    openAlertsQuery.data?.totalItems ??
-    openAlertsQuery.data?.totalElements ??
-    openAlertsQuery.data?.items?.length ??
-    0;
-
   // ── Tab Screens ──────────────────────────────────────────────────────────────
 
   const visibleTabs = [
@@ -369,7 +382,7 @@ export default function MainLayout() {
     {
       name: 'calendar',
       headerTitle: t('mainNav.headers.calendar'),
-      tabBarButton: (props) => (
+      tabBarButton: (props: BottomTabBarButtonProps) => (
         <CenterActionButton
           {...props}
           borderColor={palette.background}
@@ -403,7 +416,6 @@ export default function MainLayout() {
     'plant-events',
     'sync',
     'predict',
-    'ai-chat',
     'notifications',
     'chat',
     'experts',

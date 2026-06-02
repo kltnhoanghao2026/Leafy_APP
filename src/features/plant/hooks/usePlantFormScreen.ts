@@ -41,7 +41,7 @@ const toOptionalNumber = (value?: string) => {
   return Number.isFinite(numeric) ? numeric : undefined;
 };
 
-const formFieldNames: Array<keyof PlantFormValues> = [
+const formFieldNames: (keyof PlantFormValues)[] = [
   "plantStatus",
   "speciesId",
   "farmPlotId",

@@ -9,6 +9,7 @@ const CATEGORY_ORDER: EventCategory[] = [
   "ROUTINE_CARE",
   "HEALTH_MEDICAL",
   "GROWTH_LIFECYCLE",
+  "ALERTS",
 ];
 
 export type EventGroupedListProps = {

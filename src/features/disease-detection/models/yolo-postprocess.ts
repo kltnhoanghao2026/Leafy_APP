@@ -134,8 +134,6 @@ export function parseYoloRawOutput(
 
   const transposed = numValues === 5 && dim2 === 5;
   const rawDetections: RawDetection[] = [];
-
-  const expectedValues = 4 + YOLO_NUM_CLASSES;
   
   let scaleX = imageWidth / YOLO_INPUT_SIZE;
   let scaleY = imageHeight / YOLO_INPUT_SIZE;

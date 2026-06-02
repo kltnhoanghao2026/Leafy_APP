@@ -15,8 +15,10 @@ import {
   ChevronUp,
   ChevronDown,
   Clock,
+  Layers,
   MapPin,
   Plus,
+  Sprout,
 } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -42,10 +44,11 @@ import type {
   PlantEventResponse,
 } from "../../plant-event/components/plant-event.types";
 import { EVENT_CATEGORY_MAP, getEventCategory } from "../../plant-event/components/plant-event.types";
-import { useOfflinePlantEvents } from "../hooks/useOfflineQueries";
-import { useOfflineTogglePlantEventCompleted } from "../hooks/useOfflineMutations";
-import { useOfflinePlants as usePlants } from "../hooks/useOfflineQueries";
-import { useOfflineFarms as useFarmPlotsByOwner, useOfflineFarmZones as useFarmZonesByPlot } from "../hooks/useOfflineQueries";
+import { useOfflinePlantEvents, useOfflinePlants as usePlants, useOfflineFarms as useFarmPlotsByOwner, useOfflineFarmZones as useFarmZonesByPlot } from "../hooks/useOfflineQueries";
+import {
+  useOfflineTogglePlantEventCompleted,
+  useOfflineTogglePlantEventTask,
+} from "../hooks/useOfflineMutations";
 import { useAuthContext } from "@/src/features/auth/context/AuthContext";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 import Colors from "@/src/constants/Colors";
@@ -56,7 +59,6 @@ import {
   PlantEventHubFilterBar,
   type FilterState,
 } from "../../plant-event/components/PlantEventHubFilterBar";
-import { useMyApplies } from "../../plan/queries/plan.queries";
 import { OfflinePlantEventFormScreen } from "./OfflinePlantEventFormScreen";
 
 const SELECTED_DAY_COLOR = "#2F7F34";
@@ -111,8 +113,8 @@ export function OfflinePlantEventHubScreen({
   );
   const [selectedId, setSelectedId] = useState(params.selectedId ?? "");
   const [selectedName, setSelectedName] = useState(params.selectedName ?? "");
-  const [selectedPlotIdForZones, setSelectedPlotIdForZones] = useState("");
-  const [selectedApplyId, setSelectedApplyId] = useState("");
+  const [selectedPlotIdForZones] = useState("");
+  const [selectedApplyId] = useState("");
 
   // ── Month view state ──────────────────────────────────────────────────
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -133,10 +135,8 @@ export function OfflinePlantEventHubScreen({
   const farmPlotsQuery = useFarmPlotsByOwner(profileId ?? "");
   const plantsQuery = usePlants({ page: 0, size: 100 });
   const farmZonesQuery = useFarmZonesByPlot(selectedPlotIdForZones);
-  const appliesQuery = useMyApplies({ size: 100 });
   const farmPlots = farmPlotsQuery.data ?? [];
   const plants = plantsQuery.data?.content ?? [];
-  const applies = appliesQuery.data?.content ?? [];
 
   // ── Date ranges ───────────────────────────────────────────────────────
   const monthStart = format(startOfMonth(currentMonth), "yyyy-MM-dd");
@@ -162,7 +162,6 @@ export function OfflinePlantEventHubScreen({
         : targetType === "FARM_ZONE"
           ? { farmZoneId: selectedId }
           : { plantId: selectedId }),
-      ...(selectedApplyId ? { planApplyId: selectedApplyId } : {}),
       ...(activeView === "week"
         ? { startDate: weekStartStr, endDate: weekEndStr }
         : activeView === "timeline"
@@ -179,13 +178,20 @@ export function OfflinePlantEventHubScreen({
       tlMonthEnd,
       monthStart,
       monthEnd,
-      selectedApplyId,
     ],
   );
 
-  const eventsQuery = useOfflinePlantEvents(calendarParams as any);
+  const eventsQuery = useOfflinePlantEvents({
+    ...calendarParams,
+    ...(activeFilter.farmPlotId ? { farmPlotId: activeFilter.farmPlotId } : {}),
+    ...(activeFilter.farmZoneId ? { farmZoneId: activeFilter.farmZoneId } : {}),
+    ...(activeFilter.plantId ? { plantId: activeFilter.plantId } : {}),
+    ...(activeFilter.selectedApplyId ? { planApplyId: activeFilter.selectedApplyId } : {}),
+    ...(activeFilter.eventType ? { eventType: activeFilter.eventType } : {}),
+    ...(activeFilter.targetType ? { targetType: activeFilter.targetType } : {}),
+  });
   const updateEventMutation = useOfflineTogglePlantEventCompleted();
-  const toggleTaskMutation = { mutate: (args: any) => {} }; // Not supported offline
+  const toggleTaskMutation = useOfflineTogglePlantEventTask();
 
   // Optimistic: keep last known events so UI never blanks out on refetch
   const stableEventsRef = useRef<PlantEventResponse[]>([]);
@@ -203,14 +209,16 @@ export function OfflinePlantEventHubScreen({
     toggleTaskMutation.mutate({ eventId: event.id, taskIndex });
   };
 
-  // Apply active filter
+  // Apply active filter (client-side fallback for anything not pushed into SQL yet)
   const filteredEvents = useMemo(() => {
     if (!isFiltered) return events;
     return events.filter((e) => {
-      // Filter by event type if specified
-      if (activeFilter.eventType && e.eventType !== activeFilter.eventType) {
-        return false;
-      }
+      if (activeFilter.eventType && e.eventType !== activeFilter.eventType) return false;
+      if (activeFilter.targetType && e.targetType !== activeFilter.targetType) return false;
+      if (activeFilter.selectedApplyId && e.planApplyId !== activeFilter.selectedApplyId) return false;
+      if (activeFilter.farmPlotId && e.farmPlotId !== activeFilter.farmPlotId) return false;
+      if (activeFilter.farmZoneId && e.farmZoneId !== activeFilter.farmZoneId) return false;
+      if (activeFilter.plantId && e.plantId !== activeFilter.plantId) return false;
       return true;
     });
   }, [events, activeFilter, isFiltered]);
@@ -225,18 +233,6 @@ export function OfflinePlantEventHubScreen({
   }, [selectedId, farmPlots]);
 
   // ── Shared handlers ───────────────────────────────────────────────────
-  const handleSelectTarget = (
-    id: string,
-    name: string,
-    type: EventTargetType,
-  ) => {
-    setTargetType(type);
-    setSelectedId(id);
-    setSelectedName(name);
-    setSelectedMonthDate(null);
-    setSelectedWeekDate(null);
-  };
-
   const handleNavigateToEvent = (eventId: string) => {
     router.push({
       pathname: "/(offline)/plant-events/[id]",

@@ -9,9 +9,7 @@ import {
   TouchableWithoutFeedback,
   TouchableOpacity,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
-import * as ImageManipulator from "expo-image-manipulator";
 import {
   RotateCcw,
   Cpu,
@@ -21,7 +19,7 @@ import {
   ScanLine,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { useNavigation, useRouter } from "expo-router";
+import { useNavigation } from "expo-router";
 
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
@@ -29,6 +27,8 @@ import {
   useDetectLeaf,
   usePredict,
 } from "@/src/features/disease-detection/api/usePredict";
+import { useRouter } from "expo-router";
+import { History } from "lucide-react-native";
 import type {
   LeafDetection,
   PredictionResponse,
@@ -38,7 +38,7 @@ import type { Step, PredictMode } from "./predict.types";
 import {
   getDisplayImageHeight,
   cropLeafImage,
-  commonShadow,
+  getDiseaseLabel,
 } from "./predict.utils";
 import StepIndicator from "./StepIndicator";
 import ImagePickerCard from "./ImagePickerCard";
@@ -47,6 +47,7 @@ import LocalCaptureScreen from "./LocalCaptureScreen";
 import LeafListCard from "./LeafListCard";
 import PredictionResultCard from "./PredictionResultCard";
 import LeafDetectionView from "./LeafDetectionView";
+import PlantAttachCard, { type DiagnosisPlantContext } from "./PlantAttachCard";
 
 import { useTfliteModels } from "../models/useTfliteModels";
 import { processImageToRgbBuffer, processImageToFloat32Buffer } from "../models/static-inference";
@@ -74,6 +75,8 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
   const [croppedUri, setCroppedUri] = useState<string | null>(null);
   const [result, setResult] = useState<PredictionResponse | null>(null);
 
+  const [plantContext, setPlantContext] = useState<DiagnosisPlantContext>({});
+
   const detectMutation = useDetectLeaf();
   const predictMutation = usePredict();
 
@@ -95,26 +98,46 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
     navigation.setOptions({
       headerShown: !isCameraActive,
       headerRight: () => (
-        <Pressable
-          onPress={() => setDropdownOpen((v) => !v)}
-          style={{
-            width: 36,
-            height: 36,
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: 10,
-            backgroundColor:
-              scheme === "dark"
-                ? "rgba(71, 85, 105, 0.35)"
-                : "rgba(47, 127, 52, 0.08)",
-            marginRight: 4,
-          }}
-        >
-          <ModeIcon size={18} color={palette.primary} />
-        </Pressable>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginRight: 4 }}>
+          <Pressable
+            onPress={() => router.push("/(main)/predict/history")}
+            style={({ pressed }) => ({
+              width: 36,
+              height: 36,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 10,
+              backgroundColor:
+                scheme === "dark"
+                  ? "rgba(71, 85, 105, 0.35)"
+                  : "rgba(47, 127, 52, 0.08)",
+              opacity: pressed ? 0.9 : 1,
+            })}
+          >
+            <History size={18} color={palette.primary} />
+          </Pressable>
+
+          <Pressable
+            onPress={() => setDropdownOpen((v) => !v)}
+            style={({ pressed }) => ({
+              width: 36,
+              height: 36,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 10,
+              backgroundColor:
+                scheme === "dark"
+                  ? "rgba(71, 85, 105, 0.35)"
+                  : "rgba(47, 127, 52, 0.08)",
+              opacity: pressed ? 0.9 : 1,
+            })}
+          >
+            <ModeIcon size={18} color={palette.primary} />
+          </Pressable>
+        </View>
       ),
     });
-  }, [navigation, predictMode, palette, scheme, t, isLocalCameraActive]);
+  }, [navigation, predictMode, palette, scheme, t, isLocalCameraActive, router]);
 
   // ── Step 1: Pick image ───────────────────────────────────────────
 
@@ -166,7 +189,7 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
               }
             }
           }
-        } catch (error) {
+        } catch {
           Alert.alert(
             t("diseaseDetection.error", "Error"),
             t("diseaseDetection.detectFailed", "Failed to detect leaves locally. Please try again.")
@@ -176,7 +199,12 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
           setIsLocalProcessing(false);
         }
       } else {
-        detectMutation.mutate(asset, {
+        detectMutation.mutate({
+          asset,
+          plantId: plantContext.plantId,
+          farmPlotId: plantContext.farmPlotId,
+          farmZoneId: plantContext.farmZoneId,
+        }, {
           onSuccess: async (data) => {
             setDetections(data.detections);
             const iSize = { width: data.imageWidth, height: data.imageHeight };
@@ -311,7 +339,7 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
         if (prediction) {
           setResult(prediction);
         }
-      } catch (error) {
+      } catch {
         Alert.alert(
           t("diseaseDetection.error", "Error"),
           t(
@@ -326,7 +354,13 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
     } else {
       setStep("result");
       predictMutation.mutate(
-        { uri: croppedUri, filename: `crop-${Date.now()}.jpg` },
+        {
+          uri: croppedUri,
+          filename: `crop-${Date.now()}.jpg`,
+          plantId: plantContext.plantId,
+          farmPlotId: plantContext.farmPlotId,
+          farmZoneId: plantContext.farmZoneId,
+        },
         {
           onSuccess: (data) => setResult(data),
           onError: () => {
@@ -342,7 +376,7 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
         },
       );
     }
-  }, [croppedUri, predictMutation, t, predictMode, offlineMode, runClassifierOnBuffer]);
+  }, [croppedUri, predictMutation, t, predictMode, offlineMode, runClassifierOnBuffer, plantContext]);
 
   const handleReset = useCallback(() => {
     setStep("pick");
@@ -354,6 +388,15 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
     detectMutation.reset();
     predictMutation.reset();
   }, [detectMutation, predictMutation]);
+
+  const handleGeneratePlan = useCallback((diseaseName: string) => {
+    router.push({
+      pathname: "/(main)/plans/create",
+      params: {
+        diseaseName: getDiseaseLabel(diseaseName),
+      }
+    });
+  }, [router]);
 
   const handleStepPress = useCallback((targetStep: Step) => {
     if (targetStep === "pick") {
@@ -511,13 +554,22 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
 
         {/* ─── Step 1: Pick image ─────────────────────────────────── */}
         {step === "pick" && (
-          <ImagePickerCard
-            cardBg={cardBg}
-            borderColor={borderColor}
-            palette={palette}
-            onPickGallery={pickFromGallery}
-            onTakePhoto={takePhoto}
-          />
+          <>
+            <ImagePickerCard
+              cardBg={cardBg}
+              borderColor={borderColor}
+              palette={palette}
+              onPickGallery={pickFromGallery}
+              onTakePhoto={takePhoto}
+            />
+
+            <PlantAttachCard
+              value={plantContext}
+              onChange={setPlantContext}
+              cardBg={cardBg}
+              borderColor={borderColor}
+            />
+          </>
         )}
 
         {/* ─── Step 2: Detect leaves & choose ─────────────────────── */}
@@ -589,6 +641,7 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
               scheme={scheme}
               result={result}
               croppedUri={croppedUri}
+              onGeneratePlan={handleGeneratePlan}
             />
 
             <TouchableOpacity

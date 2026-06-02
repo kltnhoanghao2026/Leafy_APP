@@ -10,24 +10,20 @@ import {
   ChevronDown,
   ChevronUp,
   Circle,
+  Leaf,
   ListChecks,
   MapPin,
-  Leaf,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
-import type { PlantEventResponse } from "./plant-event.types";
-import { getEventCategoryColors, getEventTypeIcon } from "./plant-event.types";
+import {
+  EVENT_CATEGORY_MAP,
+  getEventCategoryColors,
+  getEventTypeIcon,
+  type PlantEventResponse,
+} from "./plant-event.types";
+import { CATEGORY_DOT_COLORS } from "./calendarConstants";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
-
-// ── Accent dot color map (matching category section) ─────────────────────
-const CATEGORY_DOT_COLORS: Record<string, string> = {
-  ROUTINE_CARE: "#3B82F6",
-  HEALTH_MEDICAL: "#F97316",
-  GROWTH_LIFECYCLE: "#10B981",
-};
-
-import { EVENT_CATEGORY_MAP } from "./plant-event.types";
 
 type EventCardProps = {
   event: PlantEventResponse;

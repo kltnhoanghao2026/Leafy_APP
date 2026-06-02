@@ -30,7 +30,10 @@ export const emptyForm = (): PlanFormState => ({
   isPublic: false,
 });
 
-export const emptyEvent = (): Omit<PlantEventCreateRequest, "plantId" | "farmPlotId" | "farmZoneId"> => ({
+export const emptyEvent = (): Omit<
+  PlantEventCreateRequest,
+  "plantId" | "farmPlotId" | "farmZoneId"
+> => ({
   eventType: "IRRIGATION",
   targetType: "PLANT",
   note: "",
@@ -41,6 +44,7 @@ export const emptyEvent = (): Omit<PlantEventCreateRequest, "plantId" | "farmPlo
   phiDays: undefined,
   ppeRequired: "",
   mrlNote: "",
+  tasks: [],
 });
 
 // ── Plan Info Errors ────────────────────────────────────────────────────────

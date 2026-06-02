@@ -1,8 +1,6 @@
 import { useTensorflowModel } from "react-native-fast-tflite";
 
 import type {
-  LeafDetection,
-  PredictionResult,
   LeafDetectionResponse,
   PredictionResponse,
 } from "../api/disease-detection.api";
@@ -12,9 +10,9 @@ import { parseMobilenetOutput } from "./mobilenet-postprocess";
 
 // ── Asset requires (bundled .tflite files) ─────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const YOLO_MODEL_SOURCE = require("@/assets/models/yolo_int8.tflite");
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const MOBILENET_MODEL_SOURCE = require("@/assets/models/coffee_mobilenetv2.tflite");
 
 // ── Hook ────────────────────────────────────────────────────────────

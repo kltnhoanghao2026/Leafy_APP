@@ -1,5 +1,4 @@
 import { PlanScreen } from '@/src/features/plan/components/PlanScreen';
-
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SafePlans() {
@@ -8,8 +7,4 @@ export default function SafePlans() {
       <PlanScreen />
     </SafeAreaView>
   );
-}
-
-function Plans() {
-  return <PlanScreen />;
 }

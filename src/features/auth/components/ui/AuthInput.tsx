@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, TextInput, View, TextInputProps, TouchableOpacity } from "react-native";
+import { StyleSheet, Text, TextInput, View, TextInputProps } from "react-native";
 
 interface AuthInputProps extends TextInputProps {
   label: string;

@@ -6,17 +6,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  StyleSheet,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Trash2, RefreshCw, AlertCircle, CheckCircle2, Clock, CloudUpload } from 'lucide-react-native';
+import { Trash2, AlertCircle, CheckCircle2, Clock, CloudUpload } from 'lucide-react-native';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import Colors from '@/src/constants/Colors';
 import { getAllSyncItems, deleteSyncItem, type PendingSyncItem } from '../services/sync-queue.service';
 import { formatDistanceToNow } from 'date-fns';
 import { useFocusEffect } from 'expo-router';
-import { useOfflineDataContext } from '../context/OfflineDataContext';
-import { useNetworkContext } from '@/src/providers/NetworkProvider';
-import { StyleSheet } from 'react-native';
+import { useOfflineDataContext } from "../context/OfflineDataContext";
+import { useNetworkContext } from "@/src/providers/NetworkProvider";
 
 export function OfflineSyncQueueTab() {
   const { t } = useTranslation();
@@ -68,7 +68,7 @@ export function OfflineSyncQueueTab() {
             try {
               await deleteSyncItem(id);
               await loadItems();
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'Failed to delete item');
             } finally {
               setIsDeleting(null);

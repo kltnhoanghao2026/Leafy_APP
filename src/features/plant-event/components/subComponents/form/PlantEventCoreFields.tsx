@@ -1,7 +1,6 @@
 import React from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Switch } from "react-native";
 import { Controller } from "react-hook-form";
-import { Switch } from "react-native";
 import { ChevronDown } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { FormField } from "@/src/components/ui/FormField";

@@ -4,8 +4,11 @@ import { CalendarDays, ArrowRight } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "expo-router";
 import { format } from "date-fns";
-import { usePlantEventsCalendar } from "../../plant-event/queries";
-import { useUpdatePlantEventMutation, useToggleTaskMutation } from "../../plant-event/queries";
+import {
+  usePlantEventsCalendar,
+  useToggleTaskMutation,
+  useUpdatePlantEventMutation,
+} from "../../plant-event/queries";
 import { PlantEventHubCategorySection } from "../../plant-event/components/PlantEventHubCategorySection";
 import { PlantEventHubFilterBar, type FilterState } from "../../plant-event/components/PlantEventHubFilterBar";
 import type { PlantEventResponse, EventCategory } from "../../plant-event/components/plant-event.types";
@@ -35,17 +38,6 @@ export function TodayTasksSection() {
     eventType: "",
     selectedApplyId: "",
   });
-
-  const activeFilterCount = [
-    activeFilter.farmPlotId,
-    activeFilter.farmZoneId,
-    activeFilter.plantId,
-    activeFilter.targetType,
-    activeFilter.eventType,
-    activeFilter.selectedApplyId,
-  ].filter(Boolean).length;
-
-  const isFiltered = activeFilterCount > 0;
 
   // ── Data hooks ───────────────────────────────────────────────────────
   const farmPlotsQuery = useFarmPlotsByOwner(profileId ?? "");

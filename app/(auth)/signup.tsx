@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { Controller } from "react-hook-form";
 import { Eye, EyeOff } from "lucide-react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useSignupScreen } from "@/src/features/auth/hooks";
 import {
@@ -22,8 +23,6 @@ import {
 } from "@/src/features/auth/components/ui";
 
 const SIGNUP_HERO_MIN_HEIGHT = 220;
-
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SignupScreen() {
   const { t } = useTranslation();

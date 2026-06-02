@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { chatApi } from '../api/chatApi';
 
 export const useConversations = () => {

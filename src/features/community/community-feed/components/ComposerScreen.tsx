@@ -5,7 +5,6 @@ import {
   ImagePlus,
   Lock,
   MapPin,
-  Send,
   Users,
   X,
 } from "lucide-react-native";
@@ -22,7 +21,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
@@ -38,8 +36,8 @@ const VISIBILITY_OPTIONS: {
 }[] = [
   { value: "ALL", labelKey: "community.composer.visibilityAll", icon: Globe },
   {
-    value: "FRIEND",
-    labelKey: "community.composer.visibilityFriend",
+    value: "FOLLOWER",
+    labelKey: "community.composer.visibilityFollower",
     icon: Users,
   },
   {
@@ -53,7 +51,6 @@ export function ComposerScreen() {
   const { t } = useTranslation();
   const colorScheme = useColorScheme() === "dark" ? "dark" : "light";
   const palette = Colors[colorScheme];
-  const insets = useSafeAreaInsets();
 
   const {
     caption,

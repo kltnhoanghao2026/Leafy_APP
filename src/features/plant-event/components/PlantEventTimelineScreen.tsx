@@ -8,10 +8,8 @@ import {
 } from "react-native";
 import {
   CalendarDays,
-  CalendarRange,
   ChevronLeft,
   ChevronRight,
-  Clock,
   Layers,
   List,
   MapPin,

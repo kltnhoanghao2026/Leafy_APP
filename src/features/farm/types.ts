@@ -18,11 +18,15 @@ export type FarmPlotResponse = {
   status?: FarmPlotStatus | null;
   createdAt?: string | null;
   lastModifiedAt?: string | null;
+  createdBy?: string | null;
+  lastModifiedBy?: string | null;
+  active?: boolean | null;
 };
 
 export type FarmZoneResponse = {
   id: string;
   farmPlotId: string;
+  ownerProfileId?: string | null;
   zoneName: string;
   zoneCode?: string | null;
   description?: string | null;
@@ -35,4 +39,7 @@ export type FarmZoneResponse = {
   status?: FarmZoneStatus | null;
   createdAt?: string | null;
   lastModifiedAt?: string | null;
+  createdBy?: string | null;
+  lastModifiedBy?: string | null;
+  active?: boolean | null;
 };

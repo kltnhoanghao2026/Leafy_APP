@@ -9,8 +9,7 @@ import { X, ChevronDown, ChevronUp, Hash, CalendarDays } from 'lucide-react-nati
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import Colors from '@/src/constants/Colors';
-import { useOfflineSpecies } from '../hooks/useOfflineQueries';
-import { useOfflineFarms } from '../hooks/useOfflineQueries';
+import { useOfflineSpecies, useOfflineFarms } from '../hooks/useOfflineQueries';
 import { useOfflineCreatePlant, useOfflineUpdatePlant } from '../hooks/useOfflineMutations';
 import { useAuthContext } from '@/src/features/auth';
 import { getSpeciesLabel } from '@/src/features/plant';

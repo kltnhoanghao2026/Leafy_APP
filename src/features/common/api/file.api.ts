@@ -2,7 +2,7 @@ import type { ImagePickerAsset } from "expo-image-picker";
 
 import { apiClient } from "@/src/lib/axios";
 import { API_ENDPOINTS } from "@/src/lib/routes";
-import type { ApiResponse } from "@/src/shared/api";
+import { type ApiResponse } from "@/src/shared/api";
 
 // ─── Internal types ────────────────────────────────────────────────────────────
 
@@ -14,12 +14,6 @@ interface UploadedFileRecord {
 const MAX_PRESIGNED_EXPIRATION_MINUTES = 60 * 24 * 7;
 
 // ─── Helper utilities ──────────────────────────────────────────────────────────
-
-const resolveFileName = (asset: ImagePickerAsset): string => {
-  if (asset.fileName) return asset.fileName;
-  const nameFromPath = asset.uri.split("/").pop();
-  return nameFromPath || `upload-${Date.now()}.jpg`;
-};
 
 const resolveMimeType = (asset: ImagePickerAsset): string =>
   asset.mimeType ?? "image/jpeg";
@@ -100,6 +94,10 @@ export const uploadFile = async (
 export const fileApi = {
   /** Resolve an existing file-service ID into a short-lived image URL. */
   getPresignedUrl: async (fileId: string): Promise<string> => {
+    if (!fileId) return "";
+    if (fileId.startsWith("http://") || fileId.startsWith("https://")) {
+      return fileId;
+    }
     const response = await apiClient.get<ApiResponse<string>>(
       API_ENDPOINTS.FILES.PRESIGNED_URL(fileId),
       { params: { expirationMinutes: MAX_PRESIGNED_EXPIRATION_MINUTES } },

@@ -15,8 +15,10 @@ import {
   ChevronUp,
   ChevronDown,
   Clock,
+  Layers,
   MapPin,
   Plus,
+  Sprout,
 } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -125,8 +127,8 @@ export function PlantEventHubScreen({
   );
   const [selectedId, setSelectedId] = useState(params.selectedId ?? "");
   const [selectedName, setSelectedName] = useState(params.selectedName ?? "");
-  const [selectedPlotIdForZones, setSelectedPlotIdForZones] = useState("");
-  const [selectedApplyId, setSelectedApplyId] = useState("");
+  const [selectedPlotIdForZones] = useState("");
+  const [selectedApplyId] = useState("");
 
   // ── Month view state ──────────────────────────────────────────────────
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -171,10 +173,13 @@ export function PlantEventHubScreen({
   // ── Single data fetch, range adapts to active view ────────────────────
   const calendarParams: CalendarParams = useMemo(
     () => ({
+      // If no farmPlotId is selected, we default to “all farms” (no farmPlotId filter)
       ...(activeFilter.farmPlotId ? { farmPlotId: activeFilter.farmPlotId } : {}),
       ...(activeFilter.farmZoneId ? { farmZoneId: activeFilter.farmZoneId } : {}),
       ...(activeFilter.plantId ? { plantId: activeFilter.plantId } : {}),
-      ...(selectedApplyId || activeFilter.selectedApplyId ? { planApplyId: activeFilter.selectedApplyId || selectedApplyId } : {}),
+      ...(selectedApplyId || activeFilter.selectedApplyId
+        ? { planApplyId: activeFilter.selectedApplyId || selectedApplyId }
+        : {}),
       ...(activeFilter.eventType ? { eventType: activeFilter.eventType } : {}),
       ...(activeView === "week"
         ? { startDate: weekStartStr, endDate: weekEndStr }
@@ -251,28 +256,17 @@ export function PlantEventHubScreen({
     });
   }, [events, activeFilter, isFiltered]);
 
-  // ── Auto-select first farm plot ───────────────────────────────────────
+  // ── Default to “All farms” ────────────────────────────────────────────
+  // By default we show events across all farm plots (no farmPlotId filter)
+  // and keep the target label as “All farms”. Users can still filter via the filter bar.
   useEffect(() => {
-    if (selectedId || farmPlots.length === 0) return;
-    const first = farmPlots[0];
-    setSelectedId(first.id);
-    setSelectedName(first.name);
+    if (selectedId) return;
     setTargetType("FARM_PLOT");
-  }, [selectedId, farmPlots]);
+    setSelectedId("ALL");
+    setSelectedName(t("calendar.allFarms", { defaultValue: "Tất cả nông trại" }));
+  }, [selectedId, t]);
 
   // ── Shared handlers ───────────────────────────────────────────────────
-  const handleSelectTarget = (
-    id: string,
-    name: string,
-    type: EventTargetType,
-  ) => {
-    setTargetType(type);
-    setSelectedId(id);
-    setSelectedName(name);
-    setSelectedMonthDate(null);
-    setSelectedWeekDate(null);
-  };
-
   const handleNavigateToEvent = (eventId: string) => {
     router.push({
       pathname: "/(main)/plant-events/[id]",
@@ -974,9 +968,13 @@ export function PlantEventHubScreen({
                 style={{ backgroundColor: palette.primary + "1A" }}
                 className="rounded-lg p-1"
               >
-                <Text style={{ fontSize: 13, color: palette.primary }}>
-                  {targetType === "FARM_PLOT" ? "📍" : targetType === "FARM_ZONE" ? "🗂️" : "🌱"}
-                </Text>
+                {targetType === "FARM_PLOT" ? (
+                  <MapPin size={14} color={palette.primary} />
+                ) : targetType === "FARM_ZONE" ? (
+                  <Layers size={14} color={palette.primary} />
+                ) : (
+                  <Sprout size={14} color={palette.primary} />
+                )}
               </View>
               <Text
                 className="text-sm font-semibold text-slate-700 dark:text-slate-200 flex-1"
@@ -1259,7 +1257,7 @@ export function PlantEventHubScreen({
         )}
 
         {/* Filter bar */}
-        {!hideFilter && selectedId && (
+        {!hideFilter && (
           <PlantEventHubFilterBar
             filter={activeFilter}
             onApply={(f) => setActiveFilter(f)}

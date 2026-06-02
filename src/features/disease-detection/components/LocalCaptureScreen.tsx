@@ -9,7 +9,6 @@ import {
   StyleSheet,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as ImagePicker from "expo-image-picker";
 import {
   Camera,
   useCameraDevice,
@@ -17,9 +16,10 @@ import {
 } from "react-native-vision-camera";
 import { useResizePlugin } from "vision-camera-resize-plugin";
 import {
-  RotateCcw,
-  CameraIcon,
   Aperture,
+  CameraIcon,
+  ChevronLeft,
+  RotateCcw,
   SwitchCamera,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -28,26 +28,20 @@ import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 import type {
   LeafDetection,
-  LeafDetectionResponse,
   PredictionResponse,
 } from "@/src/features/disease-detection/api/disease-detection.api";
 
 import { useTfliteModels } from "../models/useTfliteModels";
 import { useLeafDetectionProcessor } from "../models/useLeafDetectionProcessor";
-import { YOLO_INPUT_SIZE, MOBILENET_INPUT_SIZE } from "../models/constants";
-import { processImageToRgbBuffer, processImageToFloat32Buffer } from "../models/static-inference";
+import { MOBILENET_INPUT_SIZE } from "../models/constants";
+import { processImageToFloat32Buffer } from "../models/static-inference";
 
 import StepIndicator from "./StepIndicator";
 import LeafDetectionView from "./LeafDetectionView";
 import LeafListCard from "./LeafListCard";
 import PredictionResultCard from "./PredictionResultCard";
 import type { Step } from "./predict.types";
-import {
-  getDisplayImageHeight,
-  cropLeafImage,
-  commonShadow,
-} from "./predict.utils";
-import { ChevronLeft } from "lucide-react-native";
+import { cropLeafImage, getDisplayImageHeight } from "./predict.utils";
 
 export default function LocalCaptureScreen({ onCancel, offlineMode = false }: { onCancel?: () => void; offlineMode?: boolean; }) {
   const { t } = useTranslation();
@@ -57,19 +51,17 @@ export default function LocalCaptureScreen({ onCancel, offlineMode = false }: { 
   const insets = useSafeAreaInsets();
 
   const { hasPermission, requestPermission } = useCameraPermission();
-  const device = useCameraDevice("back");
+  const device = useCameraDevice(devicePosition);
   const cameraRef = useRef<Camera>(null);
-  const { resize } = useResizePlugin();
+  useResizePlugin();
 
   const {
     isLoading: modelsLoading,
     isYoloLoaded,
-    isMobilenetLoaded,
     error: modelError,
     yoloModel,
     mobilenetModel,
     yoloOutputShape,
-    runYoloOnBuffer,
     runClassifierOnBuffer,
   } = useTfliteModels();
 
@@ -109,6 +101,8 @@ export default function LocalCaptureScreen({ onCancel, offlineMode = false }: { 
   const [cameraPosition, setCameraPosition] = useState<"back" | "front">(
     "back",
   );
+
+  const devicePosition = cameraPosition;
 
   const cardBg = scheme === "dark" ? "rgba(30, 41, 59, 0.8)" : "#FFFFFF";
   const borderColor =
@@ -202,7 +196,7 @@ export default function LocalCaptureScreen({ onCancel, offlineMode = false }: { 
     } finally {
       setIsProcessing(false);
     }
-  }, [yoloModel, frameSize, t]);
+  }, [frameSize, t, triggerDetection, yoloModel]);
 
   // ── Select leaf and crop ─────────────────────────────────────────
 

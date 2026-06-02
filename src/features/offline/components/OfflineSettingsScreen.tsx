@@ -1,12 +1,10 @@
 import React from "react";
-import { View, ScrollView, Text, Switch, StyleSheet } from "react-native";
+import { View, ScrollView, Text, Switch } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "expo-router";
 import { Globe, Moon, Database, Wifi } from "lucide-react-native";
 import { useColorScheme as useNativeWindColorScheme } from "nativewind";
 
-import { useColorScheme } from "@/src/hooks/useColorScheme";
-import Colors from "@/src/constants/Colors";
 import { changeAppLanguage, getCurrentLanguage } from "@/src/i18n";
 import { ProfileRow } from "@/src/features/user-profile/components/ProfileRow";
 import { useNetworkContext } from "@/src/providers/NetworkProvider";
@@ -14,8 +12,6 @@ import { useNetworkContext } from "@/src/providers/NetworkProvider";
 export function OfflineSettingsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const palette = Colors[colorScheme ?? "light"];
   const { colorScheme: nativeWindColorScheme, setColorScheme } = useNativeWindColorScheme();
   const currentLanguage = getCurrentLanguage();
   const { toggleForceOffline } = useNetworkContext();

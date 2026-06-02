@@ -1,7 +1,6 @@
 
 import "@/global.css";
 import { queryClient } from "@/src/lib";
-import { useColorScheme } from "@/src/hooks/useColorScheme";
 import { AuthProvider, useAuthContext } from "@/src/features/auth";
 import {
   DarkTheme,
@@ -14,22 +13,21 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LogBox } from "react-native";
+import { LogBox, useColorScheme } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { initializeI18n } from "@/src/i18n";
 import { OfflineNotice } from "@/src/components/ui/OfflineNotice";
-import { NetworkProvider } from "@/src/providers/NetworkProvider";
+import { NetworkProvider, useIsOffline } from "@/src/providers/NetworkProvider";
 import { WebSocketProvider } from "@/src/providers/WebSocketProvider";
-import { PlanReviewProvider } from "@/src/features/rag-chat/context/PlanReviewContext";
 import { ExpoPushProvider } from "@/src/features/notifications/context/ExpoPushContext";
 import { ExpoPushBootstrap, configurePushNotifications } from "@/src/features/notifications";
 import { OfflineDataProvider } from "@/src/features/offline";
 
 import { useOfflineCacheSync } from "@/src/hooks/useOfflineCacheSync";
-import { useIsOffline } from "@/src/providers/NetworkProvider";
 
 // Configure how notifications appear while the app is in the foreground.
 configurePushNotifications();
@@ -52,7 +50,6 @@ LogBox.ignoreLogs([
 ]);
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
   const [isI18nReady, setIsI18nReady] = useState(false);
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
@@ -91,18 +88,17 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <StatusBar style="auto" />
       <GestureHandlerRootView style={{ flex: 1 }}>
         <NetworkProvider>
           <QueryClientProvider client={queryClient}>
             <AuthProvider>
               <WebSocketProvider>
-                <PlanReviewProvider>
-                  <ExpoPushProvider>
-                    <OfflineDataProvider>
-                      <RootLayoutNav />
-                    </OfflineDataProvider>
-                  </ExpoPushProvider>
-                </PlanReviewProvider>
+                <ExpoPushProvider>
+                  <OfflineDataProvider>
+                    <RootLayoutNav />
+                  </OfflineDataProvider>
+                </ExpoPushProvider>
               </WebSocketProvider>
             </AuthProvider>
           </QueryClientProvider>
@@ -139,7 +135,7 @@ function RootLayoutNav() {
         router.replace("/(main)");
       }
     }
-  }, [isAuthenticated, isRestoringAuth, isOffline, segments]);
+  }, [isAuthenticated, isRestoringAuth, isOffline, segments, router]);
 
   // Show splash while restoring authentication state
   if (isRestoringAuth) {

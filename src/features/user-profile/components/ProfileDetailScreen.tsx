@@ -30,7 +30,6 @@ import { useColorScheme } from "@/src/hooks/useColorScheme";
 import { parseApiError } from "@/src/lib/error-handler";
 import {
   PostCard,
-  Post,
   getUserPostsQueryOptions,
   ComposerCard,
 } from "@/src/features/community";
@@ -60,7 +59,6 @@ export function ProfileDetailScreen({ profileId }: ProfileDetailScreenProps) {
   const {
     data: postsData,
     isLoading: isLoadingPosts,
-    refetch: refetchPosts,
   } = useQuery(getUserPostsQueryOptions(profileId));
 
   const posts = postsData?.content || [];

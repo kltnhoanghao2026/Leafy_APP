@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import { View, Text } from "react-native";
 import { Calendar } from "react-native-calendars";
-import { format, addDays } from "date-fns";
 import { CalendarDays } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
-import type { PlantEventCreateRequest } from "@/src/features/plant-event/components/plant-event.types";
+import { format, addDays } from "date-fns";
 import {
   CATEGORY_DOT_COLORS,
   getEventCategory,
@@ -47,12 +45,10 @@ function toMarkedEvent(
 }
 
 export function PlanPreviewCalendar({ draftEvents }: PlanPreviewCalendarProps) {
-  const { t, i18n } = useTranslation();
-
   const markedDates = useMemo(() => {
     const marks: Record<
       string,
-      { dots?: Array<{ key: string; color: string }>; selected?: boolean; selectedColor?: string }
+      { dots?: { key: string; color: string }[]; selected?: boolean; selectedColor?: string }
     > = {};
 
     const today = new Date();
@@ -102,7 +98,7 @@ export function PlanPreviewCalendar({ draftEvents }: PlanPreviewCalendarProps) {
           Chưa có sự kiện nào để xem trước.
         </Text>
         <Text className="mt-1 text-xs font-medium text-slate-400">
-          Thêm sự kiện trong tab "Lịch trình" để xem bố cục theo tháng.
+          Thêm sự kiện trong tab {"\"Lịch trình\""} để xem bố cục theo tháng.
         </Text>
       </View>
     );

@@ -75,8 +75,7 @@ export function useNotificationsScreen() {
     if (unreadCount > 0) {
       markCheckedMutation.mutate();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [markCheckedMutation, unreadCount]);
 
   const notifications =
     historyData?.pages.flatMap((p) => p.data ?? []) ?? [];

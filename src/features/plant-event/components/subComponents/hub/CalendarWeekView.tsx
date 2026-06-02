@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text } from "react-native";
 import { CalendarRange } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
+import { CATEGORY_DOT_COLORS } from "../../calendarConstants";
 import type { PlantEventResponse } from "../../plant-event.types";
 import { EventGroupedList } from "@/src/features/shared/components/EventGroupedList";
 
@@ -109,7 +109,6 @@ export function CalendarWeekView({
           {(
             ["ROUTINE_CARE", "HEALTH_MEDICAL", "GROWTH_LIFECYCLE", "ALERTS"] as const
           ).map((cat) => {
-            const { CATEGORY_DOT_COLORS } = require("../../calendarConstants");
             return (
               <View key={cat} className="flex-row items-center gap-1.5">
                 <View

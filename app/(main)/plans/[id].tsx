@@ -1,18 +1,32 @@
-import { useMemo, useState, useLayoutEffect } from "react";
-import { ScrollView, View, Text, TouchableOpacity, Alert, ActivityIndicator, Image } from "react-native";
+import { useLayoutEffect, useState } from "react";
+import { Alert, ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
-import { Edit2, Globe, Lock, Play, Trash2, Bot, CheckCircle2, ShieldAlert, FlaskConical, MapPin, Cpu, Sprout, User, UserCheck, BadgeCheck, Clock, DollarSign, AlertTriangle } from "lucide-react-native";
+import {
+  AlertTriangle,
+  BadgeCheck,
+  Bot,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  FlaskConical,
+  Globe,
+  Lock,
+  Play,
+  ShieldAlert,
+  Trash2,
+  User,
+} from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 import { usePlanDetail, useUpdatePlanVisibilityMutation, useDeletePlanMutation } from "@/src/features/plan/queries/plan.queries";
 import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
-import { usePlantById } from "@/src/features/plant/queries/queries";
-import { useFarmPlotById } from "@/src/features/farm/queries/queries";
 
 import { formatDate } from "@/src/utils/date";
 import { ApplyPlanSheet } from "@/src/features/plan/components/apply-plan";
 import type { PlanStatus } from "@/src/features/plan/schemas/plan.schema";
+
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const STATUS_STYLE: Record<PlanStatus, string> = {
   PENDING:   "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800",
@@ -37,8 +51,6 @@ const SEVERITY_STYLE: Record<string, { bg: string, text: string }> = {
   CRITICAL: { bg: "bg-red-50", text: "text-red-600" },
 };
 
-import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function SafePlanDetailScreen() {
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
@@ -52,8 +64,6 @@ function PlanDetailScreen() {
   console.log(`Id screen: `, id );
   const router = useRouter();
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
-
   const [isDeleting, setIsDeleting] = useState(false);
   const [isApplySheetOpen, setIsApplySheetOpen] = useState(false);
 

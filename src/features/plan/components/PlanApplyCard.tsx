@@ -1,7 +1,6 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import {
   CalendarDays,
-  CheckCircle2,
   Leaf,
   LayoutGrid,
   TreePine,

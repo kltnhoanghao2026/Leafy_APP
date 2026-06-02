@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { initOfflineDatabase, clearOfflineDatabase } from '../services/offline-database';
+import { initOfflineDatabase } from '../services/offline-database';
 import { getOfflineSyncStatus, getOfflineRecordCounts } from '../services/offline-query.service';
 import { getPendingCount } from '../services/sync-queue.service';
 import { useOfflineSyncUp } from '../hooks/useOfflineSyncUp';
@@ -32,7 +32,7 @@ export const OfflineDataProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [syncStatus, setSyncStatus] = useState<Record<string, { lastSyncedAt: string | null }>>({});
   const [recordCounts, setRecordCounts] = useState<Record<string, number>>({});
   const [pendingCount, setPendingCount] = useState(0);
-  const { user } = useAuthContext();
+  useAuthContext();
 
   const { isSyncing: isSyncingUp, manualSync: manualSyncUp } = useOfflineSyncUp();
 

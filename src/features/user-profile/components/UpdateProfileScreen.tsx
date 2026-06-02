@@ -70,7 +70,6 @@ export function UpdateProfileScreen() {
     isWardOptionsLoading,
     isLocating,
     locationError,
-    setLocationError,
     handleSelectProvinceCode,
     handleSelectDistrictCode,
     handleSelectWardCode,

@@ -1,13 +1,7 @@
 import React, { useMemo } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import {
-  CalendarDays,
-  CalendarRange,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react-native";
-import { format, startOfWeek, endOfWeek, addDays, isToday as isDateToday, subWeeks, addWeeks } from "date-fns";
-import { useTranslation } from "react-i18next";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { format, addDays, isToday as isDateToday } from "date-fns";
 import type { PlantEventResponse } from "../../plant-event.types";
 import { getEventCategory, CATEGORY_DOT_COLORS } from "../../plant-event.types";
 

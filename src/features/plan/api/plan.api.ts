@@ -1,7 +1,7 @@
 import { apiClient } from "@/src/lib/axios";
 import { API_ENDPOINTS } from "@/src/lib/routes";
 import type { ApiResponse } from "@/src/shared/api";
-import type { PageResponse, PlanListParams, PlanResponse, PlanApplyResponse, PlanStatus, PlanSourceType, TargetType, TrackingGranularity } from "../schemas/plan.schema";
+import type { PageResponse, PlanListParams, PlanResponse, PlanApplyResponse, PlanStatus, TrackingGranularity } from "../schemas/plan.schema";
 
 export const planApi = {
   getMyPlans: (params: PlanListParams = {}) => {

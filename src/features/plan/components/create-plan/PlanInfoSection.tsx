@@ -1,13 +1,13 @@
 import { useState } from "react";
 import {
+  CalendarDays,
+  ChevronDown,
   ClipboardList,
   Droplets,
-  Sun,
-  CalendarDays,
-  Wheat,
-  ChevronDown,
   Globe,
   Lock,
+  Sun,
+  Wheat,
 } from "lucide-react-native";
 import {
   View,
@@ -16,9 +16,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { useTranslation } from "react-i18next";
 import { useSpecies } from "@/src/features/plant/queries/queries";
-import type { PlantEventCreateRequest } from "@/src/features/plant-event/components/plant-event.types";
 import type { PlanFormState, PlanInfoErrors } from "./create-plan.types";
 
 interface PlanInfoSectionProps {
@@ -68,7 +66,6 @@ export function PlanInfoSection({
   farmPlotOptions,
   errors,
 }: PlanInfoSectionProps) {
-  const { t } = useTranslation();
   const speciesQuery = useSpecies();
   const speciesData = speciesQuery.data;
   const speciesList = speciesData?.content ?? [];

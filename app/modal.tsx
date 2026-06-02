@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
   Pressable,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SendHorizonal } from "lucide-react-native";
@@ -19,6 +20,7 @@ import { useColorScheme } from "@/src/hooks/useColorScheme";
 import { parseApiError } from "@/src/lib/error-handler";
 import { getCommentsByPostQueryOptions } from "@/src/features/community/community-feed/queries/options";
 import { useState } from "react";
+import { useCreateCommentMutation } from "@/src/features/community/community-feed/queries/mutations";
 
 export default function ModalScreen() {
   const router = useRouter();
@@ -27,6 +29,10 @@ export default function ModalScreen() {
   const palette = Colors[colorScheme];
   const insets = useSafeAreaInsets();
   const [commentText, setCommentText] = useState("");
+  const [replyTarget, setReplyTarget] = useState<{
+    commentId: string;
+    authorName: string;
+  } | null>(null);
 
   const safePostId = Array.isArray(postId)
     ? (postId[0] ?? "")
@@ -36,6 +42,26 @@ export default function ModalScreen() {
   const { data, isLoading, isError, error } = useQuery(
     getCommentsByPostQueryOptions(safePostId, 0, 100),
   );
+
+  const { mutateAsync: createComment, isPending: isCreatingComment } =
+    useCreateCommentMutation();
+
+  const onSubmitComment = async () => {
+    const text = commentText.trim();
+    if (!text || isCreatingComment || !safePostId) return;
+
+    try {
+      await createComment({
+        postId: safePostId,
+        content: text,
+        parentId: replyTarget?.commentId,
+      });
+      setCommentText("");
+      setReplyTarget(null);
+    } catch {
+      // Keep text in input on error so user can retry
+    }
+  };
 
   const comments = data?.content ?? [];
   const parsedError = isError ? parseApiError(error) : null;
@@ -117,6 +143,9 @@ export default function ModalScreen() {
                 comment={comment}
                 palette={palette}
                 mutedText={mutedText}
+                onReply={(commentId, authorName) =>
+                  setReplyTarget({ commentId, authorName })
+                }
               />
             ))}
           </View>
@@ -124,38 +153,70 @@ export default function ModalScreen() {
 
         {/* Input Bar */}
         <View
-          className="flex-row items-center border-t px-4 py-3"
+          className="border-t px-4 py-3"
           style={{
             borderColor: colorScheme === "dark" ? "#334155" : "#E2E8F0",
             backgroundColor: colorScheme === "dark" ? "#0F172A" : "#FFFFFF",
             paddingBottom: Math.max(12, insets.bottom),
           }}
         >
-          <TextInput
-            className="flex-1 rounded-full px-5 py-3 text-[15px]"
-            style={{
-              backgroundColor: colorScheme === "dark" ? "#1E293B" : "#F1F5F9",
-              color: palette.text,
-            }}
-            placeholder="Thêm bình luận..."
-            placeholderTextColor={mutedText}
-            value={commentText}
-            onChangeText={setCommentText}
-            multiline
-            maxLength={500}
-          />
-          <Pressable
-            className="ml-3 p-2 rounded-full"
-            style={{ opacity: commentText.trim() ? 1 : 0.5 }}
-            disabled={!commentText.trim()}
-          >
-            <SendHorizonal
-              size={22}
-              color={colorScheme === "dark" ? "#38BDF8" : "#0284C7"}
+          {replyTarget && (
+            <View className="flex-row items-center mb-1.5 gap-2 px-1">
+              <Text className="text-[12px]" style={{ color: palette.primary }}>
+                Trả lời {replyTarget.authorName}
+              </Text>
+              <Pressable onPress={() => setReplyTarget(null)} hitSlop={8}>
+                <Text
+                  className="text-[12px] font-medium"
+                  style={{ color: mutedText }}
+                >
+                  ✕
+                </Text>
+              </Pressable>
+            </View>
+          )}
+          <View className="flex-row items-center">
+            <TextInput
+              className="flex-1 rounded-full px-5 py-3 text-[15px]"
+              style={{
+                backgroundColor: colorScheme === "dark" ? "#1E293B" : "#F1F5F9",
+                color: palette.text,
+              }}
+              placeholder={
+                replyTarget
+                  ? `Trả lời ${replyTarget.authorName}...`
+                  : "Thêm bình luận..."
+              }
+              placeholderTextColor={mutedText}
+              value={commentText}
+              onChangeText={setCommentText}
+              multiline
+              maxLength={500}
             />
-          </Pressable>
+            <Pressable
+              className="ml-3 p-2 rounded-full"
+              style={{
+                opacity: commentText.trim() && !isCreatingComment ? 1 : 0.5,
+              }}
+              disabled={!commentText.trim() || isCreatingComment}
+              onPress={onSubmitComment}
+            >
+              {isCreatingComment ? (
+                <ActivityIndicator
+                  size="small"
+                  color={colorScheme === "dark" ? "#38BDF8" : "#0284C7"}
+                />
+              ) : (
+                <SendHorizonal
+                  size={22}
+                  color={colorScheme === "dark" ? "#38BDF8" : "#0284C7"}
+                />
+              )}
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </BottomSheet>
   );
 }
+

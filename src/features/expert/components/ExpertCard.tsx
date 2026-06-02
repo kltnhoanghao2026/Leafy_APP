@@ -9,7 +9,6 @@ import {
 import {
   Clock,
   MessageCircle,
-  Check,
   UserPlus,
   UserMinus,
   Award,

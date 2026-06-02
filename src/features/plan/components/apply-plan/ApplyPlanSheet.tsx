@@ -2,13 +2,14 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, Alert, ScrollView, StyleSheet, useColorScheme } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Play } from "lucide-react-native";
-import { BottomSheet } from "@/src/components/ui/BottomSheet";
-import { PickerModal } from "@/src/components/ui/PickerModal";
 import { getMyProfileQueryOptions } from "@/src/features/user-profile/queries/options";
 import { useQuery } from "@tanstack/react-query";
 import { useFarmPlotsByOwner, useFarmZonesByPlot } from "@/src/features/farm";
 import { usePlantsByFarmPlot } from "@/src/features/plant";
 import { useApplyPlanMutation } from "../../queries/plan.queries";
+
+import { BottomSheet } from "@/src/components/ui/BottomSheet";
+import { PickerModal } from "@/src/components/ui/PickerModal";
 
 import { ApplyPlanDatePicker } from "./ApplyPlanDatePicker";
 import { ApplyPlanScopeSelector, type PickerType } from "./ApplyPlanScopeSelector";
@@ -83,7 +84,7 @@ export function ApplyPlanSheet({ planId, planName, onClose }: ApplyPlanSheetProp
         }
       });
       onClose();
-    } catch (e) {
+    } catch {
       Alert.alert(t("common.error"), t("plan.apply.error", "Lỗi khi áp dụng kế hoạch"));
     }
   };

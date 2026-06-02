@@ -9,7 +9,6 @@ import { useState } from "react";
 import {
   Pencil,
   Calendar,
-  Clock,
   ShieldCheck,
   Banknote,
   Info,
@@ -17,7 +16,7 @@ import {
   XCircle,
   BarChart2,
 } from "lucide-react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 
@@ -98,7 +97,6 @@ function InfoRowNumber({
 
 export function OfflinePlantEventDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
   const { t } = useTranslation();
   const [progressVisible, setProgressVisible] = useState(false);
   const [editVisible, setEditVisible] = useState(false);
@@ -131,7 +129,6 @@ export function OfflinePlantEventDetailScreen() {
   const hasSafetyData =
     event.phiDays != null || event.ppeRequired || event.mrlNote;
   const hasCostData = event.estimatedCost != null;
-  const hasTargetData = event.plantId || event.farmPlotId || event.farmZoneId;
 
   const formatDate = (d?: string | null) => {
     if (!d) return null;

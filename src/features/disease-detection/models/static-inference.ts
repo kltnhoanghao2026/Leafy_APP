@@ -1,10 +1,6 @@
-import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as jpeg from 'jpeg-js';
 import { Buffer } from 'buffer';
-
-import type { LeafDetection, LeafDetectionResponse, PredictionResponse } from '../api/disease-detection.api';
-import { YOLO_INPUT_SIZE, MOBILENET_INPUT_SIZE } from './constants';
 
 import { Image } from 'react-native';
 

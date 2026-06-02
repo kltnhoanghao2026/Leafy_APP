@@ -6,6 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -13,7 +14,7 @@ import {
   CalendarClock,
   Eye,
 } from "lucide-react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { useAuthContext } from "@/src/features/auth/context/AuthContext";
@@ -34,6 +35,7 @@ const DRAFT_KEY = "plan_create_draft";
 
 export default function CreatePlanScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ diseaseName?: string }>();
 
   // Profile & farm plots
   const { profileId } = useAuthContext();
@@ -45,7 +47,16 @@ export default function CreatePlanScreen() {
   const [events, setEvents] = useState<PlanEventScheduleItem[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [planErrors, setPlanErrors] = useState<PlanInfoErrors>({});
-  const [activeTab, setActiveTab] = useState<"info" | "events" | "preview">("info");
+  const [activeTab, setActiveTab] = useState<"info" | "events" | "preview">(
+    "info",
+  );
+
+  // Close dropdowns when switching tabs (prevents overlay / touch issues)
+  const handleTabChange = (tab: "info" | "events" | "preview") => {
+    setActiveTab(tab);
+    // force close any dropdown that might stay open
+    setForm((prev) => ({ ...prev }));
+  };
 
   // Track if we need to save draft
   const isInitialized = useRef(false);
@@ -58,11 +69,17 @@ export default function CreatePlanScreen() {
         if (raw) {
           const parsed = JSON.parse(raw) as { form: PlanFormState; events: PlanEventScheduleItem[] };
           if (parsed.form) {
-            setForm({ ...emptyForm(), ...parsed.form });
+            setForm({
+              ...emptyForm(),
+              ...parsed.form,
+              diseaseName: params.diseaseName || parsed.form.diseaseName || "",
+            });
           }
           if (parsed.events) {
             setEvents(parsed.events);
           }
+        } else if (params.diseaseName) {
+          setForm((prev) => ({ ...prev, diseaseName: params.diseaseName! }));
         }
       } catch {
         // ignore
@@ -71,7 +88,7 @@ export default function CreatePlanScreen() {
       }
     };
     void loadDraft();
-  }, []);
+  }, [params.diseaseName]);
 
   // Persist draft to storage
   useEffect(() => {
@@ -217,93 +234,104 @@ export default function CreatePlanScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* Tab bar */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          onPress={() => setActiveTab("info")}
+    <SafeAreaView style={styles.container} edges={["left", "right"]}>
+      {/* Tab switcher (mirrors PlanScreen spacing) */}
+      <View style={styles.headerWrap}>
+        <View style={styles.tabInner}>
+          <TouchableOpacity
+          onPress={() => handleTabChange("info")}
           style={[
             styles.tabButton,
-            activeTab === "info" && { backgroundColor: "#245A34" }
+            activeTab === "info" && styles.tabButtonActive,
           ]}
         >
           <ClipboardList
             size={16}
-            color={activeTab === "info" ? "#ffffff" : "#64748b"}
+            color={activeTab === "info" ? "#059669" : "#64748b"}
             strokeWidth={2.5}
           />
           <Text
             style={[
               styles.tabButtonText,
-              { color: activeTab === "info" ? "#ffffff" : "#64748b" }
+              { color: activeTab === "info" ? "#059669" : "#64748b" },
             ]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
           >
             Thông tin
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setActiveTab("events")}
+          onPress={() => handleTabChange("events")}
           style={[
             styles.tabButton,
-            activeTab === "events" && { backgroundColor: "#245A34" }
+            activeTab === "events" && styles.tabButtonActive,
           ]}
         >
           <CalendarClock
             size={16}
-            color={activeTab === "events" ? "#ffffff" : "#64748b"}
+            color={activeTab === "events" ? "#059669" : "#64748b"}
             strokeWidth={2.5}
           />
-          <Text
-            style={[
-              styles.tabButtonText,
-              { color: activeTab === "events" ? "#ffffff" : "#64748b" }
-            ]}
-          >
-            Lịch trình
-          </Text>
-          {events.length > 0 && (
-            <View
+          <View style={styles.tabLabelRow}>
+            <Text
               style={[
-                styles.eventBadge,
-                activeTab === "events"
-                  ? { backgroundColor: "rgba(255,255,255,0.2)" }
-                  : { backgroundColor: "rgba(36,90,52,0.1)" }
+                styles.tabButtonText,
+                { color: activeTab === "events" ? "#059669" : "#64748b" },
               ]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
             >
-              <Text
+              Lịch trình
+            </Text>
+
+            {events.length > 0 && (
+              <View
                 style={[
-                  styles.eventBadgeText,
-                  { color: activeTab === "events" ? "#ffffff" : "#245A34" }
+                  styles.eventBadge,
+                  activeTab === "events"
+                    ? { backgroundColor: "rgba(255,255,255,0.22)" }
+                    : { backgroundColor: "rgba(36,90,52,0.10)" },
                 ]}
               >
-                {events.length}
-              </Text>
-            </View>
-          )}
+                <Text
+                  style={[
+                    styles.eventBadgeText,
+                    { color: activeTab === "events" ? "#059669" : "#245A34" },
+                  ]}
+                >
+                  {events.length}
+                </Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => setActiveTab("preview")}
+          onPress={() => handleTabChange("preview")}
           style={[
             styles.tabButton,
-            activeTab === "preview" && { backgroundColor: "#245A34" }
+            activeTab === "preview" && styles.tabButtonActive,
           ]}
         >
           <Eye
             size={16}
-            color={activeTab === "preview" ? "#ffffff" : "#64748b"}
+            color={activeTab === "preview" ? "#059669" : "#64748b"}
             strokeWidth={2.5}
           />
           <Text
             style={[
               styles.tabButtonText,
-              { color: activeTab === "preview" ? "#ffffff" : "#64748b" }
+              { color: activeTab === "preview" ? "#059669" : "#64748b" },
             ]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
           >
             Xem trước
           </Text>
         </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tab panels */}
@@ -380,37 +408,58 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f1f5f9",
   },
-  tabBar: {
-    flexDirection: "row",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
+  headerWrap: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e2e8f0",
     backgroundColor: "#ffffff",
+  },
+  tabInner: {
+    flexDirection: "row",
+    borderRadius: 12,
+    backgroundColor: "#f1f5f9",
     padding: 4,
-    marginHorizontal: 16,
-    marginTop: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   tabButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: 6,
     borderRadius: 12,
     paddingVertical: 10,
+    paddingHorizontal: 8,
+    minHeight: 40,
+  },
+  tabButtonActive: {
+    backgroundColor: "#ffffff",
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.08,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+  },
+  tabLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    minWidth: 0,
   },
   tabButtonText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "700",
+    flexShrink: 1,
   },
   eventBadge: {
-    borderRadius: 10,
-    paddingHorizontal: 6,
+    borderRadius: 999,
+    paddingHorizontal: 7,
     paddingVertical: 2,
   },
   eventBadgeText: {
@@ -421,8 +470,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 100,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 120,
   },
   errorMessage: {
     position: "absolute",
@@ -450,6 +500,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-end",
     gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
     borderTopWidth: 1,
     borderTopColor: "#f1f5f9",
     backgroundColor: "#ffffff",

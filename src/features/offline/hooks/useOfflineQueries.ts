@@ -53,13 +53,32 @@ export const useOfflineSpecies = () => {
   });
 };
 
-export const useOfflinePlantEvents = (params: { farmPlotId?: string; farmZoneId?: string; plantId?: string }) => {
-  // Serialize params to a stable string key to avoid cache misses from new object references
-  const stableKey = [params.farmPlotId ?? '', params.farmZoneId ?? '', params.plantId ?? ''].join('|');
+export const useOfflinePlantEvents = (params: {
+  farmPlotId?: string;
+  farmZoneId?: string;
+  plantId?: string;
+  planApplyId?: string;
+  eventType?: string;
+  targetType?: string;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  // Stable key to avoid cache misses from new object references
+  const stableKey = [
+    params.farmPlotId ?? '',
+    params.farmZoneId ?? '',
+    params.plantId ?? '',
+    params.planApplyId ?? '',
+    params.eventType ?? '',
+    params.targetType ?? '',
+    params.startDate ?? '',
+    params.endDate ?? '',
+  ].join('|');
+
   return useQuery({
     queryKey: [...offlineKeys.all, 'plantEvents', stableKey],
     queryFn: () => getOfflinePlantEvents(params),
-    staleTime: 0, // Always refetch when invalidated
+    staleTime: 0,
   });
 };
 
@@ -70,7 +89,6 @@ export const useOfflinePlantEventById = (id: string) => {
     enabled: !!id,
   });
 };
-
 export const useOfflineAgricultureStats = () => {
   return useQuery({
     queryKey: offlineKeys.stats(),

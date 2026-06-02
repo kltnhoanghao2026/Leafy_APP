@@ -40,7 +40,7 @@ const toOptionalInt = (value?: string) => {
   return Number.isFinite(n) ? Math.round(n) : undefined;
 };
 
-const formFieldNames: Array<keyof PlantEventFormValues> = [
+const formFieldNames: (keyof PlantEventFormValues)[] = [
   "plantId",
   "farmPlotId",
   "farmZoneId",
@@ -167,7 +167,7 @@ export function usePlantEventFormScreen() {
   const [pendingAttachments, setPendingAttachments] = useState<PendingAttachment[]>([]);
 
   // IDs of existing attachments that have been removed by the user
-  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+  const [_removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
 
   // Request gallery permissions
   const requestGalleryPermissions = async (): Promise<boolean> => {

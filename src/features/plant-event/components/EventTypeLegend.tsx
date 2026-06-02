@@ -5,7 +5,6 @@ import {
   EVENT_TYPE_VALUES,
   getEventTypeIcon,
   getEventCategory,
-  type EventCategory,
 } from "./plant-event.types";
 import { CATEGORY_DOT_COLORS } from "./calendarConstants";
 

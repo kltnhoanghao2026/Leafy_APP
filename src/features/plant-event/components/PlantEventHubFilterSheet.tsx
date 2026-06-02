@@ -11,17 +11,13 @@ import {
 } from "react-native";
 import {
   ChevronDown,
-  ChevronRight,
   X,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
 import {
   EVENT_TYPE_VALUES,
-  type EventCategory,
-  type EventType,
 } from "./plant-event.types";
-import { EVENT_TYPE_LABELS } from "./plant-event.types";
 
 type FarmPlot = { id: string; name: string };
 type FarmZone = { id: string; zoneName: string; farmPlotId?: string };
@@ -59,13 +55,6 @@ type PlantEventHubFilterSheetProps = {
     onSelectTarget: (id: string, name: string, type: "FARM_PLOT" | "FARM_ZONE" | "PLANT") => void;
   };
 };
-
-const SCOPE_OPTIONS = [
-  { value: "", label: "Tất cả phạm vi" },
-  { value: "FARM", label: "Vườn" },
-  { value: "FARM_ZONE", label: "Khu vực" },
-  { value: "PLANT", label: "Cây" },
-] as const;
 
 export function PlantEventHubFilterSheet({
   visible,
@@ -190,7 +179,8 @@ export function PlantEventHubFilterSheet({
     (zone) => !local.farmPlotId || zone.farmPlotId === local.farmPlotId,
   );
 
-  const renderSelectButton = (
+  // TODO: refactor to use this component
+  const _renderSelectButton = (
     label: string,
     selectedValue: string,
     options: { value: string; label: string }[],

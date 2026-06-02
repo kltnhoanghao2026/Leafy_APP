@@ -39,6 +39,14 @@ export default function PredictLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="history"
+        options={{
+          headerTitle: t("diseaseDetection.historyTitle", "Diagnosis History"),
+          headerLeft: () => <BackButton />,
+          headerRight: () => null,
+        }}
+      />
     </Stack>
   );
 }

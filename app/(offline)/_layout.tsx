@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Pressable, Text, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Home, Sprout, Map, Calendar, Settings, Activity } from 'lucide-react-native';
+import { Home, Sprout, Map, Settings, Activity } from 'lucide-react-native';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import Colors from '@/src/constants/Colors';
 import { useNetworkContext } from '@/src/providers/NetworkProvider';

@@ -25,7 +25,6 @@ export const ROUTES = {
     PROFILE: "/profile",
     FARM: "/farm",
     PLANTS: "/plants",
-    AI_CHAT: "/ai-chat",
     IOT: "/iot",
     IOT_DEVICE_DETAIL: (deviceId: string) => `/iot/devices/${deviceId}`,
     IOT_ALERT_DETAIL: (alertId: string) => `/iot/alerts/${alertId}`,
@@ -131,6 +130,11 @@ export const API_ENDPOINTS = {
       `/votes/${targetType}/${targetId}`,
   },
 
+  FEED: {
+    MARK_POST_VIEWED: (postId: string) => `/feed/posts/${postId}/viewed`,
+  },
+
+
   IOT: {
     DEVICES: {
       ME: "/iot/devices/me",
@@ -222,6 +226,11 @@ export const API_ENDPOINTS = {
       `/plant-events/${eventId}/progress/${progressId}`,
     PROGRESS_GENERATE: (eventId: string) =>
       `/plant-events/${eventId}/progress/generate`,
+  },
+
+  SYNC: {
+    PUSH: "/plant-management/sync/push",
+    PULL: "/plant-management/sync/pull",
   },
 
   PLANS: {

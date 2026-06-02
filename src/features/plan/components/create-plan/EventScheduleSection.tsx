@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
 } from "react-native";
 import {
   Plus,
@@ -18,20 +17,18 @@ import {
   List,
   LayoutGrid,
 } from "lucide-react-native";
-import { useTranslation } from "react-i18next";
 import { Calendar } from "react-native-calendars";
 import { format, addDays, parseISO, isValid } from "date-fns";
 import { EventTypePickerModal } from "@/src/features/plant-event/components/EventTypePickerModal";
-import { initCalendarLocale } from "@/src/features/plant-event/components/calendarConstants";
-import type { EventTaskRequest, EventType } from "@/src/features/plant-event/components/plant-event.types";
-import {
-  EVENT_TYPE_LABELS,
-  getEventTypeIcon,
-} from "@/src/features/plant-event/components/plant-event.types";
 import {
   CATEGORY_DOT_COLORS,
   getEventCategory,
 } from "@/src/features/plant-event/components/calendarConstants";
+import {
+  EVENT_TYPE_LABELS,
+  getEventTypeIcon,
+} from "@/src/features/plant-event/components/plant-event.types";
+import type { EventTaskRequest } from "@/src/features/plant-event/components/plant-event.types";
 import type { PlanEventScheduleItem } from "./create-plan.types";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -80,7 +77,6 @@ function EventRow({
   onMoveDown,
   onUpdate,
 }: EventRowProps) {
-  const { t } = useTranslation();
   const typeColors = EVENT_TYPE_COLORS[event.eventType] ?? {
     bg: "bg-slate-100",
     text: "text-slate-500",
@@ -389,7 +385,7 @@ function EventRow({
             {(event.tasks ?? []).length === 0 ? (
               <View className="mt-2 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 py-4">
                 <Text className="text-[11px] font-medium text-slate-400">
-                  Chưa có công việc nào. Nhấn "Thêm công việc" để bắt đầu.
+                  Chưa có công việc nào. Nhấn {"\"Thêm công việc\""} để bắt đầu.
                 </Text>
               </View>
             ) : (
@@ -530,7 +526,6 @@ export function EventScheduleSection({
   onMove,
   onUpdate,
 }: EventScheduleSectionProps) {
-  const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [expandedList, setExpandedList] = useState<boolean[]>([]);
 
@@ -677,7 +672,7 @@ export function EventScheduleSection({
             Chưa có sự kiện nào trong lịch trình.
           </Text>
           <Text className="mt-1 text-xs font-medium text-slate-400">
-            Nhấn "Thêm sự kiện" để tạo lịch tưới nước, bón phân, phun thuốc...
+            Nhấn {"\"Thêm sự kiện\""} để tạo lịch tưới nước, bón phân, phun thuốc...
           </Text>
         </View>
       ) : (
@@ -707,25 +702,22 @@ export function EventScheduleSection({
 // ── Calendar View ─────────────────────────────────────────────────────────────
 
 interface CalendarViewProps {
-  events: PlantEventCreateRequest[];
-  onUpdate: (index: number, event: PlantEventCreateRequest) => void;
+  events: PlanEventScheduleItem[];
+  onUpdate: (index: number, event: PlanEventScheduleItem) => void;
   onRemove: (index: number) => void;
 }
 
 function CalendarView({ events, onUpdate, onRemove }: CalendarViewProps) {
-  const { i18n } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(
     format(new Date(), "yyyy-MM-dd"),
   );
   const [calendarMonth, setCalendarMonth] = useState(new Date());
 
-  const dateFnsLocale = initCalendarLocale(i18n.language);
-
   // Build marked dates
   const markedDates = (() => {
     const marks: Record<
       string,
-      { dots?: Array<{ key: string; color: string }>; selected?: boolean; selectedColor?: string }
+      { dots?: { key: string; color: string }[]; selected?: boolean; selectedColor?: string }
     > = {};
 
     const today = new Date();

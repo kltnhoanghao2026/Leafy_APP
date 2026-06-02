@@ -1,12 +1,9 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MessageCircle } from 'lucide-react-native';
 
 export function ChatFAB() {
-  const insets = useSafeAreaInsets();
-  
   return (
     <TouchableOpacity
       style={[styles.fab, { bottom: 20 }]}

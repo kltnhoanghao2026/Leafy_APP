@@ -25,7 +25,7 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 *.certSigningRequest
-google-services.json
+# google-services.json
 GoogleService-Info.plist
 
 # ── Metro bundler ───────────────────────────────────────────────────────────────
@@ -63,3 +63,4 @@ Thumbs.db
 
 # ── Agent & contributor guides ──────────────────────────────────────────────────
 AGENTS.md
+google-services.json

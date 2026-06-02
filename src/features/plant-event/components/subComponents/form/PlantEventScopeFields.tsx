@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { ChevronRight } from "lucide-react-native";
-import { Controller, useFormContext } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { FormField } from "@/src/components/ui/FormField";
 import type { TrackingGranularity } from "../../plant-event.types";
@@ -22,7 +22,7 @@ export function PlantEventScopeFields({
   setValue,
 }: PlantEventScopeFieldsProps) {
   const { t } = useTranslation();
-  const { control } = useFormContext();
+  useFormContext();
 
   return (
     <>

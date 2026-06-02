@@ -1,11 +1,9 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { Clock } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Clock } from "lucide-react-native";
 import { format } from "date-fns";
-import { useTranslation } from "react-i18next";
 import { CATEGORY_DOT_COLORS } from "../../calendarConstants";
 import type { PlantEventResponse } from "../../plant-event.types";
-import { EventGroupedList } from "@/src/features/shared/components/EventGroupedList";
 
 interface CalendarTimelineViewProps {
   timelineMonth: Date;
@@ -36,8 +34,6 @@ export function CalendarTimelineView({
   onNextMonth,
   t,
 }: CalendarTimelineViewProps) {
-  const { ChevronLeft, ChevronRight } = require("lucide-react-native");
-
   return (
     <View className="mx-4 mt-2">
       {/* Month navigation */}

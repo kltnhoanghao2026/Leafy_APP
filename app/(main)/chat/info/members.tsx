@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator, AlertButton } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Shield, ShieldAlert, UserMinus, Crown } from 'lucide-react-native';
+import { UserPlus, Shield, Crown } from 'lucide-react-native';
 
 import { chatApi } from '@/src/features/chat/api/chatApi';
 import { useAuthContext } from '@/src/features/auth';
