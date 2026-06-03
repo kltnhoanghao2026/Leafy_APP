@@ -196,6 +196,13 @@ export default function MainLayout() {
           <Text style={[styles.drawerItemText, { color: palette.text }]}>
             {item.label || t(item.labelKey)}
           </Text>
+          {item.labelKey === 'mainNav.drawer.iotAlerts' && openAlertCount > 0 ? (
+            <View style={styles.drawerItemBadge}>
+              <Text style={styles.drawerItemBadgeText}>
+                {openAlertCount > 99 ? '99+' : openAlertCount}
+              </Text>
+            </View>
+          ) : null}
         </Pressable>
       ))}
     </View>
