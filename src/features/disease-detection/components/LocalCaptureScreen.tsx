@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Camera,
   useCameraDevice,
@@ -16,9 +16,10 @@ import {
 } from "react-native-vision-camera";
 import { useResizePlugin } from "vision-camera-resize-plugin";
 import {
-  RotateCcw,
-  CameraIcon,
   Aperture,
+  CameraIcon,
+  ChevronLeft,
+  RotateCcw,
   SwitchCamera,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -27,46 +28,41 @@ import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 import type {
   LeafDetection,
-  LeafDetectionResponse,
   PredictionResponse,
 } from "@/src/features/disease-detection/api/disease-detection.api";
-import { diseaseDetectionApi } from "@/src/features/disease-detection/api/disease-detection.api";
 
 import { useTfliteModels } from "../models/useTfliteModels";
 import { useLeafDetectionProcessor } from "../models/useLeafDetectionProcessor";
-import { YOLO_INPUT_SIZE, MOBILENET_INPUT_SIZE } from "../models/constants";
+import { MOBILENET_INPUT_SIZE } from "../models/constants";
+import { processImageToFloat32Buffer } from "../models/static-inference";
 
 import StepIndicator from "./StepIndicator";
 import LeafDetectionView from "./LeafDetectionView";
 import LeafListCard from "./LeafListCard";
 import PredictionResultCard from "./PredictionResultCard";
 import type { Step } from "./predict.types";
-import {
-  getDisplayImageHeight,
-  cropLeafImage,
-  commonShadow,
-} from "./predict.utils";
-import { ChevronLeft } from "lucide-react-native";
+import { cropLeafImage, getDisplayImageHeight } from "./predict.utils";
 
-export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void }) {
+export default function LocalCaptureScreen({ onCancel, offlineMode = false }: { onCancel?: () => void; offlineMode?: boolean; }) {
   const { t } = useTranslation();
   const colorScheme = useColorScheme();
   const scheme = colorScheme ?? "light";
   const palette = Colors[scheme];
+  const insets = useSafeAreaInsets();
 
   const { hasPermission, requestPermission } = useCameraPermission();
-  const device = useCameraDevice("back");
+  const device = useCameraDevice(devicePosition);
   const cameraRef = useRef<Camera>(null);
-  const { resize } = useResizePlugin();
+  useResizePlugin();
 
   const {
     isLoading: modelsLoading,
     isYoloLoaded,
-    isMobilenetLoaded,
     error: modelError,
     yoloModel,
     mobilenetModel,
     yoloOutputShape,
+    runClassifierOnBuffer,
   } = useTfliteModels();
 
   const [step, setStep] = useState<Step>("pick"); // "pick" = camera preview
@@ -105,6 +101,8 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
   const [cameraPosition, setCameraPosition] = useState<"back" | "front">(
     "back",
   );
+
+  const devicePosition = cameraPosition;
 
   const cardBg = scheme === "dark" ? "rgba(30, 41, 59, 0.8)" : "#FFFFFF";
   const borderColor =
@@ -198,7 +196,7 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
     } finally {
       setIsProcessing(false);
     }
-  }, [yoloModel, frameSize, t]);
+  }, [frameSize, t, triggerDetection, yoloModel]);
 
   // ── Select leaf and crop ─────────────────────────────────────────
 
@@ -237,16 +235,13 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
       return;
     }
 
-    // Fallback: send the cropped JPEG to the backend Keras model
+    // Always run local MobileNetV2 — this is the Local Capture screen, API is never used here
     setIsPredicting(true);
     try {
-      const predictionResult = await diseaseDetectionApi.predictFromUri(
-        croppedUri,
-        `crop-${Date.now()}.jpg`
-      );
-
-      if (predictionResult) {
-        setResult(predictionResult);
+      const float32Buffer = await processImageToFloat32Buffer(croppedUri, MOBILENET_INPUT_SIZE);
+      const prediction = runClassifierOnBuffer(float32Buffer.buffer);
+      if (prediction) {
+        setResult(prediction);
         setStep("result");
       }
     } catch (error) {
@@ -255,13 +250,13 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
         t("diseaseDetection.error", "Error"),
         t(
           "diseaseDetection.predictFailed",
-          "Failed to analyze image. Please try again.",
+          "Failed to analyze image locally. Please try again.",
         ),
       );
     } finally {
       setIsPredicting(false);
     }
-  }, [croppedUri, mobilenetModel, selectedLeafIndex, detections, t]);
+  }, [croppedUri, mobilenetModel, selectedLeafIndex, detections, t, runClassifierOnBuffer]);
 
   // ── Reset ────────────────────────────────────────────────────────
 
@@ -280,14 +275,23 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
     setIsPredicting(false);
   }, [step, onCancel]);
 
+  const handleStepPress = useCallback((targetStep: Step) => {
+    if (targetStep === "pick") {
+      handleReset();
+    } else if (targetStep === "detect") {
+      setStep("detect");
+      setResult(null);
+    }
+  }, [handleReset]);
+
   const displayImageHeight = getDisplayImageHeight(imageSize);
 
   // ── Guard: no permission ─────────────────────────────────────────
 
   if (!hasPermission) {
     return (
-      <SafeAreaView
-        style={[styles.center, { backgroundColor: palette.background }]}
+      <View
+        style={[styles.center, { backgroundColor: palette.background, paddingTop: insets.top }]}
       >
         <CameraIcon size={48} color={palette.tabIconDefault} />
         <Text style={[styles.permText, { color: palette.text }]}>
@@ -304,7 +308,7 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
             {t("diseaseDetection.grantPermission", "Grant Permission")}
           </Text>
         </Pressable>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -312,20 +316,20 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
 
   if (!device) {
     return (
-      <SafeAreaView
-        style={[styles.center, { backgroundColor: palette.background }]}
+      <View
+        style={[styles.center, { backgroundColor: palette.background, paddingTop: insets.top }]}
       >
         <Text style={{ color: palette.text }}>
           {t("diseaseDetection.noCamera", "No camera device found")}
         </Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   // ── Render ───────────────────────────────────────────────────────
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
+    <View style={{ flex: 1, backgroundColor: step === "pick" ? "#000" : palette.background }}>
       {/* Model loading overlay */}
       {modelsLoading && (
         <View style={styles.loadingOverlay}>
@@ -368,17 +372,25 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
             }}
           />
 
+          {/* Center Crop Guide Overlay */}
+          <View style={styles.cropGuideContainer} pointerEvents="none">
+            <View style={styles.cropGuide} />
+            <Text style={styles.cropGuideText}>
+              {t("diseaseDetection.placeLeafInCenter", "Place leaf within the square")}
+            </Text>
+          </View>
+
           {/* Top Header / Back Button */}
           {onCancel && (
-            <SafeAreaView style={styles.topHeaderOverlay}>
+            <View style={[styles.topHeaderOverlay, { paddingTop: insets.top }]}>
               <Pressable onPress={onCancel} style={styles.backButton}>
                 <ChevronLeft size={24} color="#FFFFFF" />
               </Pressable>
-            </SafeAreaView>
+            </View>
           )}
 
           {/* Bottom controls */}
-          <View style={styles.cameraControls}>
+          <View style={[styles.cameraControls, { bottom: insets.bottom + 40 }]}>
             {/* Flip camera */}
             <Pressable
               onPress={() =>
@@ -413,7 +425,7 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
 
           {/* Model status badge */}
           {!isYoloLoaded && !modelsLoading && (
-            <View style={styles.statusBadge}>
+            <View style={[styles.statusBadge, { top: insets.top + 60 }]}>
               <Text style={styles.statusText}>
                 {t("diseaseDetection.modelNotReady", "Model not loaded yet...")}
               </Text>
@@ -428,11 +440,12 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
           contentContainerStyle={{
             flexGrow: 1,
             padding: 16,
-            paddingBottom: 40,
+            paddingTop: insets.top + 16,
+            paddingBottom: insets.bottom + 40,
           }}
           showsVerticalScrollIndicator={false}
         >
-          <StepIndicator step={step} palette={palette} />
+          <StepIndicator step={step} palette={palette} onStepPress={handleStepPress} />
 
           <LeafDetectionView
             cardBg={cardBg}
@@ -493,11 +506,12 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
           contentContainerStyle={{
             flexGrow: 1,
             padding: 16,
-            paddingBottom: 40,
+            paddingTop: insets.top + 16,
+            paddingBottom: insets.bottom + 40,
           }}
           showsVerticalScrollIndicator={false}
         >
-          <StepIndicator step={step} palette={palette} />
+          <StepIndicator step={step} palette={palette} onStepPress={handleStepPress} />
 
           <PredictionResultCard
             cardBg={cardBg}
@@ -533,7 +547,7 @@ export default function LocalCaptureScreen({ onCancel }: { onCancel?: () => void
           </Pressable>
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -582,7 +596,6 @@ const styles = StyleSheet.create({
   },
   cameraControls: {
     position: "absolute",
-    bottom: 40,
     left: 0,
     right: 0,
     flexDirection: "row",
@@ -610,7 +623,6 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     position: "absolute",
-    top: 60,
     alignSelf: "center",
     backgroundColor: "rgba(0,0,0,0.6)",
     paddingHorizontal: 16,
@@ -638,5 +650,28 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "500",
+  },
+  cropGuideContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cropGuide: {
+    width: "100%",
+    aspectRatio: 1,
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.5)",
+    borderStyle: "dashed",
+  },
+  cropGuideText: {
+    position: "absolute",
+    bottom: "20%",
+    color: "#FFFFFF",
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    fontSize: 14,
+    overflow: "hidden",
   },
 });

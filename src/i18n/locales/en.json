@@ -201,7 +201,7 @@
       "posting": "Posting...",
       "visibility": "Visibility",
       "visibilityAll": "Public",
-      "visibilityFriend": "Friends",
+      "visibilityFollower": "Followers",
       "visibilityOnlyMe": "Only me",
       "postSuccess": "Post created successfully!",
       "postError": "Failed to create post. Please try again.",
@@ -293,8 +293,11 @@
       "managePlans": "Manage plans",
       "manageEvents": "Manage events",
       "eventCalendar": "Event calendar",
+      "experts": "Expert Directory",
       "systemAlerts": "System alerts",
       "predict": "Disease Detection",
+      "iotDevices": "IoT Devices",
+      "iotAlerts": "IoT Alerts",
       "more": "More options",
       "notifications": "Notifications",
       "viewAllNotifications": "View all notifications"
@@ -302,21 +305,35 @@
     "tabs": {
       "overview": "Overview",
       "sensors": "Sensors",
-      "diagnosis": "Monitor",
+      "calendar": "Event Calendar",
       "community": "Community",
-      "profile": "Profile"
+      "profile": "Profile",
+      "experts": "Experts"
     },
     "headers": {
       "overview": "Overview",
       "sensors": "Sensors",
-      "diagnosis": "Monitor",
+      "calendar": "Event Calendar",
       "community": "Community",
       "myAccount": "My account",
       "manageFarm": "Farm management",
       "managePlants": "Plant management",
       "managePlans": "Plan management",
-      "manageEvents": "Event management"
+      "manageEvents": "Event management",
+      "experts": "Expert Directory"
     }
+  },
+  "expert": {
+    "title": "Experts",
+    "searchPlaceholder": "Search experts...",
+    "requestConsult": "Consult",
+    "pending": "Pending",
+    "following": "Following",
+    "empty": "No experts available.",
+    "noResults": "No experts found.",
+    "bio": "About",
+    "header": "Verified Expert Directory",
+    "error": "An error occurred while loading experts."
   },
   "farm": {
     "validation": {
@@ -538,7 +555,25 @@
   },
   "plantManagement": {
     "overview": {
-      "totalPlans": "{{count}} plans"
+      "welcomeTitle": "Dashboard",
+      "appTitle": "Leafy Overview",
+      "completionTitle": "Task Completion",
+      "completedEvents": "Completed",
+      "pendingEvents": "Pending",
+      "planStatsTitle": "Plan Analytics",
+      "totalPlans": "{{count}} plans",
+      "activeApplies": "Active",
+      "completedApplies": "Completed",
+      "todayTasksTitle": "Today's Tasks",
+      "tasksScheduled": "tasks scheduled",
+      "noTasks": "Take a rest",
+      "viewAll": "Calendar",
+      "todayTasksEmpty": "No tasks scheduled for today",
+      "statsPlants": "Plants",
+      "statsFarms": "Farms",
+      "statsTodayEvents": "Today's Events",
+      "statsOverdue": "Overdue",
+      "zones": "{{count}} zones"
     }
   },
   "sensors": {
@@ -620,6 +655,7 @@
       "noteRequired": "Note is required",
       "dateFormatInvalid": "Invalid date format (YYYY-MM-DD)",
       "daysFromNowInvalid": "Must be a non-negative whole number",
+      "daysFromStartInvalid": "Must be a valid number",
       "durationDaysInvalid": "Must be a non-negative whole number",
       "phiDaysInvalid": "Must be a non-negative whole number",
       "endDateBeforeStart": "End date must be on or after start date"
@@ -641,22 +677,26 @@
       "HEALTH_RECOVERY": "Health recovery",
       "PHENOLOGY": "Phenology",
       "REPOT": "Repot",
-      "HARVEST": "Harvest"
+      "HARVEST": "Harvest",
+      "ALERT_TRIGGERED": "Alert"
     },
     "eventCategory": {
       "ROUTINE_CARE": "Routine care",
       "HEALTH_MEDICAL": "Health & medical",
-      "GROWTH_LIFECYCLE": "Growth & lifecycle"
+      "GROWTH_LIFECYCLE": "Growth & lifecycle",
+      "ALERTS": "Alerts"
     },
     "eventCategoryShort": {
       "ROUTINE_CARE": "Routine",
       "HEALTH_MEDICAL": "Health",
-      "GROWTH_LIFECYCLE": "Growth"
+      "GROWTH_LIFECYCLE": "Growth",
+      "ALERTS": "Alerts"
     },
     "category": {
       "ROUTINE_CARE": "Routine care",
       "HEALTH_MEDICAL": "Health & medical",
-      "GROWTH_LIFECYCLE": "Growth & lifecycle"
+      "GROWTH_LIFECYCLE": "Growth & lifecycle",
+      "ALERTS": "Alerts"
     },
     "eventTypeModal": {
       "title": "Select event type",
@@ -736,6 +776,12 @@
       "daysFromNowFuture": "In {{days}} day(s)",
       "daysFromNowPast": "{{days}} day(s) ago",
       "daysFromNowHint": "Calculated automatically from the start date.",
+      "daysFromStart": "Days from start",
+      "daysFromStartNotSet": "Set a start date to compute",
+      "daysFromStartToday": "Today (0 days)",
+      "daysFromStartFuture": "In {{days}} day(s)",
+      "daysFromStartPast": "{{days}} day(s) ago",
+      "daysFromStartHint": "Calculated automatically from the start date.",
       "durationDays": "Duration (days)",
       "durationDaysPlaceholder": "e.g. 14",
       "chemicalSection": "Chemical safety (treatment)",
@@ -757,7 +803,8 @@
       "loadEditDataFailed": "Failed to load event data",
       "errors": {
         "notFoundForUpdate": "Event not found for update",
-        "submitFailed": "Failed to save event. Please try again."
+        "submitFailed": "Failed to save event. Please try again.",
+        "hasFailedUploads": "Some files failed to upload. Please remove or retry them before saving."
       }
     },
     "card": {
@@ -782,6 +829,8 @@
     "progress": {
       "targetProgress": "Target progress",
       "progressDetails": "Progress details ({{count}})",
+      "progressTracking": "Progress tracking ({{count}})",
+      "addNote": "Add note...",
       "markIncomplete": "Mark as incomplete",
       "markComplete": "Mark as complete"
     },
@@ -792,6 +841,7 @@
       "safetySection": "Agricultural safety",
       "costSection": "Cost & resources",
       "metaSection": "Record info",
+      "daysFromStart": "Days from start",
       "daysFromNow": "Days from now",
       "createdAt": "Created at",
       "modifiedAt": "Last modified",
@@ -803,6 +853,23 @@
     "alerts": {
       "deleteFailedTitle": "Delete failed",
       "deleteFailedMessage": "Could not delete the event. Please try again."
+    },
+    "attachments": {
+      "title": "Attachments ({{count}})",
+      "add": "Add attachments",
+      "viewAll": "View all",
+      "addFrom": "Add from",
+      "fromGallery": "Gallery",
+      "fromGalleryDesc": "Select photos or videos from your gallery",
+      "fromCamera": "Camera",
+      "fromCameraDesc": "Take a new photo or video",
+      "uploading": "Uploading...",
+      "uploadFailed": "Upload failed",
+      "uploadingCount": "Uploading {{count}}/{{total}}",
+      "pendingCount": "{{count}} pending",
+      "permissionRequired": "Permission Required",
+      "galleryPermissionMessage": "Please allow gallery access to pick attachments.",
+      "cameraPermissionMessage": "Please allow camera access to take photos or videos."
     }
   },
   "calendar": {
@@ -934,7 +1001,119 @@
       "emptySearchMessage": "Try changing the search keywords",
       "emptyMessage": "Your data will appear here",
       "itemAppliedLabel": "applies",
-      "itemLabel": "plans"
+      "itemLabel": "plans",
+      "plantFilter": "Plant",
+      "allPlants": "All plants"
+    },
+    "card": {
+      "noDisease": "Unknown disease",
+      "unnamed": "Unnamed plan",
+      "by": "By",
+      "applies": "applies",
+      "aiDisclaimer": "AI plan is for guidance only",
+      "expert": "Expert",
+      "aiGenerated": "AI generated",
+      "userCreated": "User created",
+      "consulted": "Consulted",
+      "severity": "Severity",
+      "cost": "Cost",
+      "farm": "Plot",
+      "zone": "Zone",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "APPLYING": "Applying",
+      "ACTIVE": "Active",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "detail": {
+      "error": "Failed to load plan",
+      "deleteTitle": "Delete plan",
+      "deleteConfirm": "Are you sure you want to delete this plan?",
+      "disease": "Disease",
+      "createdAt": "Created at",
+      "unknownUser": "Anonymous user",
+      "member": "Member",
+      "apply": "Apply",
+      "public": "Public",
+      "private": "Private",
+      "keyMetrics": "Key Information",
+      "confidence": "Confidence",
+      "severity": "Severity",
+      "cost": "Cost",
+      "eventCount": "Events (Template)",
+      "safetyInputs": "Inputs & Safety",
+      "requiredInputs": "Required inputs",
+      "safetyWarnings": "Safety warnings",
+      "successIndicators": "Success indicators",
+      "noData": "Not set",
+      "checkBeforeApply": "Verify in practice before applying.",
+      "originalQuestion": "Original question",
+      "unnamed": "Treatment Plan"
+    },
+    "apply": {
+      "scopePlant": "Specific plant",
+      "scopeZone": "Zone",
+      "scopePlot": "Plot",
+      "scopeUnknown": "Unknown",
+      "appliedAt": "Applied at",
+      "events": "events",
+      "cancelTitle": "Cancel apply",
+      "cancelConfirm": "Are you sure you want to cancel this plan apply?",
+      "cancelWarning": "Incomplete events will be deleted. Completed events will be kept. This action cannot be undone.",
+      "cancelling": "Cancelling...",
+      "confirmCancel": "Confirm cancel",
+      "scope": "Scope",
+      "target": "Target",
+      "successPrompt": {
+        "title": "Plan completed",
+        "message": "All events for plan \"{planName}\" have been completed. Was this plan successful?",
+        "messageDefault": "All events for this plan have been completed. Was this plan successful?",
+        "failure": "Failure",
+        "success": "Success"
+      },
+      "startDate": "Start date",
+      "noScope": "No scope selected"
+    },
+    "filter": {
+      "sourceAll": "All sources",
+      "sourceUserCreated": "User created",
+      "sourceRagGen": "AI generated",
+      "sourceConsulted": "Consulted",
+      "statusAll": "All statuses"
+    },
+    "bulk": {
+      "selectedCount": "{{count}} plans selected",
+      "pageCount": "{{count}} / {{total}} plans on page",
+      "selectPage": "Select this page",
+      "deselectAll": "Deselect all",
+      "bulkStatusChange": "Change status",
+      "applyChanges": "Apply",
+      "applyTogether": "Apply together",
+      "applySeparately": "Apply separately",
+      "deleteSelected": "Delete selected",
+      "deleteConfirmTitle": "Delete treatment plan",
+      "deleteConfirmMessage": "Are you sure you want to delete plan \"{{name}}\"?",
+      "bulkDeleteConfirmTitle": "Delete selected plans",
+      "bulkDeleteConfirmMessage": "Are you sure you want to delete {{count}} selected plans?"
+    },
+    "empty": {
+      "myTitle": "No treatment plans yet",
+      "myMessage": "When you create plans from AI or a consulting expert, the list will appear here.",
+      "appliedTitle": "No applied plans yet",
+      "appliedMessage": "When you apply a plan to your garden or plants, the list will appear here.",
+      "publicTitle": "No matching community plans found",
+      "publicMessage": "Publicly shared plans will appear here for you to browse and apply."
+    },
+    "page": {
+      "tag": "Treatment plans",
+      "title": "Treatment Plans",
+      "subtitle": "Manage your personal plans or explore community plans from other farmers."
     }
   },
   "iot": {
@@ -1646,10 +1825,10 @@
   },
   "offline": {
     "title": "Offline Mode",
-    "dashboard": "Offline Dashboard",
-    "plants": "My Plants (Offline)",
-    "farm": "My Farm (Offline)",
-    "events": "Plant Events (Offline)",
+    "dashboard": "Dashboard",
+    "plants": "My Plants",
+    "farmTab": "My Farm",
+    "events": "Plant Events",
     "lastSynced": "Last synced: {{time}}",
     "neverSynced": "Never synced",
     "noData": "No offline data available. Please connect to the internet to sync.",
@@ -1683,6 +1862,37 @@
       "lastSyncDuration": "Completed in {{seconds}}s",
       "totalCached": "{{count}} total records",
       "retry": "Retry Sync"
-    }
+    },
+    "plant": {
+      "add": "Add plant (offline)",
+      "edit": "Edit plant"
+    },
+    "farm": {
+      "add": "Add farm (offline)",
+      "edit": "Edit farm"
+    },
+    "farmZone": {
+      "add": "Add zone (offline)",
+      "edit": "Edit zone",
+      "delete": "Delete zone",
+      "deleteConfirm": "Delete zone",
+      "title": "Farm zones",
+      "noZones": "No zones yet",
+      "hide": "Hide zones",
+      "show": "Show zones"
+    },
+    "plantEvent": {
+      "add": "Add event (offline)",
+      "edit": "Edit event"
+    },
+    "form": {
+      "error": "Error",
+      "offlineNotice": "Data will be saved locally and synced when online."
+    },
+    "noPlants": "Tap + to add a new plant or connect to network to sync data.",
+    "noEventsTitle": "No events yet",
+    "noEvents": "Tap + to add a new event or connect to network to sync data.",
+    "pendingTitle": "{{count}} pending changes",
+    "pendingHint": "Will sync automatically when online or tap Push now."
   }
 }

@@ -10,7 +10,7 @@ import {
   ScrollView,
 } from "react-native";
 import { Bell, CheckCheck, Inbox, ShieldAlert } from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
   NotificationItem,
@@ -21,8 +21,6 @@ import {
 } from "@/src/features/notifications";
 import { AlertEventCard } from "@/src/features/iot/components/AlertEventCard";
 
-import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function SafeNotificationsScreen() {
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -32,7 +30,6 @@ export default function SafeNotificationsScreen() {
 }
 
 function NotificationsScreen() {
-  const insets = useSafeAreaInsets();
   const {
     t,
     activeTab,

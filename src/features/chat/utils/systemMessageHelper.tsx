@@ -82,7 +82,7 @@ export function renderSystemMessage(metadata?: Record<string, any> | null): Reac
     case 'ADD_MEMBERS': return <Text>{Actor} đã thêm {Targets} vào nhóm</Text>;
     case 'REMOVE_MEMBER': return <Text>{Actor} đã xóa {Targets} khỏi nhóm</Text>;
     case 'LEAVE_GROUP': return <Text>{Actor} đã rời nhóm</Text>;
-    case 'UPDATE_NAME': return newName ? <Text>{Actor} đã đổi tên nhóm thành <Text style={{ fontWeight: '600', color: '#374151' }}>"{newName}"</Text></Text> : <Text>{Actor} đã đổi tên nhóm</Text>;
+    case 'UPDATE_NAME': return newName ? <Text>{Actor} đã đổi tên nhóm thành <Text style={{ fontWeight: '600', color: '#374151' }}>{"\""}{newName}{"\""}</Text></Text> : <Text>{Actor} đã đổi tên nhóm</Text>;
     case 'UPDATE_AVATAR': return <Text>{Actor} đã đổi ảnh đại diện nhóm</Text>;
     case 'DISBAND_GROUP': return <Text>{Actor} đã giải tán nhóm</Text>;
     case 'PROMOTE_ADMIN': return <Text>{Actor} đã cấp quyền Admin cho {Targets}</Text>;

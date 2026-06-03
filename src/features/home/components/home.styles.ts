@@ -1,9 +1,6 @@
 import { StyleSheet } from "react-native";
 
 export const homeStyles = StyleSheet.create({
-  scrollContent: {
-    paddingBottom: 32,
-  },
   // Weather
   weatherCard: {
     flexDirection: "row",
@@ -42,49 +39,7 @@ export const homeStyles = StyleSheet.create({
     fontWeight: "600" as const,
     marginTop: 2,
   },
-  // Stats grid
-  statsGrid: {
-    flexDirection: "row" as const,
-    flexWrap: "wrap" as const,
-    paddingHorizontal: 12,
-  },
-  statCard: {
-    width: "47%",
-    margin: "1.5%",
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statCardHeader: {
-    flexDirection: "row" as const,
-    justifyContent: "space-between" as const,
-    alignItems: "flex-start" as const,
-    marginBottom: 8,
-  },
-  statIcon: {
-    padding: 8,
-    borderRadius: 10,
-  },
-  statBadge: {
-    fontSize: 11,
-    fontWeight: "700" as const,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: "500" as const,
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: "800" as const,
-    letterSpacing: -0.5,
-  },
-  // Section
+  // Section (Kept for backwards compatibility with other components)
   section: {
     paddingHorizontal: 16,
     marginTop: 24,

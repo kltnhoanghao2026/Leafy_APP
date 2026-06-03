@@ -8,6 +8,12 @@ const isEmptyOrDate = (value?: string) => {
   return /^\d{4}-\d{2}-\d{2}$/.test(value.trim());
 };
 
+const isEmptyOrInteger = (value?: string) => {
+  if (!value?.trim()) return true;
+  const n = Number(value);
+  return Number.isInteger(n);
+};
+
 const isEmptyOrNonNegativeInt = (value?: string) => {
   if (!value?.trim()) return true;
   const n = Number(value);
@@ -43,9 +49,9 @@ export const createPlantEventSchema = (t: TFunction) =>
       t("plantEvent.validation.dateFormatInvalid"),
     ),
 
-    daysFromNow: optionalString.refine(
-      isEmptyOrNonNegativeInt,
-      t("plantEvent.validation.daysFromNowInvalid"),
+    daysFromStart: optionalString.refine(
+      isEmptyOrInteger,
+      t("plantEvent.validation.daysFromStartInvalid"),
     ),
     durationDays: optionalString.refine(
       isEmptyOrNonNegativeInt,

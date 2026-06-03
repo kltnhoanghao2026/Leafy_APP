@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
-  Image,
   Pressable,
   ScrollView,
   Text,
@@ -32,6 +30,7 @@ import { parseApiError } from "@/src/lib/error-handler";
 import { useAuthContext } from "@/src/features/auth";
 import { useNetworkContext } from "@/src/providers/NetworkProvider";
 
+import { Avatar } from "@/src/components/ui/Avatar";
 import { getMyProfileQueryOptions } from "../queries/options";
 
 import { ProfileRow } from "./ProfileRow";
@@ -43,10 +42,9 @@ export function ProfileScreen() {
   const { colorScheme: nativeWindColorScheme, setColorScheme } =
     useNativeWindColorScheme();
   const { logoutLocal } = useAuthContext();
-  const { isForceOffline, toggleForceOffline } = useNetworkContext();
+  const { toggleForceOffline } = useNetworkContext();
   const scheme = colorScheme ?? "light";
   const palette = Colors[scheme];
-  const [isAvatarError, setIsAvatarError] = useState(false);
   const {
     data: profile,
     error,
@@ -68,11 +66,6 @@ export function ProfileScreen() {
         defaultValue: t("screens.profile.roles.user"),
       })
     : t("screens.profile.roles.user");
-
-  const avatarUri =
-    profile?.profilePicture?.trim() || profile?.avatar?.trim() || "";
-  const avatarLetter = displayName.charAt(0).toUpperCase();
-  const shouldShowLetterAvatar = !avatarUri || isAvatarError;
 
   if (isLoading) {
     return (
@@ -141,24 +134,19 @@ export function ProfileScreen() {
           className="mx-4 mt-5 items-center rounded-[20px] border border-gray-200 bg-white px-6 py-8 shadow-sm active:opacity-80 dark:border-slate-800 dark:bg-slate-800/80"
           onPress={() =>
             profile.id
-              ? router.push(`/(main)/profile/${profile.id}` as any)
+              ? router.push({
+                  pathname: "/(main)/profile/[profileId]",
+                  params: { profileId: profile.id, returnTo: "/(main)/profile" },
+                })
               : undefined
           }
         >
           <View className="mb-3 h-28 w-28 overflow-hidden rounded-full border-4 border-gray-100 dark:border-slate-700">
-            {shouldShowLetterAvatar ? (
-              <View className="h-full w-full items-center justify-center bg-primary/20">
-                <Text className="text-5xl font-extrabold uppercase text-primary">
-                  {avatarLetter}
-                </Text>
-              </View>
-            ) : (
-              <Image
-                source={{ uri: avatarUri }}
-                className="h-full w-full"
-                onError={() => setIsAvatarError(true)}
-              />
-            )}
+            <Avatar
+              src={profile.profilePicture || profile.avatar}
+              name={displayName}
+              size="xl"
+            />
           </View>
           <Text className="mb-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
             {displayName}

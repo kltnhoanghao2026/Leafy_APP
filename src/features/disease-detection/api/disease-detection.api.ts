@@ -72,13 +72,21 @@ const resolveFileType = (asset: ImagePickerAsset): string => {
   return asset.mimeType || "image/jpeg";
 };
 
-const buildImageFormData = (asset: ImagePickerAsset): FormData => {
+const buildImageFormData = (
+  asset: ImagePickerAsset,
+  metadata?: { plantId?: string; farmPlotId?: string; farmZoneId?: string },
+): FormData => {
   const formData = new FormData();
   formData.append("file", {
     uri: asset.uri,
     name: resolveFileName(asset),
     type: resolveFileType(asset),
   } as never);
+
+  if (metadata?.plantId) formData.append("plantId", metadata.plantId);
+  if (metadata?.farmPlotId) formData.append("farmPlotId", metadata.farmPlotId);
+  if (metadata?.farmZoneId) formData.append("farmZoneId", metadata.farmZoneId);
+
   return formData;
 };
 
@@ -87,10 +95,11 @@ const buildImageFormData = (asset: ImagePickerAsset): FormData => {
 export const diseaseDetectionApi = {
   detectLeaf: async (
     asset: ImagePickerAsset,
+    metadata?: { plantId?: string; farmPlotId?: string; farmZoneId?: string },
   ): Promise<LeafDetectionResponse> => {
     const response = await apiClient.post<ApiResponse<LeafDetectionResponse>>(
       API_ENDPOINTS.DISEASES.DETECT_LEAF,
-      buildImageFormData(asset),
+      buildImageFormData(asset, metadata),
       {
         headers: { "Content-Type": "multipart/form-data" },
         timeout: 60000,
@@ -99,10 +108,13 @@ export const diseaseDetectionApi = {
     return response.data.data;
   },
 
-  predict: async (asset: ImagePickerAsset): Promise<PredictionResponse> => {
+  predict: async (
+    asset: ImagePickerAsset,
+    metadata?: { plantId?: string; farmPlotId?: string; farmZoneId?: string },
+  ): Promise<PredictionResponse> => {
     const response = await apiClient.post<ApiResponse<PredictionResponse>>(
       API_ENDPOINTS.DISEASES.PREDICT,
-      buildImageFormData(asset),
+      buildImageFormData(asset, metadata),
       {
         headers: { "Content-Type": "multipart/form-data" },
         timeout: 60000,
@@ -114,6 +126,7 @@ export const diseaseDetectionApi = {
   predictFromUri: async (
     uri: string,
     filename: string,
+    metadata?: { plantId?: string; farmPlotId?: string; farmZoneId?: string },
   ): Promise<PredictionResponse> => {
     const formData = new FormData();
     formData.append("file", {
@@ -121,6 +134,10 @@ export const diseaseDetectionApi = {
       name: filename,
       type: "image/jpeg",
     } as never);
+
+    if (metadata?.plantId) formData.append("plantId", metadata.plantId);
+    if (metadata?.farmPlotId) formData.append("farmPlotId", metadata.farmPlotId);
+    if (metadata?.farmZoneId) formData.append("farmZoneId", metadata.farmZoneId);
 
     const response = await apiClient.post<ApiResponse<PredictionResponse>>(
       API_ENDPOINTS.DISEASES.PREDICT,

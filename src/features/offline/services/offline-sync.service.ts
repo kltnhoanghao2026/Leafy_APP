@@ -7,7 +7,10 @@ import {
   cacheSpecies,
   cachePlants,
   cachePlantEvents,
-} from './offline-cache.service';
+} from "./offline-cache.service";
+
+const countPlaceholders = (sql: string) => (sql.match(/\?/g) ?? []).length;
+import { getDbAsync } from './offline-database';
 import type { FarmPlotResponse } from '@/src/features/farm';
 
 export type SyncTableKey = 'farm_plots' | 'farm_zones' | 'species' | 'plants' | 'plant_events';
@@ -93,6 +96,9 @@ export const syncSpeciesData = async (
   const size = 100;
 
   try {
+    const db = await getDbAsync();
+    await db.runAsync('DELETE FROM species');
+
     while (true) {
       const res = await plantApi.getSpecies({ page, size, sortBy: 'commonName', sortDir: 'ASC' });
       const data = res.data.data;
@@ -184,6 +190,14 @@ export const syncPlantEventsData = async (
     });
 
     const events = res.data.data ?? [];
+
+    if (__DEV__) {
+      // Quick sanity log: if this is off, SQLite will throw "values for columns".
+      console.info("[OfflineSync] plant_events insert placeholders", {
+        placeholders: countPlaceholders((cachePlantEvents as any)?.toString?.() ?? ""),
+        events: events.length,
+      });
+    }
 
     if (events.length > 0) {
       await cachePlantEvents(events);

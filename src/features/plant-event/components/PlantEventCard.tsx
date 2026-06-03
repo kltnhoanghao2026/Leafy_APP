@@ -1,11 +1,19 @@
 import { Text, TouchableOpacity, View } from "react-native";
-import { CalendarDays, Pencil, Trash2 } from "lucide-react-native";
+import {
+  CalendarDays,
+  FileText,
+  Leaf,
+  MapPin,
+  Paperclip,
+  Pencil,
+  Trash2,
+} from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
-import { StatusBadge } from "@/src/components/ui/StatusBadge";
 import { formatDateShort } from "@/src/utils/date";
 import type { PlantEventResponse } from "./plant-event.types";
-import { getEventCategoryColors } from "./plant-event.types";
+import { getEventCategoryColors, getEventCategory } from "./plant-event.types";
+import { CATEGORY_DOT_COLORS } from "./calendarConstants";
 
 type Props = {
   event: PlantEventResponse;
@@ -13,9 +21,34 @@ type Props = {
   onDelete: (event: PlantEventResponse) => void;
 };
 
+function EntityInfoRow({
+  icon: Icon,
+  text,
+  className,
+}: {
+  icon: React.ComponentType<{ size: number; className?: string }>;
+  text?: string | null;
+  className?: string;
+}) {
+  if (!text) return null;
+  return (
+    <View className="flex-row items-center gap-1">
+      <Icon size={11} className={className} />
+      <Text
+        className={`text-[11px] font-medium ${className}`}
+        numberOfLines={1}
+      >
+        {text}
+      </Text>
+    </View>
+  );
+}
+
 export function PlantEventCard({ event, onEdit, onDelete }: Props) {
   const { t } = useTranslation();
   const colors = getEventCategoryColors(event.eventType);
+  const category = getEventCategory(event.eventType);
+  const dotColor = CATEGORY_DOT_COLORS[category] ?? "#94a3b8";
 
   return (
     <View className="mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -26,7 +59,7 @@ export function PlantEventCard({ event, onEdit, onDelete }: Props) {
           >
             <CalendarDays
               size={22}
-              className={`${colors.text} ${colors.darkText}`}
+              color={dotColor}
               strokeWidth={2.4}
             />
           </View>
@@ -84,7 +117,55 @@ export function PlantEventCard({ event, onEdit, onDelete }: Props) {
                 : t("plantEvent.card.immediate")}
             </Text>
           </View>
+          {event.completed ? (
+            <View className="self-start rounded-lg bg-emerald-50 px-2.5 py-1 dark:bg-emerald-900/20">
+              <Text className="text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400">
+                {t("plantEvent.card.completed")}
+              </Text>
+            </View>
+          ) : null}
         </View>
+
+        {/* ── Entity summary info (plant / farm / plan apply) ── */}
+        {(event.plant || event.farmPlot || event.farmZone || event.planApply) ? (
+          <View className="mt-2.5 flex-row flex-wrap items-center gap-x-4 gap-y-1 border-t border-slate-100 pt-2.5 dark:border-slate-800">
+            {event.plant ? (
+              <EntityInfoRow
+                icon={Leaf}
+                text={event.plant.nickName || event.plant.plantNumber}
+                className="text-emerald-600 dark:text-emerald-400"
+              />
+            ) : null}
+            {event.farmPlot ? (
+              <EntityInfoRow
+                icon={MapPin}
+                text={event.farmPlot.name}
+                className="text-sky-600 dark:text-sky-400"
+              />
+            ) : null}
+            {event.farmZone ? (
+              <EntityInfoRow
+                icon={MapPin}
+                text={event.farmZone.zoneName}
+                className="text-amber-600 dark:text-amber-400"
+              />
+            ) : null}
+            {event.planApply ? (
+              <EntityInfoRow
+                icon={FileText}
+                text={event.planApply.planName}
+                className="text-violet-600 dark:text-violet-400"
+              />
+            ) : null}
+            {event.attachmentIds?.length ? (
+              <EntityInfoRow
+                icon={Paperclip}
+                text={`${event.attachmentIds.length}`}
+                className="text-slate-500 dark:text-slate-400"
+              />
+            ) : null}
+          </View>
+        ) : null}
 
         <View className="mt-3 gap-1.5">
           {event.description ? (

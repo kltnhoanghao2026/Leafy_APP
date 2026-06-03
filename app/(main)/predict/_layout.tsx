@@ -21,7 +21,7 @@ export default function PredictLayout() {
         name="index"
         options={{
           headerTitle: t('diseaseDetection.title', 'Disease Detection'),
-          headerLeft: () => <BackButton fallback="/" />,
+          headerLeft: () => <BackButton fallback="/(main)/predict" />,
           headerRight: () => null,
         }}
       />
@@ -37,6 +37,14 @@ export default function PredictLayout() {
         name="scan-realtime"
         options={{
           headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="history"
+        options={{
+          headerTitle: t("diseaseDetection.historyTitle", "Diagnosis History"),
+          headerLeft: () => <BackButton />,
+          headerRight: () => null,
         }}
       />
     </Stack>

@@ -2,11 +2,11 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
-import { AxiosError } from "axios";
 import { useAuthContext } from "../context/AuthContext";
 import { useLoginMutation } from "../queries/mutations";
 import { loginSchema, type LoginFormValues } from "../schema";
 import { ERROR_CODES, getErrorMessage } from "@/src/lib/routes";
+import { parseApiError } from "@/src/lib/error-handler";
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 
@@ -35,23 +35,24 @@ export function useLoginScreen() {
       await loginSuccess(response.data.data);
       router.replace("/");
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const code = error.response?.data?.code;
-        if (
-          code === ERROR_CODES.AUTH_INVALID_CREDENTIALS ||
-          code === ERROR_CODES.ACC_WRONG_PASSWORD
-        ) {
-          setError("password", {
-            type: "server",
-            message: getErrorMessage(code),
-          });
-          return;
-        }
-        const message =
-          error.response?.data?.message ??
-          getErrorMessage(ERROR_CODES.SYS_UNCATEGORIZED);
-        setError("root", { type: "server", message });
+      const apiError = parseApiError(error);
+      const code = apiError.code;
+
+      if (
+        code === ERROR_CODES.AUTH_INVALID_CREDENTIALS ||
+        code === ERROR_CODES.ACC_WRONG_PASSWORD
+      ) {
+        setError("password", {
+          type: "server",
+          message: getErrorMessage(code),
+        });
+        return;
       }
+
+      setError("root", {
+        type: "server",
+        message: apiError.message || getErrorMessage(ERROR_CODES.SYS_UNCATEGORIZED),
+      });
     }
   };
 

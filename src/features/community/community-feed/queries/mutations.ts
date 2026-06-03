@@ -66,3 +66,10 @@ export const useCreatePostMutation = () => {
     },
   });
 };
+
+export const useMarkPostViewedMutation = () =>
+  useMutation({
+    mutationKey: [...communityKeys.all(), "markViewed"],
+    mutationFn: (postId: string) => communityApi.markPostViewed(postId),
+  });
+

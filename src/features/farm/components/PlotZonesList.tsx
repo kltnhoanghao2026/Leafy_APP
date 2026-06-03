@@ -3,6 +3,7 @@ import { Sprout, Pencil, Trash2 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useFarmZonesByPlot } from "../queries";
 import type { FarmZoneResponse } from "./farm.types";
+import { useColorScheme } from "@/src/hooks/useColorScheme";
 
 type Props = {
   plotId: string;
@@ -18,6 +19,8 @@ export function PlotZonesList({
   onDeleteZone,
 }: Props) {
   const { t } = useTranslation();
+  const colorScheme = useColorScheme() ?? "light";
+  const isDark = colorScheme === "dark";
   const { data: zones, isLoading } = useFarmZonesByPlot(plotId);
 
   if (isLoading) {
@@ -45,7 +48,7 @@ export function PlotZonesList({
           className="flex-row items-center justify-between p-3 mb-2 border rounded-xl bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800"
         >
           <View className="flex-1 flex-row gap-3 items-center">
-            <Sprout size={20} className="text-green-600 dark:text-green-400" />
+            <Sprout size={20} color={isDark ? "#4ade80" : "#16a34a"} />
             <View>
               <Text className="text-sm font-semibold text-slate-900 dark:text-white">
                 {zone.zoneName}
@@ -67,7 +70,7 @@ export function PlotZonesList({
               >
                 <Pencil
                   size={14}
-                  className="text-slate-500 dark:text-slate-400"
+                  color={isDark ? "#94a3b8" : "#64748b"}
                 />
               </TouchableOpacity>
             ) : null}
@@ -77,7 +80,7 @@ export function PlotZonesList({
                 onPress={() => onDeleteZone(zone)}
                 hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
               >
-                <Trash2 size={16} className="text-red-500 dark:text-red-400" />
+                <Trash2 size={16} color={isDark ? "#f87171" : "#ef4444"} />
               </TouchableOpacity>
             ) : null}
           </View>

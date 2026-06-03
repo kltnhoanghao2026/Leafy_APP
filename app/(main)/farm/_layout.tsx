@@ -21,7 +21,7 @@ export default function FarmLayout() {
         name="index"
         options={{
           headerTitle: t('mainNav.headers.manageFarm'),
-          headerLeft: () => <BackButton fallback="/" />,
+          headerLeft: () => <BackButton fallback="/(main)/farm" />,
         }}
       />
       <Stack.Screen

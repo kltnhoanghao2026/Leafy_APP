@@ -3,6 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, ActivityIndicator } from 'react
 import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Download } from 'lucide-react-native';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import { chatApi } from '@/src/features/chat/api/chatApi';
 
@@ -14,8 +15,6 @@ const formatBytes = (bytes: number, decimals = 2) => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 };
-
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SafeFilesScreen() {
   return (

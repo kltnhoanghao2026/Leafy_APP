@@ -29,7 +29,7 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.CAMERA"
+        "android.permission.RECORD_AUDIO"
       ],
       "package": "com.leafy",
       "googleServicesFile": "./google-services.json"
@@ -65,6 +65,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "40a4fda9-909c-4e28-b5d0-5fab373e2f03"
+      }
     }
   }
 }

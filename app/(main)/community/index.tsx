@@ -1,19 +1,18 @@
 import { MessageCircle, Search } from "lucide-react-native";
-import React, { useLayoutEffect } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import {
+  FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   Text,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "expo-router";
 import { ChatFAB } from "@/src/features/chat/components/ChatFAB";
 
 import { useCommunityScreen } from "@/src/features/community/community-feed/hooks/useCommunityScreen";
-import { experts } from "@/src/features/community/community-feed/components/community.data";
 import { ComposerCard } from "@/src/features/community/community-feed/components/ComposerCard";
-import { ExpertsCard } from "@/src/features/community/community-feed/components/ExpertsCard";
 import { PostCard } from "@/src/features/community/community-feed/components/PostCard";
 import { PostCardSkeleton } from "@/src/features/community/community-feed/components/PostCardSkeleton";
 
@@ -43,7 +42,26 @@ function CommunityScreen() {
     posts,
     parsedError,
     openCommentsModal,
+    markPostViewed,
+    loadMore,
+    hasNextPage,
+    isFetchingNextPage,
   } = useCommunityScreen();
+
+  const markPostViewedRef = useRef(markPostViewed);
+  markPostViewedRef.current = markPostViewed;
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: any[] }) => {
+    viewableItems.forEach((viewableItem) => {
+      if (viewableItem.isViewable && viewableItem.item) {
+        markPostViewedRef.current(viewableItem.item.id);
+      }
+    });
+  }).current;
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -88,9 +106,17 @@ function CommunityScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: palette.background }}>
-      <ScrollView
-        className="flex-1"
-        style={{ flex: 1 }}
+      <FlatList
+        data={isRefetching ? [] : posts}
+        keyExtractor={(item, index) => item.id ?? `post-${index}`}
+        renderItem={({ item }) => (
+          <PostCard
+            post={item}
+            palette={palette}
+            mutedText={mutedText}
+            onOpenComments={openCommentsModal}
+          />
+        )}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 16, paddingBottom: 28, gap: 24 }}
         refreshControl={
@@ -101,50 +127,47 @@ function CommunityScreen() {
             tintColor={palette.primary}
           />
         }
-      >
-        <ComposerCard palette={palette} cardBg={cardBg} lineColor={lineColor} />
+        ListHeaderComponent={
+          <View style={{ gap: 24 }}>
+            <ComposerCard palette={palette} cardBg={cardBg} lineColor={lineColor} />
 
-        <View className="gap-6">
-          {(isLoading || isRefetching) && (
-            <View className="gap-6">
-              <PostCardSkeleton />
-              <PostCardSkeleton />
-              <PostCardSkeleton />
-            </View>
-          )}
+            {(isLoading || isRefetching) && (
+              <View className="gap-6">
+                <PostCardSkeleton />
+                <PostCardSkeleton />
+                <PostCardSkeleton />
+              </View>
+            )}
 
-          {isError && (
-            <Text className="text-center text-sm" style={{ color: "#DC2626" }}>
-              {parsedError?.message || "Khong the tai bang tin luc nay."}
-            </Text>
-          )}
+            {isError && (
+              <Text className="text-center text-sm" style={{ color: "#DC2626" }}>
+                {parsedError?.message || "Khong the tai bang tin luc nay."}
+              </Text>
+            )}
 
-          {!isLoading && !isRefetching && !isError && posts.length === 0 && (
-            <Text className="text-center text-sm" style={{ color: mutedText }}>
-              Chua co bai viet feed/share nao.
-            </Text>
-          )}
-
-          {!isRefetching &&
-            posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                palette={palette}
-                mutedText={mutedText}
-                onOpenComments={openCommentsModal}
-              />
-            ))}
-        </View>
-        <ExpertsCard
-          experts={experts}
-          palette={palette}
-          cardBg={cardBg}
-          lineColor={lineColor}
-          mutedText={mutedText}
-        />
-      </ScrollView>
+            {!isLoading && !isRefetching && !isError && posts.length === 0 && (
+              <Text className="text-center text-sm" style={{ color: mutedText }}>
+                Chua co bai viet feed/share nao.
+              </Text>
+            )}
+          </View>
+        }
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <ActivityIndicator
+              size="small"
+              color={palette.primary}
+              style={{ marginVertical: 16 }}
+            />
+          ) : null
+        }
+      />
       <ChatFAB />
     </View>
   );
 }
+

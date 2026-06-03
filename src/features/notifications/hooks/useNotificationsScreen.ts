@@ -13,7 +13,6 @@ import {
   useMarkCheckedMutation,
 } from "../queries/mutations";
 import { notificationKeys } from "../queries/keys";
-import { useNotificationWebSocket } from "./useNotificationWebSocket";
 import type { UserNotificationResponse } from "../types";
 import { useAlertEvents } from "@/src/features/iot/hooks/useAlerts";
 import type { AlertEventItemResponse } from "@/src/features/iot/types";
@@ -48,8 +47,6 @@ export function useNotificationsScreen() {
   const [activeTab, setActiveTab] = useState<Tab>("all");
   const [refreshing, setRefreshing] = useState(false);
 
-  useNotificationWebSocket();
-
   const { data: stateData } = useNotificationState();
   const unreadCount = stateData?.data?.unreadCount ?? 0;
 
@@ -78,8 +75,7 @@ export function useNotificationsScreen() {
     if (unreadCount > 0) {
       markCheckedMutation.mutate();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [markCheckedMutation, unreadCount]);
 
   const notifications =
     historyData?.pages.flatMap((p) => p.data ?? []) ?? [];

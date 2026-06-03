@@ -3,9 +3,9 @@ import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, I
 import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search } from 'lucide-react-native';
-import { chatApi } from '../../../src/features/chat/api/chatApi';
 import { apiClient } from '../../../src/lib/axios';
 import { API_ENDPOINTS } from '../../../src/lib/routes';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Profile {
   id: string;
@@ -15,7 +15,6 @@ interface Profile {
   role: string;
 }
 
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SafeNewDmScreen() {
   return (

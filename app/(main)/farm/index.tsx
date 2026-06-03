@@ -19,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SafeFarmScreen() {
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1 }} edges={['left', 'right']} className="bg-slate-50 dark:bg-slate-950">
       <FarmScreen />
     </SafeAreaView>
   );
@@ -52,28 +52,20 @@ function FarmScreen() {
   } = useFarmScreen();
 
   return (
-    <ScrollView
-      className="flex-1 bg-slate-50 dark:bg-slate-950"
-      contentContainerClassName="flex-grow p-4 pb-24"
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefetching}
-          onRefresh={refetch}
-          tintColor={"#10B981"}
-          colors={["#10B981"]}
-        />
-      }
-    >
-      {/* Header */}
-      <View className="mb-6 mt-2 px-1">
-        <Text className="text-[26px] font-bold text-slate-800 dark:text-slate-100">
-          {t("farm.list.title")}
-        </Text>
-        <Text className="mt-1 text-[15px] leading-6 text-slate-500 dark:text-slate-400">
-          {t("farm.list.subtitle")}
-        </Text>
-      </View>
+    <View className="flex-1 bg-white dark:bg-slate-900">
+      <ScrollView
+        className="flex-1 bg-slate-50 dark:bg-slate-950"
+        contentContainerClassName="px-4 pb-6"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor="#245A34"
+            colors={["#245A34"]}
+          />
+        }
+      >
 
       {/* Search & Action Row */}
       <View className="mb-6 flex-row items-center gap-3">
@@ -85,7 +77,7 @@ function FarmScreen() {
         <TouchableOpacity className="items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <SlidersHorizontal
             size={20}
-            className="text-emerald-600 dark:text-emerald-500"
+            color="#245A34"
           />
         </TouchableOpacity>
       </View>
@@ -101,7 +93,7 @@ function FarmScreen() {
           </Text>
           <TouchableOpacity
             onPress={() => refetch()}
-            className="mt-0 flex-row items-center justify-center rounded-xl bg-emerald-600 px-6 py-3.5 shadow-sm"
+            className="mt-0 flex-row items-center justify-center rounded-xl bg-[#245A34] px-6 py-3.5 shadow-sm"
           >
             <Text className="text-sm font-bold text-white">
               {t("common.retry")}
@@ -146,22 +138,16 @@ function FarmScreen() {
         </View>
       )}
 
-      {/* Floating Add Farm Plot Button */}
-      <View className="pt-2">
-        <TouchableOpacity
-          className="mt-0 flex-row items-center justify-center rounded-xl border-2 border-dashed border-emerald-600 bg-white py-3.5 dark:border-emerald-500 dark:bg-slate-900"
-          onPress={() => router.push("/(main)/farm/add")}
-        >
-          <Plus
-            size={18}
-            className="text-emerald-600 dark:text-emerald-500"
-            strokeWidth={3}
-          />
-          <Text className="ml-2 text-sm font-bold text-emerald-600 dark:text-emerald-500">
-            {t("farm.list.createFarm")}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Create New Farm Button */}
+      <TouchableOpacity
+        onPress={() => router.push("/(main)/farm/add")}
+        className="mt-8 mb-4 flex-row items-center justify-center rounded-xl bg-[#245A34] py-4 shadow-sm"
+      >
+        <Plus size={20} color="#ffffff" strokeWidth={2.5} className="mr-2" />
+        <Text className="text-base font-bold text-white">
+          {t("farm.form.titleCreate")}
+        </Text>
+      </TouchableOpacity>
 
       {zoneModalVisible ? (
         <FarmZoneFormModal
@@ -175,5 +161,6 @@ function FarmScreen() {
         />
       ) : null}
     </ScrollView>
+    </View>
   );
 }

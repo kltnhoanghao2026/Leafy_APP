@@ -10,24 +10,20 @@ import {
   ChevronDown,
   ChevronUp,
   Circle,
+  Leaf,
   ListChecks,
   MapPin,
-  Leaf,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
-import type { PlantEventResponse } from "./plant-event.types";
-import { getEventCategoryColors, getEventTypeIcon } from "./plant-event.types";
+import {
+  EVENT_CATEGORY_MAP,
+  getEventCategoryColors,
+  getEventTypeIcon,
+  type PlantEventResponse,
+} from "./plant-event.types";
+import { CATEGORY_DOT_COLORS } from "./calendarConstants";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
-
-// ── Accent dot color map (matching category section) ─────────────────────
-const CATEGORY_DOT_COLORS: Record<string, string> = {
-  ROUTINE_CARE: "#3B82F6",
-  HEALTH_MEDICAL: "#F97316",
-  GROWTH_LIFECYCLE: "#10B981",
-};
-
-import { EVENT_CATEGORY_MAP } from "./plant-event.types";
 
 type EventCardProps = {
   event: PlantEventResponse;
@@ -110,7 +106,8 @@ export function EventCard({
       >
         {/* Category color strip */}
         <View
-          className={`w-1.5 self-stretch min-h-[64px] ${colors.bg} ${colors.darkBg}`}
+          className="w-1.5 self-stretch min-h-[64px]"
+          style={{ backgroundColor: dotColor }}
         />
 
         <View className="flex-1 flex-row items-center px-3 py-3">
@@ -140,7 +137,7 @@ export function EventCard({
           <View
             className={`items-center justify-center rounded-lg p-2 ${colors.bg} ${colors.darkBg}`}
           >
-            <Icon size={18} color={scheme === "dark" ? undefined : undefined} />
+            <Icon size={18} color={dotColor} />
           </View>
 
           {/* Content */}
@@ -166,6 +163,35 @@ export function EventCard({
                   {event.durationDays} {t("plantEvent.card.days")}
                 </Text>
               )}
+              {/* ── Inline entity summary ── */}
+              {(event.plant || event.farmPlot || event.farmZone || event.planApply) ? (
+                <View className="flex-row items-center gap-1.5">
+                  {event.plant ? (
+                    <View className="flex-row items-center gap-0.5">
+                      <Leaf size={9} color="#10B981" />
+                      <Text className="text-[9px] font-medium text-emerald-600 dark:text-emerald-400">
+                        {event.plant.nickName || event.plant.plantNumber}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {event.farmPlot ? (
+                    <View className="flex-row items-center gap-0.5">
+                      <MapPin size={9} color="#0EA5E9" />
+                      <Text className="text-[9px] font-medium text-sky-600 dark:text-sky-400">
+                        {event.farmPlot.name}
+                      </Text>
+                    </View>
+                  ) : null}
+                  {event.farmZone ? (
+                    <View className="flex-row items-center gap-0.5">
+                      <MapPin size={9} color="#F59E0B" />
+                      <Text className="text-[9px] font-medium text-amber-600 dark:text-amber-400">
+                        {event.farmZone.zoneName}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
 
             {/* ── Task progress bar ───────────────────────────────── */}

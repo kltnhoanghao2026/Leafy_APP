@@ -381,8 +381,8 @@ function ChartBody({
   onSelectMarker,
 }: {
   charts: SensorChartResponse[];
-  alerts: Array<AlertEventItemResponse & Partial<DisplayAlertEvent>>;
-  mediaEvents: Array<DeviceMediaEvent & Partial<DisplayDeviceMediaEvent>>;
+  alerts: (AlertEventItemResponse & Partial<DisplayAlertEvent>)[];
+  mediaEvents: (DeviceMediaEvent & Partial<DisplayDeviceMediaEvent>)[];
   compareMode: boolean;
   range: ChartRange;
   loading?: boolean;
@@ -592,8 +592,8 @@ const buildSeries = (charts: SensorChartResponse[], range: ChartRange) =>
   }));
 
 const buildMarkers = (
-  alerts: Array<AlertEventItemResponse & Partial<DisplayAlertEvent>>,
-  mediaEvents: Array<DeviceMediaEvent & Partial<DisplayDeviceMediaEvent>>,
+  alerts: (AlertEventItemResponse & Partial<DisplayAlertEvent>)[],
+  mediaEvents: (DeviceMediaEvent & Partial<DisplayDeviceMediaEvent>)[],
   points: ChartPoint[],
   mediaAnalysisLabel: string,
 ): Marker[] => {

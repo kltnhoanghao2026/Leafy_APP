@@ -21,7 +21,8 @@ export default function PlansLayout() {
         name="index"
         options={{
           headerTitle: t('mainNav.headers.managePlans', 'Quản lý kế hoạch'),
-          headerLeft: () => <BackButton fallback="/" />,
+          headerTitleStyle: { color: palette.text, fontWeight: '700' },
+          headerLeft: () => <BackButton fallback="/(main)/plans" />,
         }}
       />
       <Stack.Screen
@@ -29,6 +30,14 @@ export default function PlansLayout() {
         options={{
           headerTitle: t('plan.detail.unnamed', 'Kế hoạch'),
           headerLeft: () => <BackButton fallback="/(main)/plans" />,
+        }}
+      />
+      <Stack.Screen
+        name="create"
+        options={{
+          headerShown: true,
+          headerTitle: "Tạo kế hoạch điều trị",
+          headerBackTitle: "Quay lại",
         }}
       />
       <Stack.Screen

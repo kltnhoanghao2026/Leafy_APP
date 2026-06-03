@@ -4,6 +4,8 @@ import { Ban, AlertTriangle, Video } from 'lucide-react-native';
 import { format } from 'date-fns';
 import type { MessageResponse } from '../api/chatApi';
 
+import { renderSystemMessage } from '../utils/systemMessageHelper';
+
 interface MessageBubbleProps {
   msg: MessageResponse;
   isMe: boolean;
@@ -13,8 +15,6 @@ interface MessageBubbleProps {
   onEdit?: (msg: MessageResponse) => void;
   onLongPress?: (msg: MessageResponse) => void;
 }
-
-import { renderSystemMessage } from '../utils/systemMessageHelper';
 
 export function SystemMessageBubble({ msg }: { msg: MessageResponse }) {
   if (!msg.metadata) return null;

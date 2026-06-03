@@ -4,6 +4,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Image as ImageIcon, PlayCircle } from 'lucide-react-native';
 
+import { SafeAreaView } from "react-native-safe-area-context";
+
 import { chatApi } from '@/src/features/chat/api/chatApi';
 
 const { width } = Dimensions.get('window');
@@ -11,7 +13,6 @@ const COLUMN_COUNT = 4;
 const SPACING = 2;
 const ITEM_SIZE = (width - (COLUMN_COUNT + 1) * SPACING) / COLUMN_COUNT;
 
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SafeMediaScreen() {
   return (

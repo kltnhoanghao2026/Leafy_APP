@@ -4,12 +4,12 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Alert,
 } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Pencil,
   Calendar,
-  Clock,
   ShieldCheck,
   Banknote,
   Info,
@@ -21,13 +21,16 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 
-import { usePlantEventById } from "../queries";
+import { plantEventApi } from "../api/plant-event.api";
+import { usePlantEventById, useDeletePlantEventMutation } from "../queries";
 import {
   getEventCategoryColors,
   getEventCategory,
   getEventTypeIcon,
 } from "./plant-event.types";
 import { PlantEventProgressModal } from "./PlantEventProgressModal";
+import { AttachmentGrid, type AttachmentItem } from "./AttachmentGrid";
+import { CATEGORY_DOT_COLORS } from "./calendarConstants";
 
 // ── Helper: section card ──────────────────────────────────────────────────
 
@@ -92,6 +95,56 @@ function InfoRowNumber({
   );
 }
 
+// ── Attachments helper ─────────────────────────────────────────────────────────
+
+function EventAttachments({ attachmentIds }: { attachmentIds: string[] }) {
+  const [attachmentUrls, setAttachmentUrls] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchUrls = async () => {
+      setLoading(true);
+      const urls: Record<string, string> = {};
+      await Promise.all(
+        attachmentIds.map(async (fileId) => {
+          try {
+            const url = await plantEventApi.getPresignedUrl(fileId);
+            if (!cancelled) {
+              urls[fileId] = url;
+            }
+          } catch {
+            // Keep empty URL for failed fetches
+          }
+        }),
+      );
+      if (!cancelled) {
+        setAttachmentUrls(urls);
+        setLoading(false);
+      }
+    };
+    fetchUrls();
+    return () => {
+      cancelled = true;
+    };
+  }, [attachmentIds]);
+
+  const resolvedAttachments: AttachmentItem[] = attachmentIds.map((fileId) => ({
+    fileId,
+    url: attachmentUrls[fileId] || "",
+  }));
+
+  if (loading) {
+    return (
+      <View className="py-2">
+        <ActivityIndicator size="small" className="text-slate-400" />
+      </View>
+    );
+  }
+
+  return <AttachmentGrid attachments={resolvedAttachments} maxVisible={4} />;
+}
+
 // ── Main screen ───────────────────────────────────────────────────────────
 
 export function PlantEventDetailScreen() {
@@ -101,6 +154,7 @@ export function PlantEventDetailScreen() {
   const [progressVisible, setProgressVisible] = useState(false);
 
   const { data: event, isLoading, isError } = usePlantEventById(id ?? "");
+  const deleteMutation = useDeletePlantEventMutation();
 
   if (isLoading) {
     return (
@@ -128,7 +182,6 @@ export function PlantEventDetailScreen() {
   const hasSafetyData =
     event.phiDays != null || event.ppeRequired || event.mrlNote;
   const hasCostData = event.estimatedCost != null;
-  const hasTargetData = event.plantId || event.farmPlotId || event.farmZoneId;
 
   const formatDate = (d?: string | null) => {
     if (!d) return null;
@@ -159,14 +212,14 @@ export function PlantEventDetailScreen() {
           className={`mx-4 mt-4 mb-3 overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-slate-900`}
         >
           {/* Category accent bar */}
-          <View className={`h-1 w-full ${colors.bg} ${colors.darkBg}`} />
+          <View className="h-1 w-full" style={{ backgroundColor: CATEGORY_DOT_COLORS[category] ?? "#94a3b8" }} />
 
           <View className="flex-row items-start gap-3 px-4 py-4">
             {/* Icon badge */}
             <View
               className={`items-center justify-center rounded-xl p-3 ${colors.bg} ${colors.darkBg}`}
             >
-              <Icon size={24} className={`${colors.text} ${colors.darkText}`} />
+              <Icon size={24} color={CATEGORY_DOT_COLORS[category] ?? "#94a3b8"} />
             </View>
 
             <View className="flex-1">
@@ -268,8 +321,8 @@ export function PlantEventDetailScreen() {
               unit={t("plantEvent.card.days")}
             />
             <InfoRowNumber
-              label={t("plantEvent.detail.daysFromNow")}
-              value={event.daysFromNow}
+              label={t("plantEvent.detail.daysFromStart")}
+              value={event.daysFromStart}
               unit={t("plantEvent.card.days")}
             />
           </View>
@@ -283,6 +336,13 @@ export function PlantEventDetailScreen() {
             </Text>
           </SectionCard>
         ) : null}
+
+        {/* ── Attachments ─────────────────────────────────────── */}
+        {event.attachmentIds && event.attachmentIds.length > 0 && (
+          <SectionCard title={t("plantEvent.attachments.title", { count: event.attachmentIds.length })} icon={Info}>
+            <EventAttachments attachmentIds={event.attachmentIds} />
+          </SectionCard>
+        )}
 
         {/* ── Agricultural Safety ───────────────────────────────── */}
         {hasSafetyData && (
@@ -358,6 +418,28 @@ export function PlantEventDetailScreen() {
         event={event}
         visible={progressVisible}
         onClose={() => setProgressVisible(false)}
+        onEdit={(ev) => router.push(`/(main)/plant-events/edit/${ev.id}`)}
+        onDelete={(ev) => {
+          setProgressVisible(false);
+          Alert.alert(
+            t("plantEvent.detail.deleteConfirmTitle"),
+            t("plantEvent.detail.deleteConfirmMessage", { note: ev.note ?? ev.eventType }),
+            [
+              { text: t("common.cancel"), style: "cancel" },
+              {
+                text: t("plantEvent.detail.delete"),
+                style: "destructive",
+                onPress: () => {
+                  deleteMutation.mutate(ev.id, {
+                    onSuccess: () => {
+                      router.back();
+                    },
+                  });
+                },
+              },
+            ],
+          );
+        }}
       />
     </View>
   );

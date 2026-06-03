@@ -18,7 +18,63 @@ interface RawDetection {
   classIndex: number;
 }
 
-// ── Helpers (worklet-compatible, plain JS) ─────────────────────────
+// ── NMS-baked-in parser ────────────────────────────────────────────
+
+/**
+ * Parse output from a YOLO TFLite model exported with NMS baked in
+ * (Ultralytics `nms=True`).
+ *
+ * The model produces 4 output tensors:
+ *   [0] detection_boxes:  [1, max_det, 4]  — normalised [y1, x1, y2, x2] in 0..1
+ *   [1] detection_classes: [1, max_det]     — class index (float)
+ *   [2] detection_scores:  [1, max_det]     — confidence score
+ *   [3] detection_count:   [1]              — number of valid detections
+ *
+ * Coordinates are normalised to [0, 1] relative to the 640×640 input, then
+ * scaled to the original image dimensions.
+ */
+export function parseYoloNmsOutput(
+  outputs: ArrayBuffer[],
+  imageWidth: number,
+  imageHeight: number,
+): LeafDetection[] {
+  "worklet";
+  const boxes = new Float32Array(outputs[0]);     // [max_det * 4]
+  const classes = new Float32Array(outputs[1]);    // [max_det]
+  const scores = new Float32Array(outputs[2]);     // [max_det]
+  const countArr = new Float32Array(outputs[3]);   // [1]
+
+  const numDetections = Math.round(countArr[0]);
+  const results: LeafDetection[] = [];
+
+  for (let i = 0; i < numDetections; i++) {
+    const score = scores[i];
+    if (score < YOLO_CONFIDENCE_THRESHOLD) continue;
+
+    // TFLite NMS outputs normalised [y1, x1, y2, x2]
+    const y1Norm = boxes[i * 4 + 0];
+    const x1Norm = boxes[i * 4 + 1];
+    const y2Norm = boxes[i * 4 + 2];
+    const x2Norm = boxes[i * 4 + 3];
+
+    const classIdx = Math.round(classes[i]);
+
+    results.push({
+      className: YOLO_CLASS_NAMES[classIdx] ?? "item",
+      confidenceScore: score,
+      boundingBox: {
+        x1: Math.max(0, x1Norm * imageWidth),
+        y1: Math.max(0, y1Norm * imageHeight),
+        x2: Math.min(imageWidth, x2Norm * imageWidth),
+        y2: Math.min(imageHeight, y2Norm * imageHeight),
+      } satisfies BoundingBox,
+    });
+  }
+
+  return results;
+}
+
+// ── Raw YOLO parser (no baked-in NMS, kept as fallback) ────────────
 
 function iou(a: RawDetection, b: RawDetection): number {
   "worklet";
@@ -38,7 +94,6 @@ function iou(a: RawDetection, b: RawDetection): number {
 
 function nms(detections: RawDetection[], iouThreshold: number): RawDetection[] {
   "worklet";
-  // Sort by confidence descending
   const sorted = detections.slice().sort((a, b) => b.confidence - a.confidence);
   const kept: RawDetection[] = [];
 
@@ -56,59 +111,52 @@ function nms(detections: RawDetection[], iouThreshold: number): RawDetection[] {
   return kept;
 }
 
-// ── Main post-processing ───────────────────────────────────────────
-
 /**
- * Parse YOLO TFLite output tensor into LeafDetection[].
- *
- * The YOLO model (exported via Ultralytics → SavedModel → TFLite) typically
- * outputs shape [1, 5, 8400] where:
- *   - dim 1 = [cx, cy, w, h, class_conf] (for 1-class model: 4 + 1 = 5)
- *   - dim 2 = 8400 candidate boxes
- *
- * If the tensor is transposed to [1, 8400, 5], we detect that and handle it.
- *
- * Coordinates are in the YOLO input space (0..640). We scale them to the
- * original image dimensions.
- *
- * @param outputBuffer Raw ArrayBuffer from TFLite model
- * @param outputShape  Shape of the output tensor, e.g. [1, 5, 8400]
- * @param imageWidth   Original image width (for scaling)
- * @param imageHeight  Original image height (for scaling)
+ * Parse raw YOLO output (no baked-in NMS).
+ * Shape [1, 5, 8400] or [1, 8400, 5].
+ * Applies manual NMS.
  */
-export function parseYoloOutput(
+export function parseYoloRawOutput(
   outputBuffer: ArrayBufferLike,
   outputShape: number[],
   imageWidth: number,
   imageHeight: number,
+  mode: "stretch" | "letterbox" | "center-crop" = "stretch"
 ): LeafDetection[] {
   "worklet";
   const data = new Float32Array(outputBuffer);
 
-  // Robust dimension extraction logic: explicitly find 8400 for boxes
   const dim1 = outputShape.length === 3 ? outputShape[1] : outputShape[0];
   const dim2 = outputShape.length === 3 ? outputShape[2] : outputShape[1];
 
-  // YOLO models typically have 8400 (YOLOv8/11) boxes at 640x640
   const numBoxes = dim1 === 8400 ? dim1 : dim2 === 8400 ? dim2 : Math.max(dim1, dim2);
   const numValues = dim1 === 8400 ? dim2 : dim2 === 8400 ? dim1 : Math.min(dim1, dim2);
 
-  // Determine if shape is [..., 8400, 5] (transposed) or [..., 5, 8400]
   const transposed = numValues === 5 && dim2 === 5;
-
   const rawDetections: RawDetection[] = [];
+  
+  let scaleX = imageWidth / YOLO_INPUT_SIZE;
+  let scaleY = imageHeight / YOLO_INPUT_SIZE;
+  let padX = 0;
+  let padY = 0;
 
-  const expectedValues = 4 + YOLO_NUM_CLASSES; // cx, cy, w, h, + class confs
-
-  const scaleX = imageWidth / YOLO_INPUT_SIZE;
-  const scaleY = imageHeight / YOLO_INPUT_SIZE;
-
-  const actualNumBoxes = transposed
-    ? numBoxes
-    : numValues === expectedValues
-      ? numBoxes
-      : numValues;
-  const stride = transposed ? 5 : expectedValues;
+  if (mode === "letterbox") {
+    const scale = Math.min(YOLO_INPUT_SIZE / imageWidth, YOLO_INPUT_SIZE / imageHeight);
+    const newWidth = imageWidth * scale;
+    const newHeight = imageHeight * scale;
+    padX = (YOLO_INPUT_SIZE - newWidth) / 2;
+    padY = (YOLO_INPUT_SIZE - newHeight) / 2;
+    
+    scaleX = 1 / scale;
+    scaleY = 1 / scale;
+  } else if (mode === "center-crop") {
+    const size = Math.min(imageWidth, imageHeight);
+    padX = -(imageWidth - size) / 2 * (YOLO_INPUT_SIZE / size);
+    padY = -(imageHeight - size) / 2 * (YOLO_INPUT_SIZE / size);
+    
+    scaleX = size / YOLO_INPUT_SIZE;
+    scaleY = size / YOLO_INPUT_SIZE;
+  }
 
   for (let i = 0; i < numBoxes; i++) {
     let cx: number, cy: number, w: number, h: number;
@@ -116,8 +164,7 @@ export function parseYoloOutput(
     let maxClassIdx = 0;
 
     if (transposed) {
-      // Shape [1, 8400, 5]: row-major, each row is [cx, cy, w, h, conf]
-      const offset = i * stride;
+      const offset = i * 5;
       cx = data[offset];
       cy = data[offset + 1];
       w = data[offset + 2];
@@ -131,9 +178,7 @@ export function parseYoloOutput(
         }
       }
     } else {
-      // Shape [1, 5, 8400]: each channel is a separate row of 8400 values
-      const boxCount = numBoxes > numValues ? numBoxes : numValues;
-      const actualBoxes = boxCount === 8400 ? 8400 : numBoxes;
+      const actualBoxes = numBoxes > numValues ? numBoxes : numValues;
       cx = data[0 * actualBoxes + i];
       cy = data[1 * actualBoxes + i];
       w = data[2 * actualBoxes + i];
@@ -150,11 +195,10 @@ export function parseYoloOutput(
 
     if (maxClassConf < YOLO_CONFIDENCE_THRESHOLD) continue;
 
-    // Convert center-format to corner-format and scale to original image
-    const x1 = (cx - w / 2) * scaleX;
-    const y1 = (cy - h / 2) * scaleY;
-    const x2 = (cx + w / 2) * scaleX;
-    const y2 = (cy + h / 2) * scaleY;
+    const x1 = (cx - w / 2 - padX) * scaleX;
+    const y1 = (cy - h / 2 - padY) * scaleY;
+    const x2 = (cx + w / 2 - padX) * scaleX;
+    const y2 = (cy + h / 2 - padY) * scaleY;
 
     rawDetections.push({
       x1: Math.max(0, x1),
@@ -166,10 +210,8 @@ export function parseYoloOutput(
     });
   }
 
-  // Apply NMS
   const kept = nms(rawDetections, YOLO_IOU_THRESHOLD);
 
-  // Convert to LeafDetection format
   return kept.map((det) => ({
     className: YOLO_CLASS_NAMES[det.classIndex] ?? "item",
     confidenceScore: det.confidence,

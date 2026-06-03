@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { planApi } from "../api/plan.api";
-import type { PlanListParams, PlanStatus, TargetType, TrackingGranularity } from "../components/plan.types";
+import type { PlanListParams, PlanStatus, TrackingGranularity } from "../schemas/plan.schema";
 
 export const planKeys = {
   all: ["plans"] as const,
@@ -24,7 +24,6 @@ export function useMyPlans(params: PlanListParams) {
       const response = await planApi.getMyPlans(params);
       return response.data.data;
     },
-    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -35,7 +34,6 @@ export function usePublicPlans(params: PlanListParams) {
       const response = await planApi.getPublicPlans(params);
       return response.data.data;
     },
-    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -46,7 +44,6 @@ export function useMyApplies(params: PlanListParams & { status?: PlanStatus | ""
       const response = await planApi.getMyApplies(params);
       return response.data.data;
     },
-    placeholderData: (previousData) => previousData,
   });
 }
 
@@ -97,12 +94,37 @@ export function useDeletePlanMutation() {
   });
 }
 
+export function useBulkDeletePlansMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (planIds: string[]) => Promise.all(planIds.map((id) => planApi.deletePlan(id))),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: planKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: planKeys.publicLists() });
+    },
+  });
+}
+
 export function useApplyPlanMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ planId, payload }: { planId: string; payload: { plantId?: string; farmPlotId?: string; farmZoneId?: string; startDate: string; trackingGranularity?: TrackingGranularity; excludedPlantIds?: string[]; excludedFarmZoneIds?: string[] } }) =>
-      planApi.applyPlan(planId, payload),
+    mutationFn: ({
+      planId,
+      payload,
+    }: {
+      planId: string;
+      payload: {
+        plantId?: string;
+        farmPlotId?: string;
+        farmZoneId?: string;
+        startDate: string;
+        trackingGranularity?: TrackingGranularity;
+        excludedPlantIds?: string[];
+        excludedFarmZoneIds?: string[];
+      };
+    }) => planApi.applyPlan(planId, payload),
     onSuccess: (_, { planId }) => {
       queryClient.invalidateQueries({ queryKey: planKeys.detail(planId) });
       queryClient.invalidateQueries({ queryKey: planKeys.applies() });
@@ -114,11 +136,62 @@ export function useUpdateApplyStatusMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ applyId, status, planId }: { applyId: string; status: PlanStatus; planId: string }) =>
-      planApi.updateApplyStatus(applyId, status),
+    mutationFn: ({
+      applyId,
+      status,
+      planId,
+    }: {
+      applyId: string;
+      status: PlanStatus;
+      planId?: string;
+    }) => planApi.updateApplyStatus(applyId, status),
     onSuccess: (_, { planId }) => {
-      queryClient.invalidateQueries({ queryKey: planKeys.detail(planId) });
+      if (planId) {
+        queryClient.invalidateQueries({ queryKey: planKeys.detail(planId) });
+      }
       queryClient.invalidateQueries({ queryKey: planKeys.applies() });
+    },
+  });
+}
+
+export function useCancelApplyMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (applyId: string) => planApi.cancelApply(applyId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: planKeys.applies() });
+      queryClient.invalidateQueries({ queryKey: planKeys.lists() });
+    },
+  });
+}
+
+export function useCompleteApplyMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      applyId,
+      success,
+    }: {
+      applyId: string;
+      success: boolean;
+    }) => planApi.completeApply(applyId, success),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: planKeys.all });
+    },
+  });
+}
+
+export function useCreatePlanMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (body: Parameters<typeof planApi.createPlan>[0]) =>
+      planApi.createPlan(body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: planKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: planKeys.publicLists() });
     },
   });
 }

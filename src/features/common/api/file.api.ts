@@ -2,7 +2,7 @@ import type { ImagePickerAsset } from "expo-image-picker";
 
 import { apiClient } from "@/src/lib/axios";
 import { API_ENDPOINTS } from "@/src/lib/routes";
-import type { ApiResponse } from "@/src/shared/api";
+import { type ApiResponse } from "@/src/shared/api";
 
 // ─── Internal types ────────────────────────────────────────────────────────────
 
@@ -14,12 +14,6 @@ interface UploadedFileRecord {
 const MAX_PRESIGNED_EXPIRATION_MINUTES = 60 * 24 * 7;
 
 // ─── Helper utilities ──────────────────────────────────────────────────────────
-
-const resolveFileName = (asset: ImagePickerAsset): string => {
-  if (asset.fileName) return asset.fileName;
-  const nameFromPath = asset.uri.split("/").pop();
-  return nameFromPath || `upload-${Date.now()}.jpg`;
-};
 
 const resolveMimeType = (asset: ImagePickerAsset): string =>
   asset.mimeType ?? "image/jpeg";
@@ -42,28 +36,57 @@ export interface UploadedFile {
 export const uploadFile = async (
   asset: ImagePickerAsset,
 ): Promise<UploadedFile> => {
+  const fileName = asset.fileName || `upload-${Date.now()}.jpg`;
+  const mimeType = asset.mimeType || "image/jpeg";
+
+  console.info("[File Upload] Preparing upload", {
+    uri: asset.uri,
+    fileName,
+    mimeType,
+  });
+
   const formData = new FormData();
   formData.append("file", {
     uri: asset.uri,
-    name: resolveFileName(asset),
-    type: resolveMimeType(asset),
-  } as never);
+    type: mimeType,
+    name: fileName,
+  });
 
-  const uploadResponse = await apiClient.post<ApiResponse<UploadedFileRecord>>(
-    API_ENDPOINTS.FILES.UPLOAD,
-    formData,
-    { headers: { "Content-Type": "multipart/form-data" } },
-  );
+  const uploadUrl = `${apiClient.defaults.baseURL}${API_ENDPOINTS.FILES.UPLOAD}`;
+  console.info("[File Upload] Starting POST to", uploadUrl);
 
-  const fileId = uploadResponse.data.data.id;
-  const fileType = uploadResponse.data.data.fileType ?? "IMAGE";
+  try {
+    // Explicitly set Content-Type to multipart/form-data for file uploads
+    const uploadResponse = await apiClient.post<ApiResponse<UploadedFileRecord>>(
+      API_ENDPOINTS.FILES.UPLOAD,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
+    );
 
-  const signedUrlResponse = await apiClient.get<ApiResponse<string>>(
-    API_ENDPOINTS.FILES.PRESIGNED_URL(fileId),
-    { params: { expirationMinutes: MAX_PRESIGNED_EXPIRATION_MINUTES } },
-  );
+    const fileId = uploadResponse.data.data.id;
+    const fileType = uploadResponse.data.data.fileType ?? "IMAGE";
 
-  return { fileId, fileType, url: signedUrlResponse.data.data };
+    const signedUrlResponse = await apiClient.get<ApiResponse<string>>(
+      API_ENDPOINTS.FILES.PRESIGNED_URL(fileId),
+      { params: { expirationMinutes: MAX_PRESIGNED_EXPIRATION_MINUTES } },
+    );
+
+    console.info("[File Upload] Success", { fileId, fileType });
+
+    return { fileId, fileType, url: signedUrlResponse.data.data };
+  } catch (error) {
+    console.error("[File Upload] Failed", {
+      url: uploadUrl,
+      error: error instanceof Error ? error.message : String(error),
+      status: (error as any)?.response?.status,
+      data: (error as any)?.response?.data,
+    });
+    throw error;
+  }
 };
 
 // ─── Convenience wrappers (kept for backward compatibility) ───────────────────
@@ -71,6 +94,10 @@ export const uploadFile = async (
 export const fileApi = {
   /** Resolve an existing file-service ID into a short-lived image URL. */
   getPresignedUrl: async (fileId: string): Promise<string> => {
+    if (!fileId) return "";
+    if (fileId.startsWith("http://") || fileId.startsWith("https://")) {
+      return fileId;
+    }
     const response = await apiClient.get<ApiResponse<string>>(
       API_ENDPOINTS.FILES.PRESIGNED_URL(fileId),
       { params: { expirationMinutes: MAX_PRESIGNED_EXPIRATION_MINUTES } },

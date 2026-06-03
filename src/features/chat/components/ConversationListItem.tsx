@@ -2,7 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { Users, Pin } from 'lucide-react-native';
 import { format, isToday, isYesterday } from 'date-fns';
+
 import type { ConversationResponse } from '../api/chatApi';
+import { formatSystemMessageAsText } from '../utils/systemMessageHelper';
 
 interface ConversationListItemProps {
   conversation: ConversationResponse;
@@ -20,8 +22,6 @@ function formatTime(timestampStr?: string | null) {
   if (isYesterday(date)) return 'Hôm qua';
   return format(date, 'dd/MM/yyyy');
 }
-
-import { formatSystemMessageAsText } from '../utils/systemMessageHelper';
 
 export function ConversationListItem({
   conversation,

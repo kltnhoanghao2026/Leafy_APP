@@ -84,8 +84,7 @@ export function ChatMessages({
         queryClient.invalidateQueries({ queryKey: ['conversations'] });
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, queryClient]); // intentionally omit unreadCount
+  }, [conversationId, queryClient, unreadCount]);
 
   if (isLoading) {
     return (

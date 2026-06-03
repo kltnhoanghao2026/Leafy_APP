@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   Pressable,
@@ -7,168 +7,34 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
+  Alert,
 } from "react-native";
 import {
   CheckCircle2,
-  ChevronDown,
-  ChevronRight,
   Circle,
-  Clock,
-  LayoutGrid,
-  Leaf,
-  ListChecks,
-  MapPin,
-  X,
+  Pencil,
   Sprout,
-  GitBranch,
+  Trash2,
+  X,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns";
 
 import type { PlantEventResponse } from "./plant-event.types";
 import {
-  getEventCategoryColors,
   getEventCategory,
   getEventTypeIcon,
 } from "./plant-event.types";
 import { CATEGORY_DOT_COLORS } from "./calendarConstants";
-import { useUpdatePlantEventMutation, useToggleTaskMutation } from "../queries";
-import { useColorScheme } from "@/src/hooks/useColorScheme";
-import Colors from "@/src/constants/Colors";
-
-const TARGET_TYPE_ICONS = {
-  FARM: MapPin,
-  FARM_ZONE: LayoutGrid,
-  PLANT: Leaf,
-};
-
-// ── Small helpers ─────────────────────────────────────────────────────────────
-
-function hexToRgb(hex: string): string {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-  if (!result) return "0,0,0";
-  return `${parseInt(result[1], 16)},${parseInt(result[2], 16)},${parseInt(result[3], 16)}`;
-}
-
-// ── ChildEventTree ────────────────────────────────────────────────────────────
-
-function ChildEventNode({
-  event,
-  dotColor,
-  dotColorRgb,
-  depth,
-  onToggleComplete,
-}: {
-  event: PlantEventResponse;
-  dotColor: string;
-  dotColorRgb: string;
-  depth: number;
-  onToggleComplete: (eventId: string, completed: boolean) => void;
-}) {
-  const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(depth === 0);
-  const hasChildren = event.children && event.children.length > 0;
-  const targetIcon = event.targetType ? TARGET_TYPE_ICONS[event.targetType] : null;
-  const TargetIconCmp = targetIcon ?? Sprout;
-  
-  // Date formatting
-  const fmtDate = (d?: string | null) => {
-    if (!d) return null;
-    const [y, m, day] = d.split('-');
-    return `${day}/${m}`;
-  };
-  const startStr = fmtDate(event.calculatedStartDate);
-  const endStr = fmtDate(event.calculatedEndDate);
-  const dateLabel = startStr && endStr && startStr !== endStr ? `${startStr} → ${endStr}` : startStr;
-
-  return (
-    <View className="mb-2">
-      <View className="flex-row items-start gap-3 rounded-xl px-2 py-2.5">
-        <TouchableOpacity
-          className="mt-1"
-          onPress={() => onToggleComplete(event.id, !event.completed)}
-          activeOpacity={0.7}
-        >
-          {event.completed ? (
-            <CheckCircle2 size={20} color="#10b981" />
-          ) : (
-            <Circle size={20} className="text-slate-300 dark:text-slate-600" />
-          )}
-        </TouchableOpacity>
-
-        <View className="flex-1">
-          <View className="flex-row items-center gap-1.5 flex-wrap">
-            <Text
-              className={`text-sm font-bold ${
-                event.completed ? "text-slate-400 line-through dark:text-slate-500" : "text-slate-800 dark:text-slate-100"
-              }`}
-            >
-              {event.note}
-            </Text>
-            {dateLabel && (
-              <View className="flex-row items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">
-                <Clock size={10} className="text-slate-500 dark:text-slate-400" />
-                <Text className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                  {dateLabel}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          <View className="mt-1 flex-row items-center gap-2 flex-wrap">
-            {event.targetType && (
-              <View className="flex-row items-center gap-1">
-                <TargetIconCmp size={12} className="text-slate-400 dark:text-slate-500" />
-                <Text className="text-[10px] font-semibold text-slate-400 dark:text-slate-500">
-                  {t(`plantEvent.targetType.${event.targetType}`)}
-                </Text>
-              </View>
-            )}
-            {hasChildren && (
-              <View className="flex-row items-center gap-1 rounded-full px-1.5 py-0.5" style={{ backgroundColor: `rgba(${dotColorRgb},0.15)` }}>
-                <GitBranch size={10} color={dotColor} />
-                <Text className="text-[10px] font-bold" style={{ color: dotColor }}>
-                  {event.children.filter((c) => c.completed).length}/{event.children.length}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        {hasChildren && (
-          <TouchableOpacity
-            className="rounded-full bg-slate-100 p-1 dark:bg-slate-800"
-            onPress={() => setExpanded(!expanded)}
-          >
-            {expanded ? (
-              <ChevronDown size={14} className="text-slate-500" />
-            ) : (
-              <ChevronRight size={14} className="text-slate-500" />
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {expanded && hasChildren && (
-        <View className="mt-1 flex-row">
-          <View className="ml-4 w-[2px] bg-slate-100 dark:bg-slate-800" />
-          <View className="flex-1 pl-3">
-            {event.children.map((child) => (
-              <ChildEventNode
-                key={child.id}
-                event={child}
-                dotColor={dotColor}
-                dotColorRgb={dotColorRgb}
-                depth={depth + 1}
-                onToggleComplete={onToggleComplete}
-              />
-            ))}
-          </View>
-        </View>
-      )}
-    </View>
-  );
-}
+import {
+  useUpdatePlantEventMutation,
+  useToggleTaskMutation,
+  useDeletePlantEventMutation,
+  usePlantEventById,
+} from "../queries";
+import { useNetworkContext } from "@/src/providers/NetworkProvider";
+import { useOfflinePlantEventById } from "@/src/features/offline/hooks/useOfflineQueries";
+import { CircleProgress, ProgressRow, ChildEventNode } from "./subComponents/progress";
+import { hexToRgb } from "../utils/colors";
 
 // ── Main Modal ────────────────────────────────────────────────────────────────
 
@@ -176,25 +42,43 @@ export interface PlantEventProgressModalProps {
   event: PlantEventResponse;
   visible: boolean;
   onClose: () => void;
+  onEdit?: (event: PlantEventResponse) => void;
+  onDelete?: (event: PlantEventResponse) => void;
 }
 
 export function PlantEventProgressModal({
   event: initialEvent,
   visible,
   onClose,
+  onEdit,
+  onDelete,
 }: PlantEventProgressModalProps) {
   const [event, setEvent] = useState(initialEvent);
 
   useEffect(() => {
     setEvent(initialEvent);
   }, [initialEvent]);
+
   const { t } = useTranslation();
   const { height: viewportHeight } = useWindowDimensions();
-  const scheme = useColorScheme() ?? "light";
-  const palette = Colors[scheme];
+
+  const { isOffline } = useNetworkContext();
+
+  // Live data refetch — re-fetch every 10s while modal is open to keep progress current
+  const { data: liveEventOnline } = usePlantEventById(
+    initialEvent.id,
+    visible && !isOffline ? 10_000 : undefined,
+  );
+  const { data: liveEventOffline } = useOfflinePlantEventById(
+    visible && isOffline ? initialEvent.id : "",
+  );
 
   const updateEventMutation = useUpdatePlantEventMutation();
   const toggleTaskMutation = useToggleTaskMutation();
+  const deleteEventMutation = useDeletePlantEventMutation();
+
+  // Use live event data for display; fall back to local state for optimistic updates
+  const displayEvent = (isOffline ? liveEventOffline : liveEventOnline) ?? event;
 
   const handleToggleComplete = (eventId: string, completed: boolean) => {
     const mutationsToFire: { id: string; completed: boolean }[] = [];
@@ -266,23 +150,40 @@ export function PlantEventProgressModal({
     toggleTaskMutation.mutate({ eventId: event.id, taskIndex });
   };
 
+  const handleDelete = (eventToDelete: PlantEventResponse) => {
+    Alert.alert(
+      t("plantEvent.detail.deleteConfirmTitle"),
+      t("plantEvent.detail.deleteConfirmMessage", { note: eventToDelete.note ?? eventToDelete.eventType }),
+      [
+        { text: t("common.cancel"), style: "cancel" },
+        {
+          text: t("plantEvent.detail.delete"),
+          style: "destructive",
+          onPress: () => {
+            deleteEventMutation.mutate(eventToDelete.id, {
+              onSuccess: () => {
+                onClose();
+              },
+            });
+          },
+        },
+      ],
+    );
+  };
+
   // Event info
-  const category = getEventCategory(event.eventType);
-  // Re-use FE logic for dot colors, but adapted to mobile context where getEventCategoryColors is different.
-  // Actually we can just use the map from calendarConstants
+  const category = getEventCategory(displayEvent.eventType);
   const dotColor = CATEGORY_DOT_COLORS[category] ?? "#94a3b8";
   const dotColorRgb = hexToRgb(dotColor);
-  const Icon = getEventTypeIcon(event.eventType) ?? Sprout;
+  const Icon = getEventTypeIcon(displayEvent.eventType) ?? Sprout;
 
-  const tasks = event.tasks ?? [];
+  const tasks = displayEvent.tasks ?? [];
   const taskDone = tasks.filter((t) => t.completed).length;
   const taskPct = tasks.length > 0 ? Math.round((taskDone / tasks.length) * 100) : 0;
 
-  const hasChildren = event.children && event.children.length > 0;
-  const childrenDone = hasChildren ? event.children.filter((c) => c.completed).length : 0;
-  const childrenPct = hasChildren ? Math.round((childrenDone / event.children.length) * 100) : 0;
-
-  const fmtDate = (d?: string | null) => d ? format(new Date(d), "dd/MM/yyyy") : "—";
+  const hasChildren = displayEvent.children && displayEvent.children.length > 0;
+  const childrenDone = hasChildren ? displayEvent.children.filter((c) => c.completed).length : 0;
+  const childrenPct = hasChildren ? Math.round((childrenDone / displayEvent.children.length) * 100) : 0;
 
   return (
     <Modal
@@ -327,7 +228,7 @@ export function PlantEventProgressModal({
                 </View>
                 <View className="flex-1">
                   <Text className="text-lg font-bold text-slate-800 dark:text-slate-100">
-                    {event.note}
+                    {displayEvent.note}
                   </Text>
                   <View className="mt-1 flex-row items-center gap-2 flex-wrap">
                     <View
@@ -335,25 +236,46 @@ export function PlantEventProgressModal({
                       style={{ backgroundColor: `rgba(${dotColorRgb},0.15)` }}
                     >
                       <Text className="text-[11px] font-bold" style={{ color: dotColor }}>
-                        {t(`plantEvent.eventType.${event.eventType}`)}
-                      </Text>
-                    </View>
-                    {event.targetType && (
+                    {t(`plantEvent.eventType.${displayEvent.eventType}`)}
+                  </Text>
+                </View>
+                    {displayEvent.targetType && (
                       <View className="flex-row items-center gap-1">
                         <Text className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                          {t(`plantEvent.targetType.${event.targetType}`)}
+                          {t(`plantEvent.targetType.${displayEvent.targetType}`)}
                         </Text>
                       </View>
                     )}
                   </View>
                 </View>
               </View>
-              <TouchableOpacity
-                onPress={onClose}
-                className="rounded-full bg-slate-100 p-2 dark:bg-slate-800"
-              >
-                <X size={20} className="text-slate-500 dark:text-slate-400" />
-              </TouchableOpacity>
+              <View className="flex-row items-center gap-2">
+                {onEdit && (
+                  <TouchableOpacity
+                    onPress={() => onEdit(displayEvent)}
+                    className="rounded-full bg-slate-100 p-2 dark:bg-slate-800"
+                    activeOpacity={0.7}
+                  >
+                    <Pencil size={16} className="text-slate-500 dark:text-slate-400" />
+                  </TouchableOpacity>
+                )}
+                {onDelete && (
+                  <TouchableOpacity
+                    onPress={() => handleDelete(event)}
+                    className="rounded-full bg-slate-100 p-2 dark:bg-slate-800"
+                    activeOpacity={0.7}
+                  >
+                    <Trash2 size={16} className="text-slate-500 dark:text-slate-400" />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={onClose}
+                  className="rounded-full bg-slate-100 p-2 dark:bg-slate-800"
+                  activeOpacity={0.7}
+                >
+                  <X size={20} className="text-slate-500 dark:text-slate-400" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }} style={{ flexShrink: 1 }}>
@@ -361,7 +283,8 @@ export function PlantEventProgressModal({
               <View className="mb-6 flex-row gap-3">
                 {tasks.length > 0 && (
                   <View className="flex-1 flex-row items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
-                    <View>
+                    <CircleProgress pct={taskPct} size={56} strokeWidth={6} color={dotColor} />
+                    <View className="flex-1 ml-3">
                       <Text className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">
                         {t("plantEvent.card.tasksTitle")}
                       </Text>
@@ -372,13 +295,13 @@ export function PlantEventProgressModal({
                         {taskDone} / {tasks.length} {t("plantEvent.card.completed")}
                       </Text>
                     </View>
-                    <ListChecks size={28} className="text-slate-300 dark:text-slate-600" strokeWidth={1.5} />
                   </View>
                 )}
 
                 {hasChildren && (
                   <View className="flex-1 flex-row items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
-                    <View>
+                    <CircleProgress pct={childrenPct} size={56} strokeWidth={6} color={dotColor} />
+                    <View className="flex-1 ml-3">
                       <Text className="text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">
                         {t("plantEvent.progress.targetProgress")}
                       </Text>
@@ -386,10 +309,9 @@ export function PlantEventProgressModal({
                         {childrenPct}%
                       </Text>
                       <Text className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
-                        {childrenDone} / {event.children.length} {t("plantEvent.card.completed")}
+                        {childrenDone} / {displayEvent.children.length} {t("plantEvent.card.completed")}
                       </Text>
                     </View>
-                    <GitBranch size={28} className="text-slate-300 dark:text-slate-600" strokeWidth={1.5} />
                   </View>
                 )}
               </View>
@@ -452,6 +374,8 @@ export function PlantEventProgressModal({
                         dotColorRgb={dotColorRgb}
                         depth={0}
                         onToggleComplete={handleToggleComplete}
+                        onEdit={onEdit}
+                        onDelete={handleDelete}
                       />
                     ))}
                   </View>

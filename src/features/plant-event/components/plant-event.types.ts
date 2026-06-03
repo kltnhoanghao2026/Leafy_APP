@@ -16,6 +16,7 @@ import {
   Activity,
   PackageOpen,
   Wheat,
+  AlertTriangle,
 } from "lucide-react-native";
 import type { LucideIcon } from "lucide-react-native";
 
@@ -34,6 +35,7 @@ export const EVENT_TYPE_VALUES = [
   "PHENOLOGY",
   "REPOT",
   "HARVEST",
+  "ALERT_TRIGGERED",
 ] as const;
 
 export type EventType = (typeof EVENT_TYPE_VALUES)[number];
@@ -43,7 +45,8 @@ export type EventType = (typeof EVENT_TYPE_VALUES)[number];
 export type EventCategory =
   | "ROUTINE_CARE"
   | "HEALTH_MEDICAL"
-  | "GROWTH_LIFECYCLE";
+  | "GROWTH_LIFECYCLE"
+  | "ALERTS";
 
 export const EVENT_CATEGORY_MAP: Record<EventType, EventCategory> = {
   IRRIGATION: "ROUTINE_CARE",
@@ -58,6 +61,7 @@ export const EVENT_CATEGORY_MAP: Record<EventType, EventCategory> = {
   PHENOLOGY: "GROWTH_LIFECYCLE",
   REPOT: "GROWTH_LIFECYCLE",
   HARVEST: "GROWTH_LIFECYCLE",
+  ALERT_TRIGGERED: "ALERTS",
 };
 
 export const EVENT_CATEGORY_COLORS: Record<
@@ -82,6 +86,12 @@ export const EVENT_CATEGORY_COLORS: Record<
     text: "text-emerald-600",
     darkText: "dark:text-emerald-400",
   },
+  ALERTS: {
+    bg: "bg-red-50",
+    darkBg: "dark:bg-red-900/20",
+    text: "text-red-600",
+    darkText: "dark:text-red-400",
+  },
 };
 
 export const getEventCategory = (eventType: EventType): EventCategory =>
@@ -105,10 +115,29 @@ export const EVENT_TYPE_ICONS: Record<EventType, LucideIcon> = {
   PHENOLOGY: Activity,
   REPOT: PackageOpen,
   HARVEST: Wheat,
+  ALERT_TRIGGERED: AlertTriangle,
 };
 
 export const getEventTypeIcon = (eventType: EventType): LucideIcon =>
   EVENT_TYPE_ICONS[eventType] ?? Droplets;
+
+// ── Event type labels ───────────────────────────────────────────────────────
+
+export const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  IRRIGATION: "Tưới nước",
+  NUTRITION: "Bón phân",
+  WEED_CONTROL: "Diệt cỏ",
+  PRUNING: "Tỉa cành",
+  SCOUTING: "Theo dõi",
+  DISEASE_DETECTED: "Phát hiện bệnh",
+  TREATMENT_APPLICATION: "Phun thuốc",
+  QUARANTINE: "Cách ly",
+  HEALTH_RECOVERY: "Hồi phục",
+  PHENOLOGY: "Sinh trưởng",
+  REPOT: "Thay chậu",
+  HARVEST: "Thu hoạch",
+  ALERT_TRIGGERED: "Cảnh báo",
+};
 
 // ── Event target (UI-level, used for screen routing / filter state) ──────
 
@@ -174,7 +203,7 @@ export type PlantEventResponse = {
   targetType: TargetType | null;
   note: string;
   description?: string | null;
-  daysFromNow?: number | null;
+  daysFromStart?: number | null;
   durationDays?: number | null;
   planned: boolean;
   calculatedStartDate?: string | null;
@@ -187,6 +216,17 @@ export type PlantEventResponse = {
   planApplyId?: string | null;
   /** ID of the parent PlantEvent in the hierarchy (FARM → FARM_ZONE → PLANT). */
   parentPlantEventId?: string | null;
+  /** True when this event is the last incomplete event belonging to a PlanApply. Used to trigger the success prompt. */
+  isLastIncompleteEventForApply?: boolean | null;
+  /** Summary of the PlanApply this event belongs to. */
+  planApply?: {
+    id: string;
+    planName?: string | null;
+    diseaseName?: string | null;
+    targetName?: string | null;
+    status: string;
+    success?: boolean | null;
+  } | null;
   completed: boolean;
   createdAt?: string | null;
   lastModifiedAt?: string | null;
@@ -201,6 +241,36 @@ export type PlantEventResponse = {
   tasks: EventTaskResponse[] | null;
   /** Child events in the hierarchy (FARM → FARM_ZONE → PLANT). Empty array for leaf nodes. */
   children: PlantEventResponse[];
+
+  /** Denormalized plant info for quick display. */
+  plant?: {
+    id: string;
+    plantNumber: string;
+    nickName?: string | null;
+    tagCode?: string | null;
+    speciesId?: string | null;
+    farmPlotId?: string | null;
+    farmZoneId?: string | null;
+  } | null;
+
+  /** Denormalized farm plot info for quick display. */
+  farmPlot?: {
+    id: string;
+    name: string;
+    code?: string | null;
+    addressLine?: string | null;
+  } | null;
+
+  /** Denormalized farm zone info for quick display. */
+  farmZone?: {
+    id: string;
+    farmPlotId?: string | null;
+    zoneName: string;
+    zoneCode?: string | null;
+  } | null;
+
+  /** File IDs of images/videos attached to this event. */
+  attachmentIds?: string[] | null;
 };
 
 export type PlantEventCreateRequest = {
@@ -215,7 +285,7 @@ export type PlantEventCreateRequest = {
   targetType?: TargetType;
   note: string;
   description?: string;
-  daysFromNow?: number;
+  daysFromStart?: number;
   durationDays?: number;
   isPlanned?: boolean;
   calculatedStartDate?: string;
@@ -231,6 +301,8 @@ export type PlantEventCreateRequest = {
   trackingGranularity?: TrackingGranularity;
   excludedPlantIds?: string[];
   excludedFarmZoneIds?: string[];
+  /** File IDs referencing attachments stored in file-service. */
+  attachmentIds?: string[];
 };
 
 export interface PlantEventUpdateRequest {
@@ -241,7 +313,7 @@ export interface PlantEventUpdateRequest {
   eventType?: EventType;
   note?: string;
   description?: string;
-  daysFromNow?: number;
+  daysFromStart?: number;
   durationDays?: number;
   isPlanned?: boolean;
   calculatedStartDate?: string;
@@ -256,6 +328,8 @@ export interface PlantEventUpdateRequest {
   completed?: boolean;
   /** Replace the entire task list. Omit to leave tasks unchanged. */
   tasks?: EventTaskRequest[];
+  /** File IDs referencing attachments stored in file-service. Null means leave unchanged. */
+  attachmentIds?: string[] | null;
 }
 
 export type CalendarParams = {
@@ -265,6 +339,7 @@ export type CalendarParams = {
   profileId?: string;
   sourcePlanId?: string;
   planApplyId?: string;
+  eventType?: string;
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
 };

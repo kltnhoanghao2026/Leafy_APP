@@ -11,12 +11,12 @@ export const IMAGE_DISPLAY_WIDTH = SCREEN_WIDTH - IMAGE_PADDING;
 export const commonShadow = Platform.select({
   ios: {
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
   },
   android: {
-    elevation: 3,
+    elevation: 6,
   },
   default: {},
 });
@@ -81,3 +81,26 @@ export const cropLeafImage = async (
   );
   return manipulated.uri;
 };
+
+// ── Localized Disease Mappings ──────────────────────────────────
+export const DISEASE_LABELS: Record<string, string> = {
+  healthy: "Khỏe mạnh",
+  miner: "Sâu đục lá",
+  phoma: "Đốm nâu",
+  red_spider_mite: "Nhện đỏ",
+  rust: "Gỉ sắt",
+};
+
+export const normalizeDiseaseKey = (value: string): string =>
+  value.trim().toLowerCase().replace(/ /g, "_").replace(/-/g, "_");
+
+export const getDiseaseLabel = (value?: string | null): string => {
+  if (!value) {
+    return "Không rõ";
+  }
+  const key = normalizeDiseaseKey(value);
+  return DISEASE_LABELS[key] ?? value.replace(/_/g, " ");
+};
+
+export const isHealthyDisease = (value?: string | null): boolean =>
+  normalizeDiseaseKey(value ?? "") === "healthy";

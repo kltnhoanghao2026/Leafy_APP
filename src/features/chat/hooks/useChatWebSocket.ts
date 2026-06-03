@@ -82,8 +82,21 @@ export const useChatWebSocket = (activeConversationId?: string | null) => {
               );
               return updated;
             } else {
-              // New conversation appeared — refetch
-              queryClient.invalidateQueries({ queryKey: ['conversations'] });
+              // New conversation — fetch it and insert into the cache so the
+              // conversations list updates in real-time without waiting for a poll.
+              chatApi.getOrCreateConversation(notification.senderId).then((newConv) => {
+                queryClient.setQueryData(
+                  ['conversations'],
+                  (prev: ConversationResponse[] | undefined) => {
+                    if (!prev) return [newConv];
+                    if (prev.some(c => c.id === newConv.id)) return prev;
+                    return [newConv, ...prev];
+                  }
+                );
+              }).catch(() => {
+                // Fallback: full refetch if the insert fails
+                queryClient.invalidateQueries({ queryKey: ['conversations'] });
+              });
               return oldData;
             }
           }
@@ -97,8 +110,6 @@ export const useChatWebSocket = (activeConversationId?: string | null) => {
         console.error('[WS] Failed to parse /queue/messages payload', e);
       }
     });
-
-    // ────────── /queue/conversations ──────────
     // Full ConversationResponse pushed on any group/conversation change.
     const convSub = client.subscribe('/user/queue/conversations', (payload) => {
       try {

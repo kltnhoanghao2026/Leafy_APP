@@ -1,6 +1,8 @@
-import { ScrollView, View, RefreshControl } from "react-native";
+import { ScrollView, View, RefreshControl, Text } from "react-native";
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
+import { Sparkles } from "lucide-react-native";
 
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
@@ -9,18 +11,13 @@ import { StatsGrid } from "./StatsGrid";
 import { OverviewCompletionCard } from "./OverviewCompletionCard";
 import { PlanApplyStatsCard } from "./PlanApplyStatsCard";
 import { TodayTasksSection } from "./TodayTasksSection";
-import { homeStyles as styles } from "./home.styles";
 import { ChatFAB } from "../../chat/components/ChatFAB";
 import { useAgricultureStats } from "../queries/home.queries";
 
 export function HomeScreen() {
   const colorScheme = useColorScheme() ?? "light";
   const palette = Colors[colorScheme];
-  const isDark = colorScheme === "dark";
-
-  const cardBg = isDark ? palette.textInputBackground : "#FFFFFF";
-  const cardBorder = isDark ? "rgba(74,222,128,0.12)" : "rgba(47,127,52,0.08)";
-  const subText = isDark ? "#94A3B8" : "#64748B";
+  const { t } = useTranslation();
 
   const { data: stats, isLoading } = useAgricultureStats();
   const queryClient = useQueryClient();
@@ -33,10 +30,10 @@ export function HomeScreen() {
   }, [queryClient]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: palette.background }}>
+    <View className="flex-1 bg-slate-50 dark:bg-slate-950">
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scrollContent}
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -47,45 +44,43 @@ export function HomeScreen() {
           />
         }
       >
-        <StatsGrid
-          stats={stats}
-          isLoading={isLoading}
-          primaryColor={palette.primary}
-          cardBg={cardBg}
-          cardBorder={cardBorder}
-          textColor={palette.text}
-          subTextColor={subText}
-          isDark={isDark}
-        />
+        {/* Modern Header / Greeting Area */}
+        <View className="px-5 pt-4 pb-6">
+          <View className="flex-row items-center justify-between">
+            <View>
+              <Text className="text-sm font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-500 mb-1">
+                {t("plantManagement.overview.welcomeTitle", "Dashboard")}
+              </Text>
+              <Text className="text-2xl font-black text-slate-900 dark:text-white">
+                {t("plantManagement.overview.appTitle", "Leafy Overview")}
+              </Text>
+            </View>
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+              <Sparkles size={20} color="#059669" />
+            </View>
+          </View>
+        </View>
+
+        <StatsGrid stats={stats} isLoading={isLoading} />
         
         {stats && (
-          <>
+          <View className="px-5 mt-2 flex-col gap-6">
             <OverviewCompletionCard
               completed={stats.totalCompletedEvents}
               pending={stats.totalPendingEvents}
-              cardBg={cardBg}
-              cardBorder={cardBorder}
-              textColor={palette.text}
-              subTextColor={subText}
             />
             
             <PlanApplyStatsCard
               activePlanApplies={stats.activePlanApplies}
               completedPlanApplies={stats.completedPlanApplies}
               totalPlans={stats.totalPlans}
-              cardBg={cardBg}
-              cardBorder={cardBorder}
-              textColor={palette.text}
-              subTextColor={subText}
             />
-          </>
+          </View>
         )}
 
-        <TodayTasksSection
-          cardBg={cardBg}
-          cardBorder={cardBorder}
-          textColor={palette.text}
-        />
+        <View className="mt-6">
+          <TodayTasksSection />
+        </View>
       </ScrollView>
       <ChatFAB />
     </View>

@@ -1,5 +1,7 @@
 import { apiClient } from "@/src/lib/axios";
 import { API_ENDPOINTS } from "@/src/lib/routes";
+import { uploadFile } from "@/src/features/common/api/file.api";
+import type { ImagePickerAsset } from "expo-image-picker";
 import type { ApiResponse } from "@/src/shared/api";
 import type {
   PageParams,
@@ -116,4 +118,31 @@ export const plantEventApi = {
     apiClient.post<ApiResponse<EventProgressResponse[]>>(
       API_ENDPOINTS.PLANT_EVENTS.PROGRESS_GENERATE(eventId),
     ),
+
+  /**
+   * Upload attachments for a plant event.
+   * Returns array of file IDs and pre-signed URLs.
+   */
+  uploadAttachments: async (
+    assets: ImagePickerAsset[],
+  ): Promise<{ fileId: string; url: string }[]> => {
+    const results = await Promise.all(
+      assets.map(async (asset) => {
+        const uploaded = await uploadFile(asset);
+        return { fileId: uploaded.fileId, url: uploaded.url };
+      }),
+    );
+    return results;
+  },
+
+  /**
+   * Get a fresh pre-signed URL for an existing attachment.
+   */
+  getPresignedUrl: async (fileId: string): Promise<string> => {
+    const response = await apiClient.get<ApiResponse<string>>(
+      API_ENDPOINTS.FILES.PRESIGNED_URL(fileId),
+      { params: { expirationMinutes: 60 * 24 * 7 } },
+    );
+    return response.data.data;
+  },
 };

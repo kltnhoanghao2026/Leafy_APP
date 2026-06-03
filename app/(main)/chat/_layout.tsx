@@ -1,12 +1,10 @@
-import React from 'react';
-import { Stack } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import Colors from '@/src/constants/Colors';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import BackButton from '@/src/components/ui/BackButton';
+import React from 'react';
+import { Stack } from 'expo-router';
 
 export default function ChatLayout() {
-  const { t } = useTranslation();
   const colorScheme = useColorScheme() ?? 'light';
   const palette = Colors[colorScheme];
 

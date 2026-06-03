@@ -38,14 +38,8 @@ function ChatInfoScreen() {
   const [editNameValue, setEditNameValue] = useState('');
   const [copied, setCopied] = useState(false);
 
-  if (!conversation) return null;
-
-  const currentRole = conversation.members?.find(m => m.profileId === profileId)?.role ?? 'MEMBER';
-  const isOwner = currentRole === 'OWNER';
-  const canEditInfo = isOwner || currentRole === 'ADMIN' || (conversation.settings?.memberCanChangeInfo ?? false);
-
   const updateName = useMutation({
-    mutationFn: (name: string) => chatApi.updateGroupName(conversation.id, name),
+    mutationFn: (name: string) => chatApi.updateGroupName(id, name),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversations'] });
       setIsEditingName(false);
@@ -55,13 +49,13 @@ function ChatInfoScreen() {
   const updateAvatar = useMutation({
     mutationFn: async (asset: ImagePicker.ImagePickerAsset) => {
       const url = await fileApi.uploadAvatar(asset);
-      return chatApi.updateGroupAvatar(conversation.id, url);
+      return chatApi.updateGroupAvatar(id, url);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['conversations'] })
   });
 
   const leave = useMutation({
-    mutationFn: () => chatApi.leaveGroup(conversation.id),
+    mutationFn: () => chatApi.leaveGroup(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversations'] });
       router.replace('/(main)/chat');
@@ -69,7 +63,7 @@ function ChatInfoScreen() {
   });
 
   const disband = useMutation({
-    mutationFn: () => chatApi.disbandGroup(conversation.id),
+    mutationFn: () => chatApi.disbandGroup(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversations'] });
       router.replace('/(main)/chat');
@@ -77,7 +71,7 @@ function ChatInfoScreen() {
   });
 
   const deleteConv = useMutation({
-    mutationFn: () => chatApi.deleteConversation(conversation.id),
+    mutationFn: () => chatApi.deleteConversation(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['conversations'] });
       router.replace('/(main)/chat');
@@ -85,14 +79,20 @@ function ChatInfoScreen() {
   });
 
   const pinConv = useMutation({
-    mutationFn: () => chatApi.pinConversation(conversation.id),
+    mutationFn: () => chatApi.pinConversation(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['conversations'] })
   });
 
   const unpinConv = useMutation({
-    mutationFn: () => chatApi.unpinConversation(conversation.id),
+    mutationFn: () => chatApi.unpinConversation(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['conversations'] })
   });
+
+  if (!conversation) return null;
+
+  const currentRole = conversation.members?.find(m => m.profileId === profileId)?.role ?? 'MEMBER';
+  const isOwner = currentRole === 'OWNER';
+  const canEditInfo = isOwner || currentRole === 'ADMIN' || (conversation.settings?.memberCanChangeInfo ?? false);
 
   const handlePickAvatar = async () => {
     if (!canEditInfo) return;

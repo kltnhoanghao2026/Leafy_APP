@@ -3,7 +3,6 @@ import type { TextInput as TextInputType } from "react-native";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { AxiosError } from "axios";
 import { useAuthContext } from "../context/AuthContext";
 import {
   useResendOtpMutation,
@@ -11,6 +10,7 @@ import {
 } from "../queries/mutations";
 import { signupOtpSchema, type SignupOtpValues } from "../schema";
 import { ERROR_CODES, getErrorMessage } from "@/src/lib/routes";
+import { parseApiError } from "@/src/lib/error-handler";
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 
@@ -105,32 +105,34 @@ export function useSignupVerifyOtpScreen() {
       await loginSuccess(response.data.data);
       router.replace("/");
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const code = error.response?.data?.code;
-        if (
-          code === ERROR_CODES.OTP_INVALID ||
-          code === ERROR_CODES.INVALID_OTP ||
-          code === ERROR_CODES.OTP_EXPIRED ||
-          code === ERROR_CODES.OTP_MAX_ATTEMPTS_EXCEEDED
-        ) {
-          setError("otp", {
-            type: "server",
-            message: getErrorMessage(code),
-          });
-          return;
-        }
-        if (code === ERROR_CODES.REGISTRATION_DATA_EXPIRED) {
-          setError("root", {
-            type: "server",
-            message: getErrorMessage(code),
-          });
-          return;
-        }
-        const message =
-          error.response?.data?.message ??
-          getErrorMessage(ERROR_CODES.SYS_UNCATEGORIZED);
-        setError("root", { type: "server", message });
+      const apiError = parseApiError(error);
+      const code = apiError.code;
+
+      if (
+        code === ERROR_CODES.OTP_INVALID ||
+        code === ERROR_CODES.INVALID_OTP ||
+        code === ERROR_CODES.OTP_EXPIRED ||
+        code === ERROR_CODES.OTP_MAX_ATTEMPTS_EXCEEDED
+      ) {
+        setError("otp", {
+          type: "server",
+          message: getErrorMessage(code),
+        });
+        return;
       }
+
+      if (code === ERROR_CODES.REGISTRATION_DATA_EXPIRED) {
+        setError("root", {
+          type: "server",
+          message: getErrorMessage(code),
+        });
+        return;
+      }
+
+      setError("root", {
+        type: "server",
+        message: apiError.message || getErrorMessage(ERROR_CODES.SYS_UNCATEGORIZED),
+      });
     }
   };
 
@@ -159,19 +161,18 @@ export function useSignupVerifyOtpScreen() {
       clearErrors();
       inputRefs.current[0]?.focus();
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const code = error.response?.data?.code;
-        if (code === ERROR_CODES.REGISTRATION_DATA_EXPIRED) {
-          setError("root", {
-            type: "server",
-            message: getErrorMessage(code),
-          });
-          return;
-        }
-        setResendMessage(
-          getErrorMessage(code ?? ERROR_CODES.SYS_UNCATEGORIZED),
-        );
+      const apiError = parseApiError(error);
+      const code = apiError.code;
+
+      if (code === ERROR_CODES.REGISTRATION_DATA_EXPIRED) {
+        setError("root", {
+          type: "server",
+          message: getErrorMessage(code),
+        });
+        return;
       }
+
+      setResendMessage(apiError.message || getErrorMessage(ERROR_CODES.SYS_UNCATEGORIZED));
     }
   };
 

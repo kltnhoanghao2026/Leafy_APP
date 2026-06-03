@@ -25,7 +25,6 @@ export const ROUTES = {
     PROFILE: "/profile",
     FARM: "/farm",
     PLANTS: "/plants",
-    AI_CHAT: "/ai-chat",
     IOT: "/iot",
     IOT_DEVICE_DETAIL: (deviceId: string) => `/iot/devices/${deviceId}`,
     IOT_ALERT_DETAIL: (alertId: string) => `/iot/alerts/${alertId}`,
@@ -85,6 +84,14 @@ export const API_ENDPOINTS = {
     GET: (profileId: string) => `/profiles/${profileId}`,
     GET_BY_USER: (userId: string) => `/profiles/user/${userId}`,
     SEARCH: "/profiles/search",
+    EXPERTS: "/profiles/experts",
+    SEARCH_EXPERTS: "/profiles/search/experts",
+    EXPERT_CONSULT_REQUEST: (expertProfileId: string) =>
+      `/profiles/experts/${expertProfileId}/consult/request`,
+    EXPERT_CONSULT_CANCEL: (expertProfileId: string) =>
+      `/profiles/experts/${expertProfileId}/consult/cancel`,
+    FOLLOW: (profileId: string) => `/profiles/users/${profileId}/follow`,
+    UNFOLLOW: (profileId: string) => `/profiles/users/${profileId}/unfollow`,
     APPROVAL_REQUESTS: (profileId: string) =>
       `/profiles/${profileId}/approval-requests`,
   },
@@ -122,6 +129,11 @@ export const API_ENDPOINTS = {
     VOTE: (targetType: "POST" | "COMMENT", targetId: string) =>
       `/votes/${targetType}/${targetId}`,
   },
+
+  FEED: {
+    MARK_POST_VIEWED: (postId: string) => `/feed/posts/${postId}/viewed`,
+  },
+
 
   IOT: {
     DEVICES: {
@@ -216,6 +228,11 @@ export const API_ENDPOINTS = {
       `/plant-events/${eventId}/progress/generate`,
   },
 
+  SYNC: {
+    PUSH: "/plant-management/sync/push",
+    PULL: "/plant-management/sync/pull",
+  },
+
   PLANS: {
     CREATE: "/plans",
     ITEM: (planId: string) => `/plans/${planId}`,
@@ -232,6 +249,8 @@ export const API_ENDPOINTS = {
     APPLIES: (planId: string) => `/plans/${planId}/applies`,
     APPLY_DETAIL: (applyId: string) => `/plans/applies/${applyId}`,
     APPLY_STATUS: (applyId: string) => `/plans/applies/${applyId}/status`,
+    CANCEL_APPLY: (applyId: string) => `/plans/applies/${applyId}/cancel`,
+    COMPLETE_APPLY: (applyId: string) => `/plans/applies/${applyId}/complete`,
   },
 
   STATS: {

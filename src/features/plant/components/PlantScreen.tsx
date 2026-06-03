@@ -271,22 +271,22 @@ export function PlantScreen() {
 
 
   return (
-    <View className="flex-1 bg-slate-50 dark:bg-slate-950">
+    <View className="flex-1 bg-white dark:bg-slate-900">
       <ScrollView
-        className="flex-1"
-        contentContainerClassName="flex-grow p-4 pb-24"
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={activeQuery.isRefetching}
-          onRefresh={handleRefresh}
-          tintColor="#10B981"
-          colors={["#10B981"]}
-        />
-      }
-    >
+        className="flex-1 bg-slate-50 dark:bg-slate-950"
+        contentContainerClassName="flex-grow px-4 pb-24"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={activeQuery.isRefetching}
+            onRefresh={handleRefresh}
+            tintColor="#245A34"
+            colors={["#245A34"]}
+          />
+        }
+      >
 
-      <View className="mb-6 mt-2 flex-row items-center justify-between">
+      <View className="mb-6 mt-4 flex-row items-center justify-between">
         <SearchInput
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -298,11 +298,11 @@ export function PlantScreen() {
             onPress={handleSelectAll}
             className={`items-center justify-center rounded-xl border p-2 shadow-sm ${
               filteredPlants.length > 0 && filteredPlants.every(p => selectedIds.has(p.id))
-                ? "border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/30"
+                ? "border-[#245A34] bg-[#245A34]/10 dark:border-[#245A34] dark:bg-[#245A34]/20"
                 : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
             }`}
           >
-            <CheckSquare size={18} className="text-emerald-600 dark:text-emerald-500" />
+            <CheckSquare size={18} className="text-[#245A34]" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -310,9 +310,9 @@ export function PlantScreen() {
             className="items-center justify-center rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           >
             {viewMode === "list" ? (
-              <LayoutGrid size={18} className="text-emerald-600 dark:text-emerald-500" />
+              <LayoutGrid size={18} className="text-[#245A34]" />
             ) : (
-              <List size={18} className="text-emerald-600 dark:text-emerald-500" />
+              <List size={18} className="text-[#245A34]" />
             )}
           </TouchableOpacity>
 
@@ -320,11 +320,11 @@ export function PlantScreen() {
             onPress={() => setIsFilterSheetVisible(true)}
             className={`items-center justify-center rounded-xl border p-2 shadow-sm ${
               Object.keys(filters).some((k) => k !== "status" && filters[k as keyof typeof filters])
-                ? "border-emerald-600 bg-emerald-50 dark:border-emerald-500 dark:bg-emerald-900/30"
+                ? "border-[#245A34] bg-[#245A34]/10 dark:border-[#245A34] dark:bg-[#245A34]/20"
                 : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
             }`}
           >
-            <SlidersHorizontal size={18} className="text-emerald-600 dark:text-emerald-500" />
+            <SlidersHorizontal size={18} className="text-[#245A34]" />
           </TouchableOpacity>
         </View>
       </View>
@@ -409,7 +409,7 @@ export function PlantScreen() {
       {selectedIds.size === 0 && (
         <TouchableOpacity
           onPress={handleOpenCreate}
-          className="absolute right-6 h-14 w-14 items-center justify-center rounded-full bg-emerald-600 shadow-lg dark:bg-emerald-500 shadow-emerald-600/30"
+          className="absolute right-6 h-14 w-14 items-center justify-center rounded-full bg-[#245A34] shadow-lg shadow-[#245A34]/30"
           style={{ bottom: (activeQuery.data?.totalPages ?? 0) > 1 ? 96 : 24 }}
         >
           <Plus size={24} color="#fff" strokeWidth={2.5} />
@@ -419,7 +419,7 @@ export function PlantScreen() {
       {/* Bulk Action Toolbar */}
       {selectedIds.size > 0 && (
         <View 
-          className="absolute left-4 right-4 rounded-2xl bg-emerald-800 px-4 py-3 shadow-xl dark:bg-emerald-900"
+          className="absolute left-4 right-4 rounded-2xl bg-[#245A34] px-4 py-3 shadow-xl"
           style={{ bottom: (activeQuery.data?.totalPages ?? 0) > 1 ? 96 : 24 }}
         >
           <View className="flex-row items-center justify-between mb-3">

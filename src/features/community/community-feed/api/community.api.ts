@@ -97,6 +97,7 @@ const mapBackendPostToUiPost = (post: BackendPost): Post => {
           ? "down"
           : undefined,
     stats: safeStats,
+    visibility: post.visibility,
   };
 };
 
@@ -308,4 +309,11 @@ export const communityApi = {
 
     return mapBackendPostToUiPost(response.data.data);
   },
+
+  markPostViewed: async (postId: string): Promise<void> => {
+    await apiClient.post<ApiResponse<void>>(
+      API_ENDPOINTS.FEED.MARK_POST_VIEWED(postId),
+    );
+  },
 };
+

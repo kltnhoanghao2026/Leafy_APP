@@ -6,6 +6,7 @@ export { PlantEventDetailScreen } from "./components/PlantEventDetailScreen";
 export { plantEventApi } from "./api/plant-event.api";
 export type {
   EventType,
+  EventCategory,
   EventTargetType,
   TargetType,
   TrackingGranularity,
@@ -17,6 +18,13 @@ export type {
   EventProgressResponse,
   EventProgressUpdateRequest,
   CalendarParams,
+} from "./components/plant-event.types";
+export {
+  EVENT_TYPE_VALUES,
+  EVENT_CATEGORY_MAP,
+  getEventTypeIcon,
+  getEventCategory,
+  getEventCategoryColors,
 } from "./components/plant-event.types";
 export {
   plantEventKeys,

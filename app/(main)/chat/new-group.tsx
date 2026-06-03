@@ -4,11 +4,10 @@ import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, X, Camera } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { chatApi } from '../../../src/features/chat/api/chatApi';
-import { fileApi, uploadFile } from '../../../src/features/common/api/file.api';
 import { apiClient } from '../../../src/lib/axios';
 import { API_ENDPOINTS } from '../../../src/lib/routes';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface Profile {
   id: string;
@@ -18,7 +17,6 @@ interface Profile {
   role: string;
 }
 
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SafeNewGroupScreen() {
   return (

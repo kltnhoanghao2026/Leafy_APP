@@ -1,11 +1,11 @@
 import { apiClient } from "@/src/lib/axios";
 import { API_ENDPOINTS } from "@/src/lib/routes";
 import type { ApiResponse } from "@/src/shared/api";
-import type { PageResponse, PlanListParams, PlanResponse, PlanApplyResponse, PlanStatus, TargetType, TrackingGranularity } from "../components/plan.types";
+import type { PageResponse, PlanListParams, PlanResponse, PlanApplyResponse, PlanStatus, TrackingGranularity } from "../schemas/plan.schema";
 
 export const planApi = {
-  getMyPlans: (params: PlanListParams = {}) =>
-    apiClient.get<ApiResponse<PageResponse<PlanResponse>>>(
+  getMyPlans: (params: PlanListParams = {}) => {
+    return apiClient.get<ApiResponse<PageResponse<PlanResponse>>>(
       API_ENDPOINTS.PLANS.MY,
       {
         params: {
@@ -14,9 +14,11 @@ export const planApi = {
           ...params,
           plantId: params.plantId || undefined,
           search: params.search || undefined,
+          sourceType: params.sourceType || undefined,
         },
       },
-    ),
+    );
+  },
 
   getPublicPlans: (params: PlanListParams = {}) =>
     apiClient.get<ApiResponse<PageResponse<PlanResponse>>>(
@@ -27,6 +29,7 @@ export const planApi = {
           sortDir: "DESC",
           ...params,
           search: params.search || undefined,
+          sourceType: params.sourceType || undefined,
         },
       },
     ),
@@ -61,4 +64,50 @@ export const planApi = {
 
   getApplyDetail: (applyId: string) =>
     apiClient.get<ApiResponse<PlanApplyResponse>>(API_ENDPOINTS.PLANS.APPLY_DETAIL(applyId)),
+
+  cancelApply: (applyId: string) =>
+    apiClient.post<ApiResponse<PlanApplyResponse>>(API_ENDPOINTS.PLANS.CANCEL_APPLY(applyId)),
+
+  completeApply: (applyId: string, success: boolean) =>
+    apiClient.patch<ApiResponse<PlanApplyResponse>>(
+      API_ENDPOINTS.PLANS.COMPLETE_APPLY(applyId),
+      { success },
+    ),
+
+  createPlan: (body: {
+    planName?: string;
+    source?: "websearch" | "documents";
+    sourceType?: "USER_CREATED" | "CONSULTED" | "RAG_GEN";
+    plantId?: string;
+    farmPlotId?: string;
+    farmZoneId?: string;
+    diseaseName: string;
+    confidenceScore?: number;
+    severityLevel?: string;
+    requiredInputs?: string[];
+    safetyWarnings?: string[];
+    successIndicators?: string;
+    estimatedCost?: string;
+    schedule?: Array<{
+      eventType: string;
+      targetType?: "FARM" | "FARM_ZONE" | "PLANT";
+      note: string;
+      description?: string;
+      daysFromStart?: number;
+      durationDays?: number;
+      estimatedCost?: string;
+      phiDays?: number;
+      ppeRequired?: string;
+      mrlNote?: string;
+      tasks?: Array<{
+        title: string;
+        description?: string;
+        order?: number;
+        estimatedCost?: string;
+        completed?: boolean;
+      }>;
+    }>;
+    isPublic?: boolean;
+  }) =>
+    apiClient.post<ApiResponse<PlanResponse>>(API_ENDPOINTS.PLANS.CREATE, body),
 };

@@ -1,14 +1,22 @@
 import { LocaleConfig } from "react-native-calendars";
 import { enUS, vi } from "date-fns/locale";
 
-import type { EventCategory } from "./plant-event.types";
+import type { EventCategory, EventType } from "./plant-event.types";
+import { EVENT_CATEGORY_MAP } from "./plant-event.types";
 
 // ── Color mapping for calendar dots ─────────────────────────────────────
 export const CATEGORY_DOT_COLORS: Record<EventCategory, string> = {
   ROUTINE_CARE: "#3B82F6",
   HEALTH_MEDICAL: "#F97316",
   GROWTH_LIFECYCLE: "#10B981",
+  ALERTS: "#EF4444",
 };
+
+export const getEventCategory = (eventType: EventType): EventCategory =>
+  EVENT_CATEGORY_MAP[eventType] ?? "ROUTINE_CARE";
+
+// ── Calendar theme colors ────────────────────────────────────────────────
+export const SELECTED_DAY_COLOR = "#2F7F34";
 
 // ── Sync LocaleConfig with react-native-calendars ───────────────────────
 export function initCalendarLocale(language: string) {

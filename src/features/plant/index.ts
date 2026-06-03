@@ -8,7 +8,9 @@ export type {
   SpeciesResponse,
   PageParams,
   PageResponse,
+  PlantFilterParams,
 } from "./components/plant.types";
+export { getSpeciesLabel } from "./components/plant.types";
 export {
   plantKeys,
   withPlantPageDefaults,

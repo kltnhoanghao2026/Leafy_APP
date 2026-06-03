@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text } from "react-native";
-import { homeStyles as styles } from "./home.styles";
 
 export type StatCardProps = {
   icon: React.ReactNode;
@@ -9,10 +8,6 @@ export type StatCardProps = {
   value: string;
   badge?: string;
   badgeColor?: string;
-  bg: string;
-  borderColor: string;
-  textColor: string;
-  subTextColor: string;
 };
 
 export function StatCard({
@@ -22,21 +17,21 @@ export function StatCard({
   value,
   badge,
   badgeColor,
-  bg,
-  borderColor,
-  textColor,
-  subTextColor,
 }: StatCardProps) {
   return (
-    <View style={[styles.statCard, { backgroundColor: bg, borderColor }]}>
-      <View style={styles.statCardHeader}>
-        <View style={[styles.statIcon, { backgroundColor: iconBg }]}>
+    <View className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 w-full min-h-[120px] justify-between">
+      <View className="flex-row justify-between items-start mb-2">
+        <View className={`rounded-2xl p-2.5 ${iconBg}`}>
           {icon}
         </View>
-        <Text style={[styles.statBadge, { color: badgeColor }]}>{badge}</Text>
+        {badge ? (
+          <Text className={`text-[11px] font-bold ${badgeColor}`}>{badge}</Text>
+        ) : null}
       </View>
-      <Text style={[styles.statLabel, { color: subTextColor }]}>{label}</Text>
-      <Text style={[styles.statValue, { color: textColor }]}>{value}</Text>
+      <View>
+        <Text className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">{label}</Text>
+        <Text className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">{value}</Text>
+      </View>
     </View>
   );
 }

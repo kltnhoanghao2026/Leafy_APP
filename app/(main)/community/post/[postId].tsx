@@ -7,7 +7,7 @@ import {
   SendHorizonal,
   Share2,
 } from "lucide-react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -21,10 +21,12 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 
 import { CommentCard } from "@/src/features/community/community-feed/components/CommentCard";
 import { PostVoteListModal } from "@/src/features/community/community-feed/components/PostVoteListModal";
+import { PlanReferenceCard } from "@/src/features/community/community-feed/components/PlanReferenceCard";
 import { usePostDetailScreen } from "@/src/features/community/community-feed/hooks/usePostDetailScreen";
 import { formatStat } from "@/src/features/community/community-feed/components/community.utils";
 
@@ -32,8 +34,6 @@ const FALLBACK_AVATAR =
   "https://ui-avatars.com/api/?background=E5E7EB&color=334155&name=Leafy";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
-
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SafePostDetailRoute() {
   return (
@@ -133,6 +133,7 @@ function PostDetailRoute() {
   const bodyText = post.content?.caption || post.content?.description || "";
   const titleText = post.content?.title?.trim();
   const sharedPost = post.postType === "SHARE" ? post.sharedPost : null;
+  const planId = post.postType === "PLAN_SHARE" ? (post.planId ?? null) : null;
   const hasMultipleMedia = post.media && post.media.length > 1;
 
   return (
@@ -267,6 +268,11 @@ function PostDetailRoute() {
                 />
               )}
             </View>
+          )}
+
+          {/* ── Plan Reference Embed ── */}
+          {planId && (
+            <PlanReferenceCard planId={planId} planInfo={post.planInfo} />
           )}
 
           {/* ── Media Gallery ── */}
@@ -475,6 +481,9 @@ function PostDetailRoute() {
                     comment={comment}
                     palette={palette}
                     mutedText={mutedText}
+                    onReply={(commentId, authorName) =>
+                      setReplyTarget({ commentId, authorName })
+                    }
                   />
                 ))}
 

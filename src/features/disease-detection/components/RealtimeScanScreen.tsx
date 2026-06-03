@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState, useMemo } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -18,8 +18,6 @@ import {
   CameraIcon,
   Pause,
   Play,
-  ScanLine,
-  RotateCcw,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
@@ -33,12 +31,9 @@ import { diseaseDetectionApi } from "@/src/features/disease-detection/api/diseas
 
 import { useTfliteModels } from "../models/useTfliteModels";
 import { useLeafDetectionProcessor } from "../models/useLeafDetectionProcessor";
-import { MOBILENET_INPUT_SIZE } from "../models/constants";
 import PredictionResultCard from "./PredictionResultCard";
 import {
   cropLeafImage,
-  getConfidenceColor,
-  commonShadow,
 } from "./predict.utils";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -56,8 +51,6 @@ export default function RealtimeScanScreen() {
   const {
     isLoading: modelsLoading,
     isYoloLoaded,
-    isMobilenetLoaded,
-    error: modelError,
     yoloModel,
     mobilenetModel,
     yoloOutputShape,

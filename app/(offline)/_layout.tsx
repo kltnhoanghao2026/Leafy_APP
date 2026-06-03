@@ -1,10 +1,38 @@
 import { Tabs } from 'expo-router';
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Home, Sprout, Map, Calendar } from 'lucide-react-native';
+import { Home, Sprout, Map, Settings, Activity } from 'lucide-react-native';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import Colors from '@/src/constants/Colors';
 import { useNetworkContext } from '@/src/providers/NetworkProvider';
+
+import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
+
+// ── Center action tab button ──────────────────────────────────────────────────
+
+type CenterActionButtonProps = BottomTabBarButtonProps & {
+  borderColor: string;
+  labelColor: string;
+  label: string;
+};
+
+function CenterActionButton({
+  onPress,
+  borderColor,
+  labelColor,
+  label,
+}: CenterActionButtonProps) {
+  return (
+    <Pressable onPress={onPress} style={styles.centerButtonWrapper}>
+      <View style={[styles.centerButton, { borderColor }]}>
+        <Activity color="#FFFFFF" size={34} strokeWidth={2.5} />
+      </View>
+      <Text style={[styles.centerButtonLabel, { color: labelColor }]}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
 
 export default function OfflineLayout() {
   const { t } = useTranslation();
@@ -60,19 +88,65 @@ export default function OfflineLayout() {
           }}
         />
         <Tabs.Screen
+          name="plant-events"
+          options={{
+            headerShown: false,
+            title: '',
+            tabBarButton: (props) => (
+              <CenterActionButton
+                {...props}
+                borderColor={palette.background}
+                labelColor={palette.primary}
+                label={t('offline.tracking', 'Theo dõi')}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="farm"
           options={{
-            title: t('offline.farm', 'Farm'),
+            title: t('offline.farmTab', 'Farm'),
             tabBarIcon: ({ color }) => <Map color={color} size={24} />,
           }}
         />
         <Tabs.Screen
-          name="plant-events"
+          name="settings"
           options={{
-            title: t('offline.events', 'Events'),
-            tabBarIcon: ({ color }) => <Calendar color={color} size={24} />,
+            title: t('offline.settings', 'Cài đặt'),
+            tabBarIcon: ({ color }) => <Settings color={color} size={24} />,
           }}
+        />
+        {/* Hidden predict tab */}
+        <Tabs.Screen
+          name="predict"
+          options={{
+            href: null,
+            headerShown: false,
+            tabBarStyle: { display: 'none' }
+          }}
+        />
+        {/* Hidden sync tab for debug */}
+        <Tabs.Screen 
+          name="sync" 
+          options={{ 
+            href: null, 
+            title: 'Debug SQLite',
+            headerShown: true,
+            tabBarStyle: { display: 'none' }
+          }} 
         />
       </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  centerButtonWrapper: { top: -26, alignItems: 'center', justifyContent: 'center', width: 88 },
+  centerButton: {
+    width: 74, height: 74, borderRadius: 37,
+    backgroundColor: '#2F7F34', justifyContent: 'center', alignItems: 'center',
+    borderWidth: 6, borderColor: '#F6F8F6',
+    shadowColor: '#2F7F34', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35, shadowRadius: 12, elevation: 10,
+  },
+  centerButtonLabel: { marginTop: 4, fontWeight: '700', fontSize: 11 },
+});

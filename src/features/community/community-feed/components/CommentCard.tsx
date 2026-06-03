@@ -21,6 +21,7 @@ type CommentCardProps = {
   palette: CommunityPalette;
   mutedText: string;
   isReply?: boolean;
+  onReply?: (commentId: string, authorName: string) => void;
 };
 
 export function CommentCard({
@@ -28,6 +29,7 @@ export function CommentCard({
   palette,
   mutedText,
   isReply = false,
+  onReply,
 }: CommentCardProps) {
   const [userVote, setUserVote] = useState<Comment["userVote"]>(
     comment.userVote,
@@ -204,7 +206,16 @@ export function CommentCard({
             </Pressable>
           </View>
 
-          <Pressable className="flex-row items-center gap-1.5 p-1" hitSlop={8}>
+          <Pressable
+            className="flex-row items-center gap-1.5 p-1"
+            hitSlop={8}
+            onPress={() =>
+              onReply?.(
+                comment.id,
+                comment.author || `Người dùng ${comment.authorId.slice(-6)}`
+              )
+            }
+          >
             <MessageCircle size={16} color={mutedText} strokeWidth={2.5} />
             <Text
               className="text-[13px] font-medium"
@@ -259,6 +270,7 @@ export function CommentCard({
                         palette={palette}
                         mutedText={mutedText}
                         isReply={true}
+                        onReply={onReply}
                       />
                     ))}
                     <Pressable

@@ -39,6 +39,16 @@ export const getFeedPostsQueryOptions = (page = 0, size = 20) =>
     queryFn: () => communityApi.getFeedPosts(page, size),
   });
 
+export const getInfiniteFeedPostsQueryOptions = (size = 20) =>
+  infiniteQueryOptions({
+    queryKey: [...communityKeys.all(), "feedInfinite", size] as const,
+    queryFn: ({ pageParam }) =>
+      communityApi.getFeedPosts(pageParam as number, size),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.last ? undefined : lastPage.number + 1,
+  });
+
 export const getUserPostsQueryOptions = (userId: string, page = 0, size = 20) =>
   queryOptions({
     queryKey: communityKeys.userPosts(userId, page, size),

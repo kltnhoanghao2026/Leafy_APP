@@ -47,7 +47,7 @@ export function FarmPlotCard({
           <View className="items-center justify-center rounded-xl bg-emerald-50 p-2 dark:bg-emerald-400/15">
             <Home
               size={24}
-              className="text-emerald-700 dark:text-emerald-400"
+              color={isDark ? "#34d399" : "#047857"}
               strokeWidth={2.5}
             />
           </View>
@@ -71,13 +71,13 @@ export function FarmPlotCard({
             className="items-center justify-center rounded-full bg-slate-100 p-2 dark:bg-slate-800"
             onPress={() => onEditPlot(plot.id)}
           >
-            <Pencil size={16} className="text-slate-500 dark:text-slate-400" />
+            <Pencil size={16} color={isDark ? "#94a3b8" : "#64748b"} />
           </TouchableOpacity>
           <TouchableOpacity
             className="items-center justify-center rounded-full bg-slate-100 p-2 dark:bg-slate-800"
             onPress={() => onDeletePlot(plot.id, plot.name)}
           >
-            <Trash2 size={18} className="text-slate-500 dark:text-slate-400" />
+            <Trash2 size={18} color={isDark ? "#94a3b8" : "#64748b"} />
           </TouchableOpacity>
         </View>
       </View>
@@ -86,7 +86,7 @@ export function FarmPlotCard({
         <View className="flex-row items-center rounded-lg bg-slate-50 px-2.5 py-1.5 dark:bg-slate-800">
           <LandPlot
             size={16}
-            className="text-emerald-600 dark:text-emerald-400"
+            color={isDark ? "#34d399" : "#059669"}
           />
           <Text className="ml-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
             {formatArea(plot.areaM2)}
@@ -108,7 +108,8 @@ export function FarmPlotCard({
         <View className="mx-4 flex-row items-start border-t border-slate-100 py-3 dark:border-slate-800">
           <MapPin
             size={16}
-            className="mt-0.5 text-slate-400 dark:text-slate-500"
+            className="mt-0.5"
+            color={isDark ? "#64748b" : "#94a3b8"}
           />
           <Text className="ml-1.5 flex-1 text-sm text-slate-500 dark:text-slate-400">
             {plot.addressLine}
@@ -129,7 +130,7 @@ export function FarmPlotCard({
       >
         <Sprout
           size={16}
-          className="text-emerald-600 dark:text-emerald-500"
+          color={isDark ? "#10b981" : "#059669"}
           strokeWidth={2.6}
         />
         <Text className="ml-2 text-sm font-bold text-emerald-600 dark:text-emerald-500">

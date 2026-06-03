@@ -53,7 +53,7 @@ export function AdminCameraSchedulesPage() {
   const [uploadEndpoint, setUploadEndpoint] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
-  const schedules = (schedulesQuery.data ?? []) as Array<DeviceCameraSchedule & Partial<DisplayDeviceCameraSchedule>>;
+  const schedules = (schedulesQuery.data ?? []) as (DeviceCameraSchedule & Partial<DisplayDeviceCameraSchedule>)[];
   const filteredSchedules = useMemo(() => {
     const normalizedDeviceQuery = deviceUidFilter.trim().toLowerCase();
     return schedules.filter((schedule) => {

@@ -70,7 +70,7 @@ export function EventExclusionModal({
       ? isLoadingPlantsPlot
       : isLoadingPlantsZone;
 
-  let items: Array<{ id: string; label: string }> = [];
+  let items: { id: string; label: string }[] = [];
 
   if (isZoneExclusion && zones) {
     items = zones.map((z) => ({ id: z.id, label: z.zoneName }));

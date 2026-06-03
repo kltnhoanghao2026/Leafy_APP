@@ -86,6 +86,7 @@ export type BackendPost = {
   updatedAt?: string | null;
   stats: BackendPostStats;
   currentUserVoteType?: "UPVOTE" | "DOWNVOTE" | null;
+  visibility: PostVisibility;
 };
 
 export type BackendComment = {
@@ -149,6 +150,7 @@ export type Post = {
     commentCount: number;
     shareCount: number;
   };
+  visibility?: PostVisibility;
 };
 
 export type Comment = {
@@ -191,7 +193,7 @@ export type Expert = {
   avatarUrl: string;
 };
 
-export type PostVisibility = "FRIEND" | "ALL" | "ONLY_ME";
+export type PostVisibility = "FOLLOWER" | "ALL" | "ONLY_ME";
 
 export type LocationInfo = {
   name?: string;

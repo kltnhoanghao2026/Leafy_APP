@@ -2,7 +2,6 @@ import {
   ArrowBigDown,
   ArrowBigUp,
   ChevronDown,
-  ClipboardList,
   MessageCircle,
   MoreHorizontal,
   Share2,
@@ -157,9 +156,27 @@ export function PostCard({
               >
                 {authorLabel}
               </Text>
-              <Text className="mt-0.5 text-[13px]" style={{ color: mutedText }}>
-                {post.meta || `Tac gia: ${post.authorId || "an danh"}`}
-              </Text>
+              <View className="flex-row items-center gap-1 mt-0.5">
+                <Text className="text-[13px]" style={{ color: mutedText }}>
+                  {post.meta || `Tac gia: ${post.authorId || "an danh"}`}
+                </Text>
+                {post.visibility && post.visibility !== "ALL" && (
+                  <>
+                    <Text className="text-[13px]" style={{ color: mutedText }}>•</Text>
+                    <Text
+                      className="text-[12px] font-semibold"
+                      style={{
+                        color:
+                          post.visibility === "FOLLOWER"
+                            ? palette.primary
+                            : mutedText,
+                      }}
+                    >
+                      {post.visibility === "FOLLOWER" ? "Người theo dõi" : "Chỉ mình tôi"}
+                    </Text>
+                  </>
+                )}
+              </View>
             </View>
           </View>
           <View className="flex-row items-center gap-2 pt-1">

@@ -84,6 +84,14 @@ const CATEGORY_ACCENT: Record<
     doneBg: "bg-emerald-100 dark:bg-emerald-800/40",
     doneText: "text-emerald-600 dark:text-emerald-400",
   },
+  ALERTS: {
+    border: "border-red-200 dark:border-red-800",
+    headerBg: "bg-red-50 dark:bg-red-900/20",
+    countBg: "bg-red-100 dark:bg-red-800/40",
+    countText: "text-red-600 dark:text-red-400",
+    doneBg: "bg-emerald-100 dark:bg-emerald-800/40",
+    doneText: "text-emerald-600 dark:text-emerald-400",
+  },
 };
 
 type PlantEventHubCategorySectionProps = {

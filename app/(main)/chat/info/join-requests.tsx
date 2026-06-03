@@ -86,7 +86,7 @@ function JoinRequestsScreen() {
             
             {item.joinAnswer && (
               <View className="mb-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                <Text className="text-sm text-gray-700 italic">"{item.joinAnswer}"</Text>
+                <Text className="text-sm text-gray-700 italic">{"\""}{item.joinAnswer}{"\""}</Text>
               </View>
             )}
 

@@ -49,6 +49,9 @@ export const initOfflineDatabase = async () => {
         status TEXT,
         createdAt TEXT,
         lastModifiedAt TEXT,
+        createdBy TEXT,
+        lastModifiedBy TEXT,
+        active INTEGER DEFAULT 1,
         _dirty INTEGER DEFAULT 0,
         _deleted INTEGER DEFAULT 0
       );
@@ -59,6 +62,7 @@ export const initOfflineDatabase = async () => {
       CREATE TABLE IF NOT EXISTS farm_zones (
         id TEXT PRIMARY KEY,
         farmPlotId TEXT,
+        ownerProfileId TEXT,
         zoneName TEXT,
         zoneCode TEXT,
         description TEXT,
@@ -71,6 +75,9 @@ export const initOfflineDatabase = async () => {
         status TEXT,
         createdAt TEXT,
         lastModifiedAt TEXT,
+        createdBy TEXT,
+        lastModifiedBy TEXT,
+        active INTEGER DEFAULT 1,
         _dirty INTEGER DEFAULT 0,
         _deleted INTEGER DEFAULT 0
       );
@@ -117,6 +124,9 @@ export const initOfflineDatabase = async () => {
         ownerProfileId TEXT,
         createdAt TEXT,
         lastModifiedAt TEXT,
+        createdBy TEXT,
+        lastModifiedBy TEXT,
+        active INTEGER DEFAULT 1,
         _dirty INTEGER DEFAULT 0,
         _deleted INTEGER DEFAULT 0
       );
@@ -133,7 +143,7 @@ export const initOfflineDatabase = async () => {
         eventType TEXT,
         note TEXT,
         description TEXT,
-        daysFromNow INTEGER,
+        daysFromStart INTEGER,
         durationDays INTEGER,
         planned INTEGER,
         calculatedStartDate TEXT,
@@ -152,13 +162,16 @@ export const initOfflineDatabase = async () => {
         progressTotal INTEGER,
         progressCompleted INTEGER,
         tasks TEXT,
+        attachmentIds TEXT,
         createdAt TEXT,
         lastModifiedAt TEXT,
+        createdBy TEXT,
+        lastModifiedBy TEXT,
+        active INTEGER DEFAULT 1,
         _dirty INTEGER DEFAULT 0,
         _deleted INTEGER DEFAULT 0
       );
     `);
-
     // ── Sync Metadata ──
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS sync_metadata (
@@ -168,7 +181,17 @@ export const initOfflineDatabase = async () => {
       );
     `);
 
-    // ── Sync Queue (Stub for future) ──
+    // ── Local ID → Server ID mapping ──
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS id_map (
+        localId TEXT PRIMARY KEY,
+        serverId TEXT NOT NULL,
+        entityType TEXT NOT NULL,
+        createdAt TEXT NOT NULL
+      );
+    `);
+
+    // ── Sync Queue ──
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS pending_sync_queue (
         id TEXT PRIMARY KEY,
@@ -177,18 +200,64 @@ export const initOfflineDatabase = async () => {
         operation TEXT,
         payload TEXT,
         createdAt TEXT,
-        status TEXT
+        status TEXT,
+        retryCount INTEGER DEFAULT 0,
+        lastError TEXT,
+        syncedAt TEXT
       );
     `);
 
     // --- Schema Upgrades ---
-    // If the tables already existed without createdAt/lastModifiedAt, add them.
     // We ignore errors if the column already exists.
+
+    // plant_events: keep schema compatible across older installs
+    try { await db.execAsync(`ALTER TABLE plant_events ADD COLUMN daysFromStart INTEGER;`); } catch {}
+
+    // plant_event_progress: upgrades are no-ops if columns already exist
+    // (table creation is handled above)
+
     try {
       await db.execAsync(`ALTER TABLE plants ADD COLUMN createdAt TEXT;`);
     } catch {}
     try {
       await db.execAsync(`ALTER TABLE plants ADD COLUMN lastModifiedAt TEXT;`);
+    } catch {}
+    // id_map upgrades
+    try {
+      await db.execAsync(`ALTER TABLE id_map ADD COLUMN entityType TEXT;`);
+    } catch {}
+    try {
+      await db.execAsync(`ALTER TABLE id_map ADD COLUMN createdAt TEXT;`);
+    } catch {}
+
+    // Entity schema upgrades (ignore if already exists)
+    try { await db.execAsync(`ALTER TABLE farm_plots ADD COLUMN createdBy TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE farm_plots ADD COLUMN lastModifiedBy TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE farm_plots ADD COLUMN active INTEGER DEFAULT 1;`); } catch {}
+
+    try { await db.execAsync(`ALTER TABLE farm_zones ADD COLUMN ownerProfileId TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE farm_zones ADD COLUMN createdBy TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE farm_zones ADD COLUMN lastModifiedBy TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE farm_zones ADD COLUMN active INTEGER DEFAULT 1;`); } catch {}
+
+    try { await db.execAsync(`ALTER TABLE plants ADD COLUMN createdBy TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE plants ADD COLUMN lastModifiedBy TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE plants ADD COLUMN active INTEGER DEFAULT 1;`); } catch {}
+
+    try { await db.execAsync(`ALTER TABLE plant_events ADD COLUMN attachmentIds TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE plant_events ADD COLUMN createdBy TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE plant_events ADD COLUMN lastModifiedBy TEXT;`); } catch {}
+    try { await db.execAsync(`ALTER TABLE plant_events ADD COLUMN active INTEGER DEFAULT 1;`); } catch {}
+
+    // pending_sync_queue: retry tracking
+    try {
+      await db.execAsync(`ALTER TABLE pending_sync_queue ADD COLUMN retryCount INTEGER DEFAULT 0;`);
+    } catch {}
+    try {
+      await db.execAsync(`ALTER TABLE pending_sync_queue ADD COLUMN lastError TEXT;`);
+    } catch {}
+    try {
+      await db.execAsync(`ALTER TABLE pending_sync_queue ADD COLUMN syncedAt TEXT;`);
     } catch {}
 
     console.log('[OfflineDB] Database initialized successfully');
@@ -208,6 +277,7 @@ export const clearOfflineDatabase = async () => {
       DELETE FROM plants;
       DELETE FROM plant_events;
       DELETE FROM sync_metadata;
+      DELETE FROM id_map;
       DELETE FROM pending_sync_queue;
     `);
     console.log('[OfflineDB] Database cleared');

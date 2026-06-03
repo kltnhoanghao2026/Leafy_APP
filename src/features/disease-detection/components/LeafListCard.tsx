@@ -1,7 +1,8 @@
 import React from "react";
-import { View, Text, Pressable, Image, ActivityIndicator } from "react-native";
-import { Check, ChevronRight, ScanLine } from "lucide-react-native";
+import { View, Text, TouchableOpacity, Image, ActivityIndicator } from "react-native";
+import { Check, ChevronRight, ScanLine, Sprout } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
+import { MotiView, AnimatePresence } from "moti";
 
 import type { LeafDetection } from "@/src/features/disease-detection/api/disease-detection.api";
 import type { CardStyleProps } from "./predict.types";
@@ -36,81 +37,102 @@ export default function LeafListCard({
   const { t } = useTranslation();
 
   return (
-    <View
+    <MotiView
+      from={{ opacity: 0, translateY: 20 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: "spring", damping: 20, stiffness: 90 }}
       style={[
         {
           backgroundColor: cardBg,
           borderColor,
           borderWidth: 1,
-          borderRadius: 16,
+          borderRadius: 24,
           overflow: "hidden",
-          marginBottom: 16,
+          marginBottom: 20,
         },
         commonShadow,
       ]}
     >
-      <Text
+      <View
         style={{
-          color: palette.text,
-          fontSize: 14,
-          fontWeight: "700",
-          padding: 12,
-          paddingBottom: 4,
+          flexDirection: "row",
+          alignItems: "center",
+          padding: 20,
+          paddingBottom: 16,
+          borderBottomWidth: 1,
+          borderBottomColor: `${borderColor}80`,
         }}
       >
-        {t("diseaseDetection.detectedLeaves", "Detected Leaves")}
-      </Text>
+        <Sprout size={20} color={palette.primary} style={{ marginRight: 10 }} />
+        <Text
+          style={{
+            color: palette.text,
+            fontSize: 16,
+            fontWeight: "700",
+          }}
+        >
+          {t("diseaseDetection.detectedLeaves", "Detected Leaves")}
+        </Text>
+      </View>
+      
       {detections.map((det, idx) => {
         const isSelected = selectedLeafIndex === idx;
+        
         return (
           <View key={idx}>
-            <Pressable
+            <TouchableOpacity
               onPress={() => onSelectLeaf(idx)}
+              activeOpacity={0.7}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                paddingHorizontal: 12,
-                paddingVertical: 12,
-                borderTopWidth: idx > 0 ? 1 : 0,
-                borderTopColor: borderColor,
+                paddingHorizontal: 20,
+                paddingVertical: 16,
+                borderBottomWidth: idx < detections.length - 1 && !isSelected ? 1 : 0,
+                borderBottomColor: borderColor,
                 backgroundColor: isSelected
-                  ? `${palette.primary}10`
+                  ? `${palette.primary}15`
                   : "transparent",
               }}
             >
-              <View
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
+              <MotiView
+                animate={{
                   backgroundColor: isSelected
                     ? palette.primary
                     : `${palette.primary}15`,
+                  scale: isSelected ? 1.1 : 1,
+                }}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
                   alignItems: "center",
                   justifyContent: "center",
-                  marginRight: 12,
+                  marginRight: 16,
                 }}
               >
                 {isSelected ? (
-                  <Check size={16} color="#FFF" strokeWidth={3} />
+                  <Check size={18} color="#FFF" strokeWidth={3} />
                 ) : (
                   <Text
                     style={{
                       color: palette.primary,
-                      fontWeight: "700",
-                      fontSize: 13,
+                      fontWeight: "800",
+                      fontSize: 14,
                     }}
                   >
                     {idx + 1}
                   </Text>
                 )}
-              </View>
+              </MotiView>
+              
               <View style={{ flex: 1 }}>
                 <Text
                   style={{
-                    color: palette.text,
-                    fontSize: 14,
-                    fontWeight: "600",
+                    color: isSelected ? palette.primary : palette.text,
+                    fontSize: 15,
+                    fontWeight: isSelected ? "700" : "600",
+                    marginBottom: 2,
                   }}
                 >
                   {t("diseaseDetection.leafItem", "Leaf {{num}}", {
@@ -120,93 +142,122 @@ export default function LeafListCard({
                 <Text
                   style={{
                     color: palette.textGray || "#64748B",
-                    fontSize: 12,
+                    fontSize: 13,
                   }}
                 >
                   {t("diseaseDetection.confidence", "Confidence")}:{" "}
-                  {(det.confidenceScore * 100).toFixed(1)}%
+                  <Text style={{ fontWeight: "600", color: palette.text }}>
+                    {(det.confidenceScore * 100).toFixed(1)}%
+                  </Text>
                 </Text>
               </View>
-              <ChevronRight
-                size={18}
-                color={palette.textGray || "#94A3B8"}
-                style={{
-                  transform: [{ rotate: isSelected ? "90deg" : "0deg" }],
-                }}
-              />
-            </Pressable>
-
-            {/* Inline Action Area when Selected */}
-            {isSelected && croppedUri && (
-              <View
-                style={{
-                  backgroundColor: `${palette.primary}05`,
-                  padding: 16,
+              
+              <MotiView
+                animate={{
+                  rotate: isSelected ? "90deg" : "0deg",
+                  scale: isSelected ? 1.2 : 1,
                 }}
               >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    gap: 16,
-                    alignItems: "center",
-                  }}
+                <ChevronRight
+                  size={20}
+                  color={isSelected ? palette.primary : (palette.textGray || "#94A3B8")}
+                />
+              </MotiView>
+            </TouchableOpacity>
+
+            {/* Inline Action Area when Selected */}
+            <AnimatePresence>
+              {isSelected && croppedUri && (
+                <MotiView
+                  from={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  style={{ overflow: "hidden" }}
                 >
                   <View
                     style={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: 12,
-                      overflow: "hidden",
-                      borderWidth: 1,
-                      borderColor: borderColor,
-                      backgroundColor: palette.background || "#F8FAFC",
+                      backgroundColor: `${palette.primary}08`,
+                      padding: 20,
+                      borderBottomWidth: idx < detections.length - 1 ? 1 : 0,
+                      borderBottomColor: borderColor,
                     }}
                   >
-                    <Image
-                      source={{ uri: croppedUri }}
-                      style={{ width: "100%", height: "100%" }}
-                      resizeMode="cover"
-                    />
-                  </View>
-                  <Pressable
-                    onPress={onPredict}
-                    disabled={isPredicting}
-                    style={{
-                      flex: 1,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: isPredicting
-                        ? `${palette.primary}80`
-                        : palette.primary,
-                      borderRadius: 12,
-                      paddingVertical: 14,
-                      gap: 8,
-                    }}
-                  >
-                    {isPredicting ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
-                    ) : (
-                      <ScanLine size={18} color="#FFFFFF" />
-                    )}
-                    <Text
+                    <View
                       style={{
-                        color: "#FFFFFF",
-                        fontWeight: "700",
-                        fontSize: 15,
+                        flexDirection: "row",
+                        gap: 16,
+                        alignItems: "center",
                       }}
                     >
-                      {isPredicting
-                        ? t("diseaseDetection.analyzing", "Analyzing...")
-                        : t("diseaseDetection.predictDisease", "Analyze Leaf")}
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-            )}
+                      <View
+                        style={{
+                          width: 88,
+                          height: 88,
+                          borderRadius: 16,
+                          overflow: "hidden",
+                          borderWidth: 2,
+                          borderColor: `${palette.primary}40`,
+                          backgroundColor: palette.background || "#F8FAFC",
+                          shadowColor: "#000",
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.1,
+                          shadowRadius: 4,
+                        }}
+                      >
+                        <Image
+                          source={{ uri: croppedUri }}
+                          style={{ width: "100%", height: "100%" }}
+                          resizeMode="cover"
+                        />
+                      </View>
+                      
+                      <TouchableOpacity
+                        onPress={onPredict}
+                        disabled={isPredicting}
+                        activeOpacity={0.8}
+                        style={{
+                          flex: 1,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: isPredicting
+                            ? `${palette.primary}80`
+                            : palette.primary,
+                          borderRadius: 16,
+                          paddingVertical: 16,
+                          gap: 10,
+                          shadowColor: palette.primary,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.3,
+                          shadowRadius: 8,
+                          elevation: 4,
+                        }}
+                      >
+                        {isPredicting ? (
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                          <ScanLine size={20} color="#FFFFFF" />
+                        )}
+                        <Text
+                          style={{
+                            color: "#FFFFFF",
+                            fontWeight: "700",
+                            fontSize: 16,
+                          }}
+                        >
+                          {isPredicting
+                            ? t("diseaseDetection.analyzing", "Analyzing...")
+                            : t("diseaseDetection.predictDisease", "Analyze Leaf")}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </MotiView>
+              )}
+            </AnimatePresence>
           </View>
         );
       })}
-    </View>
+    </MotiView>
   );
 }
