@@ -1,5 +1,4 @@
-import { useRouter } from "expo-router";
-import { ArrowLeft, Camera, Play } from "lucide-react-native";
+import { Camera, Play } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -23,6 +22,7 @@ import {
 import { useMyDevices } from "../hooks/useDevices";
 import { useMediaImageUrl } from "../hooks/useMediaImageUrl";
 import { DevicePicker } from "../components/DevicePicker";
+import { IoTEmptyCard, IoTStatusBadge, mediaStatusTone, useIotTheme } from "../components/IoTUi";
 import type { DeviceCameraSchedule } from "../types";
 import type { DisplayDeviceCameraSchedule } from "../utils/iotDisplay";
 
@@ -38,7 +38,7 @@ const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
 
 export function AdminCameraSchedulesPage() {
   const { t } = useTranslation();
-  const router = useRouter();
+  const theme = useIotTheme();
   const schedulesQuery = useAllDeviceCameraSchedules();
   const devicesQuery = useMyDevices({ page: 0, size: 100 });
   const createScheduleMutation = useCreateDeviceCameraScheduleMutation();
@@ -147,36 +147,31 @@ export function AdminCameraSchedulesPage() {
         <RefreshControl
           onRefresh={schedulesQuery.refetch}
           refreshing={schedulesQuery.isRefetching}
-          tintColor="#15803d"
+          tintColor={theme.primary}
         />
       }
-      style={styles.screen}
+      style={[styles.screen, { backgroundColor: theme.background }]}
     >
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>{t("iot.common.back")}</Text>
-      </Pressable>
-
-      <View style={styles.hero}>
-        <View style={styles.heroIcon}>
-          <Camera color="#166534" size={24} />
+      <View style={[styles.hero, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <View style={[styles.heroIcon, { backgroundColor: theme.primarySoft }]}>
+          <Camera color={theme.primary} size={24} />
         </View>
         <View style={styles.heroText}>
-          <Text style={styles.kicker}>{t("iot.cameraSchedules.adminKicker")}</Text>
-          <Text style={styles.title}>{t("iot.cameraSchedules.adminTitle")}</Text>
-          <Text style={styles.description}>
+          <Text style={[styles.kicker, { color: theme.primary }]}>{t("iot.cameraSchedules.adminKicker")}</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{t("iot.cameraSchedules.adminTitle")}</Text>
+          <Text style={[styles.description, { color: theme.subtle }]}>
             {t("iot.cameraSchedules.adminDescription")}
           </Text>
         </View>
       </View>
 
-      <View style={styles.filters}>
-        <Text style={styles.sectionTitle}>{t("iot.cameraSchedules.filters")}</Text>
+      <View style={[styles.filters, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t("iot.cameraSchedules.filters")}</Text>
         <TextInput
           autoCapitalize="none"
           placeholder={t("iot.cameraSchedules.filterByDevice")}
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.cardAlt, borderColor: theme.border, color: theme.text }]}
           value={deviceUidFilter}
           onChangeText={setDeviceUidFilter}
         />
@@ -187,9 +182,13 @@ export function AdminCameraSchedulesPage() {
               <Pressable
                 key={filter}
                 onPress={() => setEnabledFilter(filter)}
-                style={[styles.chip, selected && styles.chipSelected]}
+                style={[
+                  styles.chip,
+                  { backgroundColor: theme.cardAlt, borderColor: theme.border },
+                  selected && { backgroundColor: theme.primarySoft, borderColor: theme.tone("primary").border },
+                ]}
               >
-                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                <Text style={[styles.chipText, { color: selected ? theme.primary : theme.subtle }]}>
                   {t(`iot.cameraSchedules.filter.${filter}`)}
                 </Text>
               </Pressable>
@@ -198,8 +197,8 @@ export function AdminCameraSchedulesPage() {
         </View>
       </View>
 
-      <View style={styles.form}>
-        <Text style={styles.sectionTitle}>{t("iot.cameraSchedules.createSchedule")}</Text>
+      <View style={[styles.form, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t("iot.cameraSchedules.createSchedule")}</Text>
         <DevicePicker
           devices={devicesQuery.data?.items ?? []}
           label={t("iot.cameraSchedules.selectDeviceForSchedule")}
@@ -215,7 +214,7 @@ export function AdminCameraSchedulesPage() {
           autoCapitalize="none"
           placeholder={t("iot.cameraSchedules.timePlaceholder")}
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.cardAlt, borderColor: theme.border, color: theme.text }]}
           value={timeOfDay}
           onChangeText={setTimeOfDay}
         />
@@ -244,25 +243,26 @@ export function AdminCameraSchedulesPage() {
           autoCapitalize="none"
           placeholder={t("iot.cameraSchedules.uploadEndpointPlaceholder")}
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.cardAlt, borderColor: theme.border, color: theme.text }]}
           value={uploadEndpoint}
           onChangeText={setUploadEndpoint}
         />
-        <Text style={styles.helperText}>{t("iot.cameraSchedules.customUploadHelp")}</Text>
-        {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
+        <Text style={[styles.helperText, { color: theme.subtle }]}>{t("iot.cameraSchedules.customUploadHelp")}</Text>
+        {formError ? <Text style={[styles.errorText, { color: theme.danger }]}>{formError}</Text> : null}
         <Pressable
           disabled={createScheduleMutation.isPending}
           onPress={createSchedule}
           style={({ pressed }) => [
             styles.primaryButton,
+            { backgroundColor: theme.primary },
             createScheduleMutation.isPending && styles.disabledButton,
             pressed && styles.pressedButton,
           ]}
         >
           {createScheduleMutation.isPending ? (
-            <ActivityIndicator color="#ffffff" size="small" />
+            <ActivityIndicator color={theme.primaryText} size="small" />
           ) : null}
-          <Text style={styles.primaryButtonText}>
+          <Text style={[styles.primaryButtonText, { color: theme.primaryText }]}>
             {t("iot.cameraSchedules.createSchedule")}
           </Text>
         </Pressable>
@@ -270,8 +270,8 @@ export function AdminCameraSchedulesPage() {
 
       {schedulesQuery.isLoading ? (
         <View style={styles.centerBox}>
-          <ActivityIndicator color="#15803d" size="large" />
-          <Text style={styles.muted}>{t("iot.cameraSchedules.loading")}</Text>
+          <ActivityIndicator color={theme.primary} size="large" />
+          <Text style={[styles.muted, { color: theme.subtle }]}>{t("iot.cameraSchedules.loading")}</Text>
         </View>
       ) : null}
 
@@ -286,9 +286,7 @@ export function AdminCameraSchedulesPage() {
 
       {!schedulesQuery.isLoading && !schedulesQuery.isError ? (
         filteredSchedules.length === 0 ? (
-          <View style={styles.emptyBox}>
-            <Text style={styles.emptyTitle}>{t("iot.cameraSchedules.empty")}</Text>
-          </View>
+          <IoTEmptyCard title={t("iot.cameraSchedules.empty")} />
         ) : (
           <View style={styles.list}>
             {filteredSchedules.map((schedule) => (
@@ -332,10 +330,11 @@ function OptionGroup<T extends string>({
   onChange: (nextValue: T) => void;
 }) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
 
   return (
     <View style={styles.optionGroup}>
-      <Text style={styles.inputLabel}>{label}</Text>
+      <Text style={[styles.inputLabel, { color: theme.subtle }]}>{label}</Text>
       <View style={styles.chipRow}>
         {options.map((option) => {
           const selected = option === value;
@@ -343,9 +342,13 @@ function OptionGroup<T extends string>({
             <Pressable
               key={option}
               onPress={() => onChange(option)}
-              style={[styles.chip, selected && styles.chipSelected]}
+              style={[
+                styles.chip,
+                { backgroundColor: theme.cardAlt, borderColor: theme.border },
+                selected && { backgroundColor: theme.primarySoft, borderColor: theme.tone("primary").border },
+              ]}
             >
-              <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+              <Text style={[styles.chipText, { color: selected ? theme.primary : theme.subtle }]}>
                 {translateEnum(t, keyPrefix, option)}
               </Text>
             </Pressable>
@@ -366,75 +369,71 @@ function ScheduleCard({
   onRunNow: (schedule: DeviceCameraSchedule) => void;
 }) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
   const media = schedule.lastMediaEvent;
   const directUrl = media?.fileUrl ?? media?.analysis?.fileUrl ?? null;
-  const imageUrlQuery = useMediaImageUrl(directUrl ? undefined : media?.fileId);
-  const uri = directUrl ?? imageUrlQuery.data;
+  const imageUrlQuery = useMediaImageUrl(directUrl ?? media?.fileId);
+  const uri = imageUrlQuery.data;
   const isRunning = pendingDeviceUid === schedule.deviceUid;
   const mediaStatus = schedule.display?.lastMediaStatusLabel ?? media?.display?.analysis.statusLabel ?? media?.display?.statusLabel;
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
       {uri ? (
         <Image source={{ uri }} style={styles.thumbnail} />
       ) : (
-        <View style={styles.thumbnailPlaceholder}>
+        <View style={[styles.thumbnailPlaceholder, { backgroundColor: theme.cardAlt, borderColor: theme.border }]}>
           {imageUrlQuery.isLoading ? (
-            <ActivityIndicator color="#15803d" size="small" />
+            <ActivityIndicator color={theme.primary} size="small" />
           ) : (
-            <Camera color="#94a3b8" size={22} />
+            <Camera color={theme.muted} size={22} />
           )}
         </View>
       )}
       <View style={styles.cardBody}>
         <View style={styles.rowBetween}>
-          <Text style={styles.deviceUid}>{schedule.display?.deviceLabel ?? t("iot.common.unknownDevice")}</Text>
-          <Text
-            style={[
-              styles.badge,
-              schedule.enabled ? styles.badgeSuccess : styles.badgeMuted,
-            ]}
-          >
-            {schedule.enabled
-              ? t("iot.cameraSchedules.enabled")
-              : t("iot.cameraSchedules.disabled")}
-          </Text>
+          <Text style={[styles.deviceUid, { color: theme.text }]}>{schedule.display?.deviceLabel ?? t("iot.common.unknownDevice")}</Text>
+          <IoTStatusBadge
+            label={schedule.enabled ? t("iot.cameraSchedules.enabled") : t("iot.cameraSchedules.disabled")}
+            tone={schedule.enabled ? "success" : "neutral"}
+          />
         </View>
-        <Text style={styles.metaText}>
+        <Text style={[styles.metaText, { color: theme.subtle }]}>
           {schedule.display?.timeLabel ?? t("iot.common.noData")} |{" "}
           {schedule.display?.recurrenceLabel ?? t("iot.common.unknown")} |{" "}
           {schedule.display?.resolutionLabel ?? t("iot.common.unknown")} |{" "}
           {schedule.display?.qualityLabel ?? t("iot.common.unknown")}
         </Text>
-        <Text style={styles.metaText}>
+        <Text style={[styles.metaText, { color: theme.subtle }]}>
           {t("iot.cameraSchedules.nextRunAt")}: {schedule.display?.nextRunLabel ?? t("iot.common.noData")}
         </Text>
-        <Text style={styles.metaText}>
+        <Text style={[styles.metaText, { color: theme.subtle }]}>
           {t("iot.cameraSchedules.lastRunAt")}: {schedule.display?.lastRunLabel ?? t("iot.common.noData")}
         </Text>
-        <Text style={styles.metaText}>
+        <Text style={[styles.metaText, { color: theme.subtle }]}>
           {t("iot.cameraSchedules.uploadEndpoint")}:{" "}
           {schedule.display?.endpointLabel ?? t("iot.cameraSchedules.defaultUpload")}
         </Text>
-        <Text style={styles.metaText}>
-          {t("iot.devices.media.analysisStatus")}:{" "}
-          {mediaStatus ?? t("iot.common.unknownStatus")}
-        </Text>
+        <IoTStatusBadge
+          label={mediaStatus ?? t("iot.common.unknownStatus")}
+          tone={mediaStatusTone(media?.analysis?.analysisStatus ?? media?.analysis?.status ?? media?.status)}
+        />
         <Pressable
           disabled={isRunning}
           onPress={() => onRunNow(schedule)}
           style={({ pressed }) => [
             styles.runButton,
+            { backgroundColor: theme.primarySoft },
             isRunning && styles.disabledButton,
             pressed && styles.pressedButton,
           ]}
         >
           {isRunning ? (
-            <ActivityIndicator color="#166534" size="small" />
+            <ActivityIndicator color={theme.primary} size="small" />
           ) : (
-            <Play color="#166534" size={14} />
+            <Play color={theme.primary} size={14} />
           )}
-          <Text style={styles.runButtonText}>
+          <Text style={[styles.runButtonText, { color: theme.primary }]}>
             {t("iot.cameraSchedules.runScheduledCaptureNow")}
           </Text>
         </Pressable>

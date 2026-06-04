@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, QrCode, Keyboard, CheckCircle2 } from "lucide-react-native";
+import { QrCode, Keyboard, CheckCircle2 } from "lucide-react-native";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import {
   Linking,
@@ -225,11 +225,6 @@ export function DeviceOnboardingScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>{t("iot.devices.list.title")}</Text>
-      </Pressable>
-
       <View style={styles.header}>
         <Text style={styles.kicker}>{t("iot.devices.onboarding.kicker")}</Text>
         <Text style={styles.title}>{t("iot.devices.onboarding.title")}</Text>

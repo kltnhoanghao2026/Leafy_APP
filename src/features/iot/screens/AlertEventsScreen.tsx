@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, BellRing, RefreshCw } from "lucide-react-native";
+import { BellRing, RefreshCw } from "lucide-react-native";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -145,10 +145,6 @@ export function AlertEventsScreen() {
       }
       ListHeaderComponent={
         <View style={styles.headerWrap}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft color="#0f172a" size={20} />
-            <Text style={styles.backText}>{t("iot.devices.list.kicker")}</Text>
-          </Pressable>
           <View style={styles.header}>
             <Text style={styles.kicker}>{t("iot.alerts.kicker")}</Text>
             <Text style={styles.title}>{t("iot.alerts.title")}</Text>

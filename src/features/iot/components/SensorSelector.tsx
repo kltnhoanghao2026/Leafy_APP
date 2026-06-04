@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
 import { PickerModal } from "@/src/components/ui/PickerModal";
+import { useIotTheme } from "./IoTUi";
 import type { LatestReadingItemResponse, SensorCode } from "../types";
 import { DEFAULT_SENSOR_CODES } from "../utils/chartFormat";
 import { getSensorLabel } from "../utils/sensorLabels";
@@ -20,6 +21,7 @@ export function SensorSelector({
   onChange,
 }: SensorSelectorProps) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
   const [open, setOpen] = useState(false);
   const sensorCodes = Array.from(
     new Set([
@@ -35,17 +37,18 @@ export function SensorSelector({
         onPress={() => setOpen(true)}
         style={({ pressed }) => [
           styles.dropdown,
+          { backgroundColor: theme.card, borderColor: theme.border },
           pressed && styles.dropdownPressed,
         ]}
       >
         <View style={styles.textWrap}>
-          <Text numberOfLines={1} style={styles.dropdownLabel}>
+          <Text numberOfLines={1} style={[styles.dropdownLabel, { color: theme.text }]}>
             {selectedLabel}
           </Text>
-          <Text style={styles.dropdownMeta}>{value}</Text>
+          <Text style={[styles.dropdownMeta, { color: theme.subtle }]}>{value}</Text>
         </View>
-        <View style={styles.dropdownIcon}>
-          <ChevronDown color="#ffffff" size={20} />
+        <View style={[styles.dropdownIcon, { backgroundColor: theme.primarySoft }]}>
+          <ChevronDown color={theme.primary} size={20} />
         </View>
       </Pressable>
 
@@ -75,12 +78,13 @@ export function SensorSelector({
               <Text
                 style={[
                   styles.optionLabel,
+                  { color: selected ? theme.primary : theme.text },
                   selected && styles.optionLabelSelected,
                 ]}
               >
                 {getSensorLabel(sensorCode)}
               </Text>
-              <Text style={styles.optionMeta}>{sensorCode}</Text>
+              <Text style={[styles.optionMeta, { color: theme.subtle }]}>{sensorCode}</Text>
             </View>
             {selected ? (
               <View style={styles.checkBadge}>

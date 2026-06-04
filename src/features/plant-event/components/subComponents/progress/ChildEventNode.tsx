@@ -17,6 +17,7 @@ import {
 import { useTranslation } from "react-i18next";
 import type { PlantEventResponse } from "../../plant-event.types";
 import { EntityInfoBadge } from "./EntityInfoBadge";
+import { getPlantEventDisplayText } from "../../../utils/alertEventDetails";
 
 const TARGET_TYPE_ICONS = {
   FARM: MapPin,
@@ -48,6 +49,13 @@ export function ChildEventNode({
   const hasChildren = event.children && event.children.length > 0;
   const targetIcon = event.targetType ? TARGET_TYPE_ICONS[event.targetType] : null;
   const TargetIconCmp = targetIcon ?? Sprout;
+  const { title, subtitle } = getPlantEventDisplayText(event);
+  const formatShortDate = (value?: string | null) => value?.slice(5) ?? null;
+  const startLabel = formatShortDate(event.calculatedStartDate);
+  const endLabel = formatShortDate(event.calculatedEndDate);
+  const dateLabel = startLabel && endLabel && startLabel !== endLabel
+    ? `${startLabel} - ${endLabel}`
+    : startLabel;
 
   return (
     <View className="mb-2">
@@ -71,7 +79,7 @@ export function ChildEventNode({
                 event.completed ? "text-slate-400 line-through dark:text-slate-500" : "text-slate-800 dark:text-slate-100"
               }`}
             >
-              {event.note}
+              {title}
             </Text>
             {dateLabel && (
               <View className="flex-row items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 dark:bg-slate-800">
@@ -84,6 +92,15 @@ export function ChildEventNode({
           </View>
 
           <EntityInfoBadge event={event} />
+
+          {subtitle ? (
+            <Text
+              className="mt-0.5 text-[11px] font-medium text-slate-500 dark:text-slate-400"
+              numberOfLines={1}
+            >
+              {subtitle}
+            </Text>
+          ) : null}
 
           <View className="mt-1 flex-row items-center gap-2 flex-wrap">
             {event.targetType && (

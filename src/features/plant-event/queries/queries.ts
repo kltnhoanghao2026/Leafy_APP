@@ -120,7 +120,15 @@ export const usePlantEventsCalendar = (params: CalendarParams) =>
     queryKey: plantEventKeys.calendar(params),
     queryFn: () => plantEventApi.getEventsForCalendar(params),
     select: (response) => response.data.data,
-    enabled: Boolean(params.startDate && params.endDate),
+    enabled: Boolean(
+      params.startDate &&
+        params.endDate &&
+        (params.profileId ||
+          params.farmPlotId ||
+          params.farmZoneId ||
+          params.plantId ||
+          params.planApplyId),
+    ),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
@@ -141,7 +149,7 @@ export const usePlantEventPresignedUrl = (fileId: string, enabled = true) =>
   useQuery({
     queryKey: [...plantEventKeys.all(), "presigned", fileId],
     queryFn: () => plantEventApi.getPresignedUrl(fileId),
-    select: (response) => response.data.data,
+    select: (response) => response,
     enabled: enabled && !!fileId,
     staleTime: 60 * 60 * 1000,
   });

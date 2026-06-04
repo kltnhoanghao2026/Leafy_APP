@@ -149,6 +149,28 @@ export const useDeviceMedia = (deviceId?: string) => {
   });
 };
 
+export const useDeleteDeviceMediaEventMutation = (
+  deviceId?: string,
+  deviceUid?: string,
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (mediaEventId: string) =>
+      collectorApi.deleteDeviceMediaEvent(mediaEventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: iotKeys.deviceMedia(deviceId) });
+      queryClient.invalidateQueries({ queryKey: iotKeys.deviceDetail(deviceId) });
+      queryClient.invalidateQueries({
+        queryKey: iotKeys.deviceCameraSchedules(deviceUid),
+      });
+      if (deviceUid) {
+        queryClient.invalidateQueries({ queryKey: iotKeys.deviceCameraSchedules() });
+      }
+    },
+  });
+};
+
 export const useDeviceCameraSchedules = (deviceUid?: string) => {
   return useQuery({
     ...deviceCameraSchedulesQueryOptions(deviceUid),

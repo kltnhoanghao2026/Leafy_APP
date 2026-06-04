@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, RefreshCw, Send } from "lucide-react-native";
+import { RefreshCw, Send } from "lucide-react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -242,11 +242,6 @@ export function DeviceConfigScreen() {
       }
       style={styles.screen}
     >
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>{t("iot.devices.detail.kicker")}</Text>
-      </Pressable>
-
       <View style={styles.header}>
         <Text style={styles.kicker}>{t("iot.config.kicker")}</Text>
         <Text style={styles.title}>{t("iot.config.title")}</Text>

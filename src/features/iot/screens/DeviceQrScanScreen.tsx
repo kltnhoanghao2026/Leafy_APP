@@ -1,6 +1,6 @@
 import { CameraView, type BarcodeScanningResult, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Camera, ClipboardCheck } from "lucide-react-native";
+import { Camera, ClipboardCheck } from "lucide-react-native";
 import { useState } from "react";
 import {
   Pressable,
@@ -51,11 +51,6 @@ export function DeviceQrScanScreen() {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>{t("iot.devices.onboarding.title")}</Text>
-      </Pressable>
-
       <View style={styles.header}>
         <Text style={styles.kicker}>{t("iot.devices.onboarding.qrScannerKicker")}</Text>
         <Text style={styles.title}>{t("iot.devices.onboarding.scanQrTitle")}</Text>

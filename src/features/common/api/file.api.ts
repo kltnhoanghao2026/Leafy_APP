@@ -9,14 +9,32 @@ import { type ApiResponse } from "@/src/shared/api";
 interface UploadedFileRecord {
   id: string;
   fileType?: string;
+  s3Key?: string;
 }
 
 const MAX_PRESIGNED_EXPIRATION_MINUTES = 60 * 24 * 7;
+const INTERNAL_FILE_DOWNLOAD_PATTERN = /\/internal\/files\/download\/s3-key(?:\?|$)/i;
 
 // ─── Helper utilities ──────────────────────────────────────────────────────────
 
 const resolveMimeType = (asset: ImagePickerAsset): string =>
   asset.mimeType ?? "image/jpeg";
+
+const isInternalFileDownloadUrl = (value: string) =>
+  INTERNAL_FILE_DOWNLOAD_PATTERN.test(value);
+
+const extractInternalDownloadS3Key = (value: string): string | null => {
+  if (!isInternalFileDownloadUrl(value)) {
+    return null;
+  }
+
+  try {
+    return new URL(value).searchParams.get("s3Key");
+  } catch {
+    const [, query = ""] = value.split("?");
+    return new URLSearchParams(query).get("s3Key");
+  }
+};
 
 // ─── Core upload function ──────────────────────────────────────────────────────
 
@@ -93,11 +111,22 @@ export const uploadFile = async (
 
 export const fileApi = {
   /** Resolve an existing file-service ID into a short-lived image URL. */
-  getPresignedUrl: async (fileId: string): Promise<string> => {
-    if (!fileId) return "";
-    if (fileId.startsWith("http://") || fileId.startsWith("https://")) {
-      return fileId;
+  getPresignedUrl: async (fileReference: string): Promise<string> => {
+    if (!fileReference) return "";
+
+    const internalS3Key = extractInternalDownloadS3Key(fileReference);
+    if ((fileReference.startsWith("http://") || fileReference.startsWith("https://")) && !internalS3Key) {
+      return fileReference;
     }
+
+    let fileId = fileReference;
+    if (internalS3Key) {
+      const fileResponse = await apiClient.get<ApiResponse<UploadedFileRecord>>(
+        API_ENDPOINTS.FILES.BY_S3_KEY(internalS3Key),
+      );
+      fileId = fileResponse.data.data.id;
+    }
+
     const response = await apiClient.get<ApiResponse<string>>(
       API_ENDPOINTS.FILES.PRESIGNED_URL(fileId),
       { params: { expirationMinutes: MAX_PRESIGNED_EXPIRATION_MINUTES } },

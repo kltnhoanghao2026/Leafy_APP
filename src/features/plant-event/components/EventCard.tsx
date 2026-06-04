@@ -13,6 +13,7 @@ import {
   Leaf,
   ListChecks,
   MapPin,
+  ShieldAlert,
 } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
@@ -24,6 +25,10 @@ import {
 } from "./plant-event.types";
 import { CATEGORY_DOT_COLORS } from "./calendarConstants";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
+import {
+  formatPlantEventAlertDetails,
+  getPlantEventDisplayText,
+} from "../utils/alertEventDetails";
 
 type EventCardProps = {
   event: PlantEventResponse;
@@ -47,6 +52,7 @@ export function EventCard({
   const [expanded, setExpanded] = useState(false);
   const category = EVENT_CATEGORY_MAP[event.eventType] ?? "ROUTINE_CARE";
   const dotColor = CATEGORY_DOT_COLORS[category] ?? "#3B82F6";
+  const { alertDetails, title, subtitle } = getPlantEventDisplayText(event);
 
   const hasDetails =
     !!event.description ||
@@ -150,8 +156,16 @@ export function EventCard({
               }`}
               numberOfLines={1}
             >
-              {event.note}
+              {title}
             </Text>
+            {subtitle ? (
+              <Text
+                className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400"
+                numberOfLines={1}
+              >
+                {subtitle}
+              </Text>
+            ) : null}
             <View className="mt-0.5 flex-row items-center gap-2">
               <Text
                 className={`text-[11px] font-semibold ${colors.text} ${colors.darkText}`}
@@ -293,7 +307,9 @@ export function EventCard({
       {/* ── Expanded details ─────────────────────────────────────── */}
       {expanded && hasDetails && (
         <View className="mx-3 mb-3 mt-0 border-t border-slate-100 pt-2 dark:border-slate-800">
-          {event.description ? (
+          {alertDetails ? (
+            <AlertDetailsCard alertDetails={alertDetails} />
+          ) : event.description ? (
             <View className="mb-2">
               <Text className="text-[10px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
                 {t("plantEvent.card.description")}
@@ -446,6 +462,65 @@ export function EventCard({
           )}
         </View>
       )}
+    </View>
+  );
+}
+
+function AlertDetailsCard({
+  alertDetails,
+}: {
+  alertDetails: NonNullable<ReturnType<typeof formatPlantEventAlertDetails>>;
+}) {
+  const toneClass = {
+    danger: "border-red-100 bg-red-50 dark:border-red-900/40 dark:bg-red-950/30",
+    warning: "border-amber-100 bg-amber-50 dark:border-amber-900/40 dark:bg-amber-950/30",
+    info: "border-sky-100 bg-sky-50 dark:border-sky-900/40 dark:bg-sky-950/30",
+  };
+  const toneTextClass = {
+    danger: "text-red-700 dark:text-red-300",
+    warning: "text-amber-700 dark:text-amber-300",
+    info: "text-sky-700 dark:text-sky-300",
+  };
+
+  return (
+    <View className="mb-2 overflow-hidden rounded-xl border border-red-100 bg-white dark:border-red-900/40 dark:bg-slate-900">
+      <View className="flex-row items-center gap-2 border-b border-red-100 bg-red-50 px-3 py-2 dark:border-red-900/40 dark:bg-red-950/30">
+        <ShieldAlert size={14} color="#EF4444" />
+        <Text className="text-[11px] font-bold text-red-700 dark:text-red-300">
+          {alertDetails.title}
+        </Text>
+      </View>
+
+      <View className="gap-2 px-3 py-2.5">
+        {alertDetails.message ? (
+          <View className="rounded-lg bg-slate-50 px-2.5 py-2 dark:bg-slate-800/70">
+            <Text className="text-xs font-medium leading-5 text-slate-700 dark:text-slate-200">
+              {alertDetails.message}
+            </Text>
+          </View>
+        ) : null}
+
+        {alertDetails.fields.length > 0 ? (
+          <View className="flex-row flex-wrap gap-1.5">
+            {alertDetails.fields.map(field => {
+              const tone = field.tone ?? "info";
+              return (
+                <View
+                  key={`${field.label}:${field.value}`}
+                  className={`w-[48%] rounded-lg border px-2.5 py-2 ${toneClass[tone]}`}
+                >
+                  <Text className={`text-[10px] font-semibold opacity-75 ${toneTextClass[tone]}`}>
+                    {field.label}
+                  </Text>
+                  <Text className={`mt-0.5 text-xs font-bold ${toneTextClass[tone]}`}>
+                    {field.value}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }

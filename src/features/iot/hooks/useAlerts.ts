@@ -73,6 +73,13 @@ export const useAlertRules = () => {
 };
 
 const getRuleId = (rule: AlertRuleResponse) => rule.ruleId ?? rule.id;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const asSensorTypeId = (value?: string | null) => {
+  const trimmed = value?.trim();
+  return trimmed && UUID_PATTERN.test(trimmed) ? trimmed : undefined;
+};
 
 const invalidateAlertRuleSideEffects = (
   queryClient: ReturnType<typeof useQueryClient>,
@@ -100,7 +107,7 @@ export const useCreateAlertRuleMutation = () => {
             ruleId: `optimistic-${Date.now()}`,
             name: payload.name,
             sensorType: payload.sensorType ?? payload.sensorTypeId ?? "",
-            sensorTypeId: payload.sensorTypeId ?? payload.sensorType,
+            sensorTypeId: asSensorTypeId(payload.sensorTypeId),
             sensorTypeCode: payload.sensorType ?? payload.sensorTypeId ?? "",
             thresholdMin: payload.thresholdMin ?? payload.minThreshold ?? null,
             thresholdMax: payload.thresholdMax ?? payload.maxThreshold ?? null,
@@ -148,6 +155,7 @@ export const useUpdateAlertRuleMutation = () => {
                   ...rule,
                   ...payload,
                   sensorType: payload.sensorType ?? payload.sensorTypeId ?? rule.sensorType,
+                  sensorTypeId: asSensorTypeId(payload.sensorTypeId) ?? rule.sensorTypeId,
                   thresholdMin: payload.thresholdMin ?? payload.minThreshold ?? rule.thresholdMin,
                   sensorTypeCode: payload.sensorType ?? payload.sensorTypeId ?? rule.sensorTypeCode,
                   thresholdMax: payload.thresholdMax ?? payload.maxThreshold ?? rule.thresholdMax,

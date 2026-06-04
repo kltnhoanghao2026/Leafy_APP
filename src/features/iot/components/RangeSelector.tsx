@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 
+import { useIotTheme } from "./IoTUi";
 import type { ChartRange } from "../types";
 import { CHART_RANGES } from "../utils/chartFormat";
 
@@ -18,6 +19,7 @@ const rangeLabelKeys: Record<ChartRange, string> = {
 
 export function RangeSelector({ value, onChange }: RangeSelectorProps) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
 
   return (
     <View style={styles.wrap}>
@@ -25,9 +27,13 @@ export function RangeSelector({ value, onChange }: RangeSelectorProps) {
         <Pressable
           key={range.value}
           onPress={() => onChange(range.value)}
-          style={[styles.chip, value === range.value && styles.chipActive]}
+          style={[
+            styles.chip,
+            { backgroundColor: theme.cardAlt, borderColor: theme.border },
+            value === range.value && { backgroundColor: theme.primarySoft, borderColor: theme.tone("primary").border },
+          ]}
         >
-          <Text style={[styles.label, value === range.value && styles.labelActive]}>
+          <Text style={[styles.label, { color: value === range.value ? theme.primary : theme.subtle }]}>
             {t(rangeLabelKeys[range.value])}
           </Text>
         </Pressable>

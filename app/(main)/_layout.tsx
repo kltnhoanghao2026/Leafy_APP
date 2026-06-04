@@ -384,6 +384,7 @@ export default function MainLayout() {
       name: 'iot',
       title: 'IoT',
       headerTitle: 'IoT Dashboard',
+      headerShown: false,
       tabBarIcon: ({ color }: { color: string }) => <RadioTower color={color} size={24} />,
     },
     {
@@ -460,6 +461,7 @@ export default function MainLayout() {
                 title: tab.title,
                 headerTitle: tab.headerTitle,
                 tabBarIcon: tab.tabBarIcon,
+                ...(tab.headerShown !== undefined ? { headerShown: tab.headerShown } : {}),
                 ...(tab.tabBarButton !== undefined ? { tabBarButton: tab.tabBarButton } : {}),
                 ...(tab.headerLeft !== undefined ? { headerLeft: tab.headerLeft } : {}),
                 ...(tab.headerRight !== undefined ? { headerRight: tab.headerRight } : {}),

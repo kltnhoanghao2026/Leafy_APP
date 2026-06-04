@@ -7,7 +7,7 @@ import { PickerModal } from "@/src/components/ui/PickerModal";
 
 export type DevicePickerOption = {
   id?: string;
-  deviceId?: string;
+  deviceId?: string | null;
   deviceUid?: string | null;
   deviceCode?: string | null;
   name?: string | null;
@@ -159,7 +159,7 @@ export function DevicePicker({
           (device) => device.deviceCode ?? undefined,
           (device) => device.deviceUid ?? undefined,
           (device) => device.id,
-          (device) => device.deviceId,
+          (device) => device.deviceId ?? undefined,
           (device) => device.display?.technical?.deviceUid,
           (device) => device.display?.technical?.deviceId,
         ]}

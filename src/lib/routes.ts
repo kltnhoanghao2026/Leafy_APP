@@ -99,6 +99,7 @@ export const API_ENDPOINTS = {
   FILES: {
     UPLOAD: "/files/upload",
     PRESIGNED_URL: (fileId: string) => `/files/presigned-url/${fileId}`,
+    BY_S3_KEY: (s3Key: string) => `/files/s3-key/${encodeURIComponent(s3Key)}`,
   },
 
   USERS: {
@@ -175,6 +176,7 @@ export const API_ENDPOINTS = {
     FARM_ZONE_CHARTS: (zoneId: string) => `/iot/farm-zones/${zoneId}/charts`,
     ALERT_EVENTS: "/iot/alert-events",
     ALERT_EVENT: (alertId: string) => `/iot/alert-events/${alertId}`,
+    MEDIA_EVENT: (mediaEventId: string) => `/iot/media-events/${mediaEventId}`,
     ALERT_RULES: "/iot/alert-rules",
     ALERT_RULE: (ruleId: string) => `/iot/alert-rules/${ruleId}`,
     ALERT_EVENT_ACKNOWLEDGE: (alertId: string) =>
