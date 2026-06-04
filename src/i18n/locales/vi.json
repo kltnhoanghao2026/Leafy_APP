@@ -1825,6 +1825,9 @@
   },
   "offline": {
     "title": "Chế độ ngoại tuyến",
+    "aiDiagnosticsTitle": "Chẩn đoán AI",
+    "aiPredictTitle": "Chẩn đoán bệnh cây",
+    "aiPredictSubtitle": "Sử dụng AI ngoại tuyến để phát hiện bệnh",
     "dashboard": "Tổng quan",
     "plants": "Cây trồng",
     "farmTab": "Nông trại",

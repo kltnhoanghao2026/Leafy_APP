@@ -363,10 +363,10 @@ export function PlantEventProgressModal({
               {hasChildren && (
                 <View className="mb-6">
                   <Text className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                    {t("plantEvent.progress.progressDetails", { count: event.children.length })}
+                    {t("plantEvent.progress.progressDetails", { count: displayEvent.children.length })}
                   </Text>
                   <View className="rounded-2xl border border-slate-100 bg-white p-2 dark:border-slate-800 dark:bg-slate-900">
-                    {event.children.map((child) => (
+                    {displayEvent.children.map((child) => (
                       <ChildEventNode
                         key={child.id}
                         event={child}

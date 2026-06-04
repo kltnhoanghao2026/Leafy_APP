@@ -7,15 +7,16 @@ import {
   Text,
   View,
 } from "react-native";
-import { ChevronDown, X, Leaf } from "lucide-react-native";
+import { ChevronDown, X, Leaf, Check, MapPin, Layers, Sprout } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
 import { useAuthContext } from "@/src/features/auth";
-import { useFarmPlotsByOwner, useFarmZonesByPlot } from "@/src/features/farm";
+import { useFarmPlotsByOwner, useFarmZonesByPlot, FarmPlotResponse, FarmZoneResponse } from "@/src/features/farm";
 import { usePlants } from "@/src/features/plant";
 import type { PlantResponse } from "@/src/features/plant";
+import { useOfflineFarms, useOfflineFarmZones, useOfflinePlants } from "@/src/features/offline/hooks/useOfflineQueries";
 
 export interface DiagnosisPlantContext {
   farmPlotId?: string;
@@ -26,10 +27,7 @@ export interface DiagnosisPlantContext {
   plantName?: string;
 }
 
-const getPlantName = (plant: PlantResponse) =>
-  plant.nickName || plant.plantNumber || plant.tagCode || plant.id;
-
-type Option = { value: string; label: string };
+type Option = { value: string; label: string; sublabel?: string };
 
 function PickerField({
   label,
@@ -39,6 +37,7 @@ function PickerField({
   disabled,
   isLoading,
   onChange,
+  IconComponent,
 }: {
   label: string;
   value?: string;
@@ -47,6 +46,7 @@ function PickerField({
   disabled?: boolean;
   isLoading?: boolean;
   onChange: (next: string) => void;
+  IconComponent?: React.ComponentType<{ size: number; color: string }>;
 }) {
   const scheme = useColorScheme() ?? "light";
   const palette = Colors[scheme];
@@ -76,25 +76,32 @@ function PickerField({
         style={({ pressed }) => ({
           flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
           borderWidth: 1,
-          borderColor:
-            scheme === "dark" ? "rgba(71,85,105,0.5)" : "rgba(226,232,240,1)",
-          backgroundColor:
-            scheme === "dark" ? "rgba(30,41,59,0.7)" : "#FFFFFF",
+          borderColor: value && value !== ""
+            ? `${palette.primary}40`
+            : scheme === "dark" ? "rgba(71,85,105,0.5)" : "rgba(226,232,240,1)",
+          backgroundColor: value && value !== ""
+            ? scheme === "dark" ? "rgba(47,127,52,0.08)" : "rgba(47,127,52,0.03)"
+            : scheme === "dark" ? "rgba(30,41,59,0.7)" : "#FFFFFF",
           borderRadius: 14,
           paddingHorizontal: 14,
           paddingVertical: 12,
           opacity: disabled ? 0.55 : pressed ? 0.9 : 1,
         })}
       >
+        {IconComponent && (
+          <View style={{ marginRight: 8 }}>
+            <IconComponent size={18} color={value && value !== "" ? palette.primary : palette.tabIconDefault} />
+          </View>
+        )}
+
         <Text
           numberOfLines={1}
           style={{
             flex: 1,
             fontSize: 14,
             fontWeight: "600",
-            color: display ? palette.text : palette.tabIconDefault,
+            color: display && value !== "" ? palette.text : palette.tabIconDefault,
             marginRight: 10,
           }}
         >
@@ -111,7 +118,7 @@ function PickerField({
       <Modal
         visible={open}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setOpen(false)}
         statusBarTranslucent
       >
@@ -119,9 +126,8 @@ function PickerField({
           onPress={() => setOpen(false)}
           style={{
             flex: 1,
-            backgroundColor: "rgba(0,0,0,0.45)",
-            padding: 16,
-            justifyContent: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            justifyContent: "flex-end",
           }}
         >
           <Pressable
@@ -129,20 +135,34 @@ function PickerField({
             style={{
               backgroundColor:
                 scheme === "dark" ? "rgba(15,23,42,1)" : "#FFFFFF",
-              borderRadius: 18,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
               borderWidth: 1,
               borderColor:
                 scheme === "dark" ? "rgba(71,85,105,0.45)" : "rgba(226,232,240,1)",
               overflow: "hidden",
-              maxHeight: "70%",
+              maxHeight: "80%",
+              paddingBottom: 24,
             }}
           >
+            {/* Sheet Handle */}
+            <View style={{ alignItems: "center", paddingTop: 10, paddingBottom: 4 }}>
+              <View
+                style={{
+                  width: 38,
+                  height: 4,
+                  borderRadius: 2,
+                  backgroundColor: scheme === "dark" ? "rgba(71,85,105,0.5)" : "rgba(15,23,42,0.12)",
+                }}
+              />
+            </View>
+
             <View
               style={{
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
-                paddingHorizontal: 16,
+                paddingHorizontal: 20,
                 paddingVertical: 14,
                 borderBottomWidth: 1,
                 borderBottomColor:
@@ -164,8 +184,8 @@ function PickerField({
                   justifyContent: "center",
                   backgroundColor:
                     scheme === "dark"
-                      ? "rgba(71,85,105,0.35)"
-                      : "rgba(15,23,42,0.06)",
+                      ? "rgba(71, 85, 105, 0.35)"
+                      : "rgba(15, 23, 42, 0.06)",
                 }}
               >
                 <X size={18} color={palette.tabIconDefault} />
@@ -174,7 +194,7 @@ function PickerField({
 
             <ScrollView
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ padding: 8 }}
+              contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12 }}
             >
               {options.map((opt) => (
                 <Pressable
@@ -187,25 +207,74 @@ function PickerField({
                     paddingHorizontal: 14,
                     paddingVertical: 12,
                     borderRadius: 14,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                     backgroundColor: pressed
                       ? scheme === "dark"
                         ? "rgba(47,127,52,0.22)"
                         : "rgba(47,127,52,0.10)"
+                      : opt.value === (value ?? "")
+                      ? scheme === "dark"
+                        ? "rgba(47,127,52,0.15)"
+                        : "rgba(47,127,52,0.06)"
                       : "transparent",
+                    borderWidth: 1,
+                    borderColor: opt.value === (value ?? "")
+                      ? `${palette.primary}40`
+                      : "transparent",
+                    marginBottom: 6,
                   })}
                 >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "600",
-                      color:
-                        opt.value === (value ?? "")
-                          ? palette.primary
-                          : palette.text,
-                    }}
-                  >
-                    {opt.label}
-                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", flex: 1, gap: 10 }}>
+                    {IconComponent && opt.value !== "" && (
+                      <View
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          backgroundColor: opt.value === (value ?? "")
+                            ? `${palette.primary}18`
+                            : scheme === "dark" ? "rgba(71,85,105,0.2)" : "rgba(15,23,42,0.04)",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <IconComponent
+                          size={16}
+                          color={opt.value === (value ?? "") ? palette.primary : palette.tabIconDefault}
+                        />
+                      </View>
+                    )}
+                    <View style={{ flex: 1, gap: 2 }}>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: "600",
+                          color:
+                            opt.value === (value ?? "")
+                              ? palette.primary
+                              : palette.text,
+                        }}
+                      >
+                        {opt.label}
+                      </Text>
+                      {opt.sublabel ? (
+                        <Text
+                          style={{
+                            fontSize: 11,
+                            fontWeight: "500",
+                            color: palette.tabIconDefault,
+                          }}
+                        >
+                          {opt.sublabel}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                  {opt.value === (value ?? "") && (
+                    <Check size={16} color={palette.primary} />
+                  )}
                 </Pressable>
               ))}
             </ScrollView>
@@ -216,16 +285,21 @@ function PickerField({
   );
 }
 
+const getPlantName = (plant: PlantResponse) =>
+  plant.nickName || plant.plantNumber || plant.tagCode || plant.id;
+
 export default function PlantAttachCard({
   value,
   onChange,
   cardBg,
   borderColor,
+  offlineMode = false,
 }: {
   value: DiagnosisPlantContext;
   onChange: (next: DiagnosisPlantContext) => void;
   cardBg: string;
   borderColor: string;
+  offlineMode?: boolean;
 }) {
   const { t } = useTranslation();
   const scheme = useColorScheme() ?? "light";
@@ -233,12 +307,24 @@ export default function PlantAttachCard({
 
   const { profileId } = useAuthContext();
 
-  const plotsQuery = useFarmPlotsByOwner(profileId ?? "");
-  const zonesQuery = useFarmZonesByPlot(value.farmPlotId ?? "");
-  const plantsQuery = usePlants(
+  const onlinePlotsQuery = useFarmPlotsByOwner(profileId ?? "");
+  const offlinePlotsQuery = useOfflineFarms(profileId ?? "");
+  const plotsQuery = offlineMode ? offlinePlotsQuery : onlinePlotsQuery;
+
+  const onlineZonesQuery = useFarmZonesByPlot(value.farmPlotId ?? "");
+  const offlineZonesQuery = useOfflineFarmZones(value.farmPlotId ?? "");
+  const zonesQuery = offlineMode ? offlineZonesQuery : onlineZonesQuery;
+
+  const onlinePlantsQuery = usePlants(
     { page: 0, size: 100, sortBy: "createdAt", sortDir: "DESC" },
     true,
   );
+  const offlinePlantsQuery = useOfflinePlants({
+    farmPlotId: value.farmPlotId,
+    page: 0,
+    size: 100,
+  });
+  const plantsQuery = offlineMode ? offlinePlantsQuery : onlinePlantsQuery;
 
   const plots = useMemo(() => plotsQuery.data ?? [], [plotsQuery.data]);
   const zones = useMemo(() => zonesQuery.data ?? [], [zonesQuery.data]);
@@ -253,7 +339,11 @@ export default function PlantAttachCard({
   const plotOptions: Option[] = useMemo(
     () => [
       { value: "", label: t("common.none", { defaultValue: "Không chọn" }) },
-      ...plots.map((p: { id: string; name: string }) => ({ value: p.id, label: p.name })),
+      ...plots.map((p: FarmPlotResponse) => ({
+        value: p.id,
+        label: p.name,
+        sublabel: p.code ? `Mã: ${p.code}` : undefined,
+      })),
     ],
     [plots, t],
   );
@@ -266,7 +356,11 @@ export default function PlantAttachCard({
           ? t("common.none", { defaultValue: "Không chọn" })
           : t("diseaseDetection.choosePlotFirst", { defaultValue: "Chọn vườn trước" }),
       },
-      ...zones.map((z: { id: string; zoneName: string }) => ({ value: z.id, label: z.zoneName })),
+      ...zones.map((z: FarmZoneResponse) => ({
+        value: z.id,
+        label: z.zoneName,
+        sublabel: z.zoneCode ? `Mã: ${z.zoneCode}${z.cropType ? ` · Cây: ${z.cropType}` : ""}` : undefined,
+      })),
     ],
     [zones, t, value.farmPlotId],
   );
@@ -274,7 +368,11 @@ export default function PlantAttachCard({
   const plantOptions: Option[] = useMemo(
     () => [
       { value: "", label: t("common.none", { defaultValue: "Không chọn" }) },
-      ...filteredPlants.map((p: PlantResponse) => ({ value: p.id, label: getPlantName(p) })),
+      ...filteredPlants.map((p: PlantResponse) => ({
+        value: p.id,
+        label: getPlantName(p),
+        sublabel: p.plantNumber ? `Mã số: ${p.plantNumber}` : undefined,
+      })),
     ],
     [filteredPlants, t],
   );
@@ -330,8 +428,9 @@ export default function PlantAttachCard({
           options={plotOptions}
           placeholder={t("common.none", { defaultValue: "Không chọn" })}
           isLoading={plotsQuery.isLoading}
+          IconComponent={MapPin}
           onChange={(id) => {
-            const plot = plots.find((p: { id: string; name: string }) => p.id === id);
+            const plot = plots.find((p: FarmPlotResponse) => p.id === id);
             onChange({
               farmPlotId: plot?.id || undefined,
               farmPlotName: plot?.name,
@@ -356,8 +455,9 @@ export default function PlantAttachCard({
           }
           disabled={!value.farmPlotId}
           isLoading={zonesQuery.isLoading}
+          IconComponent={Layers}
           onChange={(id) => {
-            const zone = zones.find((z: { id: string; zoneName: string }) => z.id === id);
+            const zone = zones.find((z: FarmZoneResponse) => z.id === id);
             onChange({
               ...value,
               farmZoneId: zone?.id || undefined,
@@ -376,6 +476,7 @@ export default function PlantAttachCard({
           options={plantOptions}
           placeholder={t("common.none", { defaultValue: "Không chọn" })}
           isLoading={plantsQuery.isLoading}
+          IconComponent={Sprout}
           onChange={(id) => {
             const plant = filteredPlants.find((p: PlantResponse) => p.id === id);
             onChange({
