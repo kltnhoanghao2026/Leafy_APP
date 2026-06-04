@@ -1,19 +1,22 @@
 import { farmApi } from '@/src/features/farm';
 import { plantApi } from '@/src/features/plant';
 import { plantEventApi } from '@/src/features/plant-event';
+import { planApi } from '@/src/features/plan/api/plan.api';
 import {
   cacheFarmPlots,
   cacheFarmZones,
   cacheSpecies,
   cachePlants,
   cachePlantEvents,
+  cachePlans,
+  cachePlanApplies,
 } from "./offline-cache.service";
 
 const countPlaceholders = (sql: string) => (sql.match(/\?/g) ?? []).length;
 import { getDbAsync } from './offline-database';
 import type { FarmPlotResponse } from '@/src/features/farm';
 
-export type SyncTableKey = 'farm_plots' | 'farm_zones' | 'species' | 'plants' | 'plant_events';
+export type SyncTableKey = 'farm_plots' | 'farm_zones' | 'species' | 'plants' | 'plant_events' | 'plans' | 'plan_applies';
 
 export type SyncTableStatus = 'idle' | 'syncing' | 'done' | 'error';
 
@@ -213,6 +216,76 @@ export const syncPlantEventsData = async (
 };
 
 /**
+ * Sync user's own plans (paginated via /plans/me).
+ */
+export const syncPlansData = async (
+  onProgress?: SyncProgressCallback
+): Promise<number> => {
+  onProgress?.('plans', 'syncing');
+  let total = 0;
+  let page = 0;
+  const size = 100;
+
+  try {
+    while (true) {
+      const res = await planApi.getMyPlans({ page, size, sortBy: 'createdAt', sortDir: 'DESC' });
+      const data = res.data.data;
+      const items = data?.content ?? [];
+
+      if (items.length > 0) {
+        await cachePlans(items);
+        total += items.length;
+      }
+
+      if (page >= (data?.totalPages ?? 0) - 1 || items.length === 0) break;
+      page++;
+    }
+
+    onProgress?.('plans', 'done', total);
+    return total;
+  } catch (err: any) {
+    const msg = err?.message ?? 'Failed to sync plans';
+    onProgress?.('plans', 'error', 0, msg);
+    throw err;
+  }
+};
+
+/**
+ * Sync user's plan applications (paginated).
+ */
+export const syncPlanAppliesData = async (
+  onProgress?: SyncProgressCallback
+): Promise<number> => {
+  onProgress?.('plan_applies', 'syncing');
+  let total = 0;
+  let page = 0;
+  const size = 100;
+
+  try {
+    while (true) {
+      const res = await planApi.getMyApplies({ page, size, sortBy: 'createdAt', sortDir: 'DESC' });
+      const data = res.data.data;
+      const items = data?.content ?? [];
+
+      if (items.length > 0) {
+        await cachePlanApplies(items);
+        total += items.length;
+      }
+
+      if (page >= (data?.totalPages ?? 0) - 1 || items.length === 0) break;
+      page++;
+    }
+
+    onProgress?.('plan_applies', 'done', total);
+    return total;
+  } catch (err: any) {
+    const msg = err?.message ?? 'Failed to sync plan applies';
+    onProgress?.('plan_applies', 'error', 0, msg);
+    throw err;
+  }
+};
+
+/**
  * Master sync: orchestrates all sync operations in sequence.
  */
 export const syncAll = async (
@@ -227,6 +300,8 @@ export const syncAll = async (
     species: { status: 'idle', count: 0 },
     plants: { status: 'idle', count: 0 },
     plant_events: { status: 'idle', count: 0 },
+    plans: { status: 'idle', count: 0 },
+    plan_applies: { status: 'idle', count: 0 },
   };
 
   const trackProgress: SyncProgressCallback = (table, status, count = 0, error) => {
@@ -265,6 +340,22 @@ export const syncAll = async (
   try {
     const count = await syncPlantEventsData(profileId, trackProgress);
     tables.plant_events = { status: 'done', count };
+  } catch {
+    success = false;
+  }
+
+  // 5. Plans
+  try {
+    const count = await syncPlansData(trackProgress);
+    tables.plans = { status: 'done', count };
+  } catch {
+    success = false;
+  }
+
+  // 6. Plan Applies
+  try {
+    const count = await syncPlanAppliesData(trackProgress);
+    tables.plan_applies = { status: 'done', count };
   } catch {
     success = false;
   }

@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from 'react-i18next';
+import { useRouter, useNavigation } from 'expo-router';
 import {
   RefreshCw,
   Map,
@@ -22,6 +23,7 @@ import {
   WifiOff,
   List,
   Database,
+  ChevronLeft,
 } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import { Easing } from 'react-native-reanimated';
@@ -60,7 +62,7 @@ function CompactRow({
   progress: Record<SyncTableKey, { status: SyncTableStatus; count: number; error?: string }>;
   syncStatus: Record<string, { lastSyncedAt: string | null }>;
   recordCounts: Record<string, number>;
-  t: (key: string, defaultValue?: string, options?: any) => string;
+  t: any;
 }) {
   const tableProgress = progress[meta.key];
   const tableSync = syncStatus[meta.key];
@@ -226,6 +228,13 @@ export function OfflineSyncScreen() {
   const palette = Colors[colorScheme ?? 'light'];
   const isDark = colorScheme === 'dark';
 
+  const router = useRouter();
+  const navigation = useNavigation();
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({ headerShown: false });
+  }, [navigation]);
+
   const { isOffline } = useNetworkContext();
   const { syncStatus, recordCounts, pendingCount } = useOfflineDataContext();
   const {
@@ -272,6 +281,18 @@ export function OfflineSyncScreen() {
       icon: <Calendar size={22} color={palette.primary} />,
       countKey: 'plant_events',
     },
+    {
+      key: 'plans',
+      labelKey: 'offline.sync.planData',
+      icon: <List size={22} color={palette.primary} />,
+      countKey: 'plans',
+    },
+    {
+      key: 'plan_applies',
+      labelKey: 'offline.sync.planAppliesData',
+      icon: <List size={22} color={palette.primary} />,
+      countKey: 'plan_applies',
+    },
   ];
 
   const handlePress = useCallback(() => {
@@ -297,12 +318,50 @@ export function OfflineSyncScreen() {
       edges={["top", "bottom"]}
     >
       <View style={[styles.container, { backgroundColor: palette.background }]}>
-      {/* ── Tab Switcher ── */}
-      <View style={[styles.tabContainer, { backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: isDark ? '#334155' : '#e2e8f0' }]}>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'status' && [styles.activeTab, { backgroundColor: palette.primary }]]}
-          onPress={() => setActiveTab('status')}
+        {/* ── Custom Header ── */}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            backgroundColor: isDark ? "#0F172A" : "#FFFFFF",
+            borderBottomWidth: 1,
+            borderBottomColor: isDark ? "#1E293B" : "#E2E8F0",
+          }}
         >
+          <TouchableOpacity
+            onPress={() => router.canGoBack() ? router.back() : router.push("/(offline)/plans")}
+            style={{
+              padding: 8,
+              borderRadius: 99,
+              backgroundColor: isDark ? "#1E293B" : "#F1F5F9",
+            }}
+          >
+            <ChevronLeft size={20} color={isDark ? "#94A3B8" : "#475569"} />
+          </TouchableOpacity>
+
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: "800",
+              color: isDark ? "#F8FAFC" : "#0F172A",
+              textAlign: "center",
+            }}
+          >
+            {t("offline.sync.title", "Đồng bộ dữ liệu")}
+          </Text>
+
+          <View style={{ width: 36 }} />
+        </View>
+
+        {/* ── Tab Switcher ── */}
+        <View style={[styles.tabContainer, { backgroundColor: isDark ? '#1e293b' : '#f8fafc', borderColor: isDark ? '#334155' : '#e2e8f0' }]}>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'status' && [styles.activeTab, { backgroundColor: palette.primary }]]}
+            onPress={() => setActiveTab('status')}
+          >
           <RefreshCw size={16} color={activeTab === 'status' ? '#fff' : (isDark ? '#94a3b8' : '#64748b')} />
           <Text style={[styles.tabText, activeTab === 'status' ? styles.activeTabText : { color: isDark ? '#94a3b8' : '#64748b' }]}>
             {t('offline.sync.statusTab', 'Trạng thái')}

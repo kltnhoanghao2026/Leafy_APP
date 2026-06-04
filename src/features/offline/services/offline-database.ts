@@ -207,6 +207,48 @@ export const initOfflineDatabase = async () => {
       );
     `);
 
+    // ── Plans ──
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS plans (
+        id TEXT PRIMARY KEY,
+        creatorId TEXT,
+        ownerId TEXT,
+        planName TEXT,
+        diseaseName TEXT,
+        severityLevel TEXT,
+        urgency TEXT,
+        sourceType TEXT,
+        estimatedCost TEXT,
+        createdAt TEXT,
+        lastModifiedAt TEXT,
+        active INTEGER DEFAULT 1,
+        _dirty INTEGER DEFAULT 0,
+        _deleted INTEGER DEFAULT 0
+      );
+    `);
+
+    // ── Plan Applies ──
+    await db.execAsync(`
+      CREATE TABLE IF NOT EXISTS plan_applies (
+        id TEXT PRIMARY KEY,
+        planId TEXT,
+        appliedById TEXT,
+        plantId TEXT,
+        farmPlotId TEXT,
+        farmZoneId TEXT,
+        planName TEXT,
+        diseaseName TEXT,
+        targetName TEXT,
+        startDate TEXT,
+        trackingGranularity TEXT,
+        status TEXT,
+        createdAt TEXT,
+        lastModifiedAt TEXT,
+        _dirty INTEGER DEFAULT 0,
+        _deleted INTEGER DEFAULT 0
+      );
+    `);
+
     // --- Schema Upgrades ---
     // We ignore errors if the column already exists.
 
@@ -276,6 +318,8 @@ export const clearOfflineDatabase = async () => {
       DELETE FROM species;
       DELETE FROM plants;
       DELETE FROM plant_events;
+      DELETE FROM plans;
+      DELETE FROM plan_applies;
       DELETE FROM sync_metadata;
       DELETE FROM id_map;
       DELETE FROM pending_sync_queue;

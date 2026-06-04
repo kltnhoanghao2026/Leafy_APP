@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import type { FarmPlotResponse, FarmZoneResponse } from '@/src/features/farm';
 import type { PlantResponse, SpeciesResponse } from '@/src/features/plant';
 import type { PlantEventResponse } from '@/src/features/plant-event';
+import type { PlanResponse, PlanApplyResponse } from '@/src/features/plan/schemas/plan.schema';
 
 export const updateSyncMetadata = async (tableName: string) => {
   if (Platform.OS === 'web') return;
@@ -155,5 +156,52 @@ export const cachePlantEvents = async (events: PlantEventResponse[]) => {
     await updateSyncMetadata('plant_events');
   } catch (error) {
     console.error('[OfflineCache] Failed to cache plant events', error);
+  }
+};
+
+export const cachePlans = async (plans: PlanResponse[]) => {
+  if (Platform.OS === 'web' || !plans || plans.length === 0) return;
+  const db = await getDbAsync();
+  try {
+    for (const plan of plans) {
+      await db.runAsync(
+        `INSERT OR REPLACE INTO plans 
+        (id, creatorId, ownerId, planName, diseaseName, severityLevel, urgency, sourceType, estimatedCost, createdAt, lastModifiedAt, active, _dirty, _deleted) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
+        [
+          plan.id, plan.creatorId || null, plan.ownerId || null, plan.planName || null,
+          plan.diseaseName || null, plan.severityLevel || null, plan.urgency || null,
+          plan.sourceType || null, plan.estimatedCost || null, plan.createdAt || null,
+          plan.lastModifiedAt || null, plan.active === false ? 0 : 1
+        ]
+      );
+    }
+    await updateSyncMetadata('plans');
+  } catch (error) {
+    console.error('[OfflineCache] Failed to cache plans', error);
+  }
+};
+
+export const cachePlanApplies = async (applies: PlanApplyResponse[]) => {
+  if (Platform.OS === 'web' || !applies || applies.length === 0) return;
+  const db = await getDbAsync();
+  try {
+    for (const apply of applies) {
+      await db.runAsync(
+        `INSERT OR REPLACE INTO plan_applies 
+        (id, planId, appliedById, plantId, farmPlotId, farmZoneId, planName, diseaseName, targetName, startDate, trackingGranularity, status, createdAt, lastModifiedAt, _dirty, _deleted) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
+        [
+          apply.id, apply.planId, apply.appliedById || null, apply.plantId || null,
+          apply.farmPlotId || null, apply.farmZoneId || null, apply.planName || null,
+          apply.diseaseName || null, apply.targetName || null, apply.startDate || null,
+          apply.trackingGranularity || null, apply.status, apply.createdAt || null,
+          apply.lastModifiedAt || null
+        ]
+      );
+    }
+    await updateSyncMetadata('plan_applies');
+  } catch (error) {
+    console.error('[OfflineCache] Failed to cache plan applies', error);
   }
 };

@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Pressable, Text, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Home, Sprout, Map, Settings, Activity } from 'lucide-react-native';
+import { Home, Sprout, Map, Settings, Activity, ClipboardList } from 'lucide-react-native';
 import { useColorScheme } from '@/src/hooks/useColorScheme';
 import Colors from '@/src/constants/Colors';
 import { useNetworkContext } from '@/src/providers/NetworkProvider';
@@ -85,6 +85,13 @@ export default function OfflineLayout() {
           options={{
             title: t('offline.plants', 'Plants'),
             tabBarIcon: ({ color }) => <Sprout color={color} size={24} />,
+          }}
+        />
+        <Tabs.Screen
+          name="plans"
+          options={{
+            title: t('offline.plans', 'Plans'),
+            tabBarIcon: ({ color }) => <ClipboardList color={color} size={24} />,
           }}
         />
         <Tabs.Screen

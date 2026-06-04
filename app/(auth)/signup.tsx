@@ -21,6 +21,8 @@ import {
   AuthLegalFooter,
   AuthErrorBanner,
 } from "@/src/features/auth/components/ui";
+import { useAuthContext } from "@/src/features/auth/context/AuthContext";
+import { useNetworkContext } from "@/src/providers/NetworkProvider";
 
 const SIGNUP_HERO_MIN_HEIGHT = 220;
 
@@ -43,6 +45,16 @@ export default function SignupScreen() {
     handleToggleTermsAccepted,
     handlePressSignin,
   } = useSignupScreen();
+
+  const { loginOffline } = useAuthContext();
+  const { toggleForceOffline } = useNetworkContext();
+
+  const handleContinueOffline = async () => {
+    const success = await loginOffline();
+    if (success) {
+      await toggleForceOffline();
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }} edges={['bottom', 'left', 'right','top']}>
@@ -239,6 +251,18 @@ export default function SignupScreen() {
               onPressLink={handlePressSignin}
             />
 
+            <TouchableOpacity
+              onPress={handleContinueOffline}
+              style={[
+                styles.offlineButton,
+                { borderColor: palette.primary, backgroundColor: palette.background }
+              ]}
+            >
+              <Text style={[styles.offlineButtonText, { color: palette.primary }]}>
+                {t("offline.continueOffline", "Continue Offline")}
+              </Text>
+            </TouchableOpacity>
+
             <AuthLegalFooter palette={palette} />
           </View>
         </View>
@@ -283,5 +307,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     flex: 1,
+  },
+  offlineButton: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  offlineButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

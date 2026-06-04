@@ -1847,6 +1847,7 @@
     "dashboardDesc": "You are currently disconnected from the main server. Your cached farms, plants, and events are available here for reference.",
     "noDataTitle": "Workspace Empty",
     "farms": "Farms & Zones",
+    "plans": "Cultivation Plans",
     "sync": {
       "title": "Sync Data",
       "subtitle": "Download your farm data for offline use. Events are synced for the current month.",
@@ -1860,6 +1861,8 @@
       "speciesData": "Species",
       "plantData": "Plants",
       "eventData": "Plant Events (This Month)",
+      "planData": "Cultivation Plans",
+      "planAppliesData": "Applied Plans",
       "recordsCached": "{{count}} synced",
       "noNetwork": "No internet connection. Connect to sync.",
       "lastSyncDuration": "Completed in {{seconds}}s",

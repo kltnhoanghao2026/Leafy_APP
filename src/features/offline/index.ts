@@ -5,6 +5,7 @@ export * from './components/OfflineFarmList';
 export * from './components/OfflineFarmZoneList';
 export * from './components/OfflinePlantList';
 export * from './components/OfflinePlantEventList';
+export * from './components/OfflinePlanList';
 export * from './components/OfflineSyncScreen';
 
 // ── Offline Form Modals ───────────────────────────────────────────────────

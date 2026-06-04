@@ -1847,6 +1847,7 @@
     "dashboardDesc": "Bạn hiện đang mất kết nối với máy chủ. Nông trại, cây trồng và sự kiện đã lưu sẵn để tham khảo.",
     "noDataTitle": "Chưa có dữ liệu",
     "farms": "Nông trại & Phân khu",
+    "plans": "Kế hoạch nuôi trồng",
     "sync": {
       "title": "Đồng bộ dữ liệu",
       "subtitle": "Tải dữ liệu nông trại để dùng ngoại tuyến. Sự kiện được đồng bộ cho tháng hiện tại.",
@@ -1860,6 +1861,8 @@
       "speciesData": "Loài cây",
       "plantData": "Cây trồng",
       "eventData": "Sự kiện cây trồng (Tháng này)",
+      "planData": "Kế hoạch nuôi trồng",
+      "planAppliesData": "Kế hoạch áp dụng",
       "recordsCached": "Đã đồng bộ {{count}}",
       "noNetwork": "Không có kết nối internet. Kết nối để đồng bộ.",
       "lastSyncDuration": "Hoàn thành trong {{seconds}}s",

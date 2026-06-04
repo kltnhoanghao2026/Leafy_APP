@@ -19,6 +19,8 @@ const initialProgress = (): SyncProgressMap => ({
   species: { status: 'idle', count: 0 },
   plants: { status: 'idle', count: 0 },
   plant_events: { status: 'idle', count: 0 },
+  plans: { status: 'idle', count: 0 },
+  plan_applies: { status: 'idle', count: 0 },
 });
 
 export function useOfflineSync() {

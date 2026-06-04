@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import type { FarmPlotResponse, FarmZoneResponse, CreateFarmPlotRequest, UpdateFarmPlotRequest, CreateFarmZoneRequest, UpdateFarmZoneRequest } from '@/src/features/farm';
 import type { PlantResponse, PlantCreateRequest, PlantUpdateRequest, SpeciesResponse, PageResponse } from '@/src/features/plant';
 import type { PlantEventResponse, PlantEventCreateRequest, PlantEventUpdateRequest } from '@/src/features/plant-event';
+import type { PlanResponse, PlanApplyResponse } from '@/src/features/plan/schemas/plan.schema';
 import { enqueueMutation } from './sync-queue.service';
 // Polyfill-safe UUID generator
 const generateUUID = (): string => {
@@ -350,7 +351,7 @@ export const getOfflineRecordCounts = async (): Promise<Record<string, number>> 
   if (Platform.OS === 'web') return {};
   const db = await getDbAsync();
   try {
-    const tables = ['farm_plots', 'farm_zones', 'species', 'plants', 'plant_events'];
+    const tables = ['farm_plots', 'farm_zones', 'species', 'plants', 'plant_events', 'plans', 'plan_applies'];
     const counts: Record<string, number> = {};
     for (const table of tables) {
       const result = await db.getFirstAsync(
@@ -638,6 +639,10 @@ export const getOfflineAgricultureStats = async (): Promise<any> => {
     
     const overdueEventsRow = await db.getFirstAsync(`SELECT COUNT(*) as c FROM plant_events WHERE _deleted = 0 AND completed = 0 AND parentPlantEventId IS NULL AND calculatedEndDate < ?`, [todayDate]) as any;
     
+    const totalPlansRow = await db.getFirstAsync(`SELECT COUNT(*) as c FROM plans WHERE _deleted = 0`) as any;
+    const activeAppliesRow = await db.getFirstAsync(`SELECT COUNT(*) as c FROM plan_applies WHERE _deleted = 0 AND status = 'ACTIVE'`) as any;
+    const completedAppliesRow = await db.getFirstAsync(`SELECT COUNT(*) as c FROM plan_applies WHERE _deleted = 0 AND status = 'COMPLETED'`) as any;
+
     return {
       activePlants: activePlantsRow?.c || 0,
       totalPlants: totalPlantsRow?.c || 0,
@@ -648,12 +653,81 @@ export const getOfflineAgricultureStats = async (): Promise<any> => {
       todayEvents: todayEventsRow?.c || 0,
       todayCompletedEvents: todayCompletedEventsRow?.c || 0,
       overdueEvents: overdueEventsRow?.c || 0,
-      totalPlans: 0,
-      activePlanApplies: 0,
-      completedPlanApplies: 0,
+      totalPlans: totalPlansRow?.c || 0,
+      activePlanApplies: activeAppliesRow?.c || 0,
+      completedPlanApplies: completedAppliesRow?.c || 0,
     };
   } catch (error) {
     console.error('[OfflineQuery] getOfflineAgricultureStats failed', error);
     return null;
+  }
+};
+
+export const getOfflinePlans = async (params: { page?: number; size?: number } = {}): Promise<PageResponse<PlanResponse>> => {
+  if (Platform.OS === 'web') return { content: [], number: 0, size: 0, totalElements: 0, totalPages: 0, numberOfElements: 0, first: true, last: true, empty: true };
+  const db = await getDbAsync();
+  try {
+    const page = params.page || 0;
+    const size = params.size || 20;
+    
+    let query = `SELECT * FROM plans WHERE _deleted = 0 ORDER BY createdAt DESC LIMIT ? OFFSET ?`;
+    let countQuery = `SELECT COUNT(*) as count FROM plans WHERE _deleted = 0`;
+    
+    const rows = await db.getAllAsync(query, [size, page * size]) as any[];
+    const countResult = await db.getFirstAsync(countQuery) as { count: number } | null;
+
+    const totalElements = countResult?.count || 0;
+    const totalPages = Math.ceil(totalElements / size);
+
+    return {
+      content: rows.map(row => ({
+        ...row,
+        active: row.active !== 0,
+      })) as PlanResponse[],
+      number: page,
+      size,
+      totalElements,
+      totalPages,
+      numberOfElements: rows.length,
+      first: page === 0,
+      last: page === totalPages - 1 || totalPages === 0,
+      empty: rows.length === 0,
+    };
+  } catch (error) {
+    console.error('[OfflineQuery] getOfflinePlans failed', error);
+    return { content: [], number: 0, size: 0, totalElements: 0, totalPages: 0, numberOfElements: 0, first: true, last: true, empty: true };
+  }
+};
+
+export const getOfflinePlanApplies = async (params: { page?: number; size?: number } = {}): Promise<PageResponse<PlanApplyResponse>> => {
+  if (Platform.OS === 'web') return { content: [], number: 0, size: 0, totalElements: 0, totalPages: 0, numberOfElements: 0, first: true, last: true, empty: true };
+  const db = await getDbAsync();
+  try {
+    const page = params.page || 0;
+    const size = params.size || 20;
+    
+    let query = `SELECT * FROM plan_applies WHERE _deleted = 0 ORDER BY createdAt DESC LIMIT ? OFFSET ?`;
+    let countQuery = `SELECT COUNT(*) as count FROM plan_applies WHERE _deleted = 0`;
+    
+    const rows = await db.getAllAsync(query, [size, page * size]) as any[];
+    const countResult = await db.getFirstAsync(countQuery) as { count: number } | null;
+
+    const totalElements = countResult?.count || 0;
+    const totalPages = Math.ceil(totalElements / size);
+
+    return {
+      content: rows as PlanApplyResponse[],
+      number: page,
+      size,
+      totalElements,
+      totalPages,
+      numberOfElements: rows.length,
+      first: page === 0,
+      last: page === totalPages - 1 || totalPages === 0,
+      empty: rows.length === 0,
+    };
+  } catch (error) {
+    console.error('[OfflineQuery] getOfflinePlanApplies failed', error);
+    return { content: [], number: 0, size: 0, totalElements: 0, totalPages: 0, numberOfElements: 0, first: true, last: true, empty: true };
   }
 };

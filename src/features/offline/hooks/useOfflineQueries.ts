@@ -6,7 +6,9 @@ import {
   getOfflineSpecies, 
   getOfflinePlantEvents,
   getOfflinePlantEventById,
-  getOfflineAgricultureStats
+  getOfflineAgricultureStats,
+  getOfflinePlans,
+  getOfflinePlanApplies
 } from '../services/offline-query.service';
 import { getPendingCount } from '../services/sync-queue.service';
 import type { PageParams, PlantFilterParams } from '@/src/features/plant';
@@ -101,5 +103,19 @@ export const useOfflinePendingCount = () => {
     queryKey: offlineKeys.pendingCount(),
     queryFn: () => getPendingCount(),
     refetchInterval: 5000,
+  });
+};
+
+export const useOfflinePlans = (params: { page?: number; size?: number } = {}) => {
+  return useQuery({
+    queryKey: [...offlineKeys.all, 'plans', params],
+    queryFn: () => getOfflinePlans(params),
+  });
+};
+
+export const useOfflinePlanApplies = (params: { page?: number; size?: number } = {}) => {
+  return useQuery({
+    queryKey: [...offlineKeys.all, 'planApplies', params],
+    queryFn: () => getOfflinePlanApplies(params),
   });
 };

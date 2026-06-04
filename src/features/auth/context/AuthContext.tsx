@@ -178,7 +178,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(cachedProfile);
         return true;
       }
-      return false;
+      // Create a default offline profile for new installations / offline testing
+      const offlineProfile = {
+        id: "offline_user",
+        userId: "offline_user",
+        fullName: "Offline User",
+        role: "FARMER" as const,
+        active: true,
+        email: "offline@leafy.org",
+        createdAt: new Date().toISOString(),
+      };
+      setUser(offlineProfile);
+      return true;
     } catch {
       return false;
     }

@@ -183,22 +183,17 @@ export default function LoginScreen() {
               onPressLink={handlePressSignup}
             />
 
-            {!checkingOffline && canOffline && (
-              <TouchableOpacity
-                onPress={handleContinueOffline}
-                style={[
-                  styles.offlineButton,
-                  { borderColor: palette.primary, backgroundColor: palette.background }
-                ]}
-              >
-                <Text style={[styles.offlineButtonText, { color: palette.primary }]}>
-                  {t("offline.continueOffline", "Continue Offline")}
-                </Text>
-              </TouchableOpacity>
-            )}
-            {checkingOffline && (
-              <ActivityIndicator color={palette.primary} style={{ marginTop: 16 }} />
-            )}
+            <TouchableOpacity
+              onPress={handleContinueOffline}
+              style={[
+                styles.offlineButton,
+                { borderColor: palette.primary, backgroundColor: palette.background }
+              ]}
+            >
+              <Text style={[styles.offlineButtonText, { color: palette.primary }]}>
+                {t("offline.continueOffline", "Continue Offline")}
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <AuthLegalFooter palette={palette} />
