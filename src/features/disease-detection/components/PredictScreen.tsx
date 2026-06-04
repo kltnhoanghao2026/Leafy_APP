@@ -23,6 +23,7 @@ import { useNavigation } from "expo-router";
 
 import Colors from "@/src/constants/Colors";
 import { useColorScheme } from "@/src/hooks/useColorScheme";
+import BackButton from "@/src/components/ui/BackButton";
 import {
   useDetectLeaf,
   usePredict,
@@ -97,25 +98,33 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
 
     navigation.setOptions({
       headerShown: !isCameraActive,
+      headerTitle: offlineMode
+        ? t('offline.aiPredictTitle', 'Chẩn đoán bệnh cây')
+        : t('diseaseDetection.title', 'Disease Detection'),
+      headerLeft: offlineMode
+        ? () => <BackButton fallback="/(offline)" className="ml-4" />
+        : undefined,
       headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginRight: 4 }}>
-          <Pressable
-            onPress={() => router.push("/(main)/predict/history")}
-            style={({ pressed }) => ({
-              width: 36,
-              height: 36,
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 10,
-              backgroundColor:
-                scheme === "dark"
-                  ? "rgba(71, 85, 105, 0.35)"
-                  : "rgba(47, 127, 52, 0.08)",
-              opacity: pressed ? 0.9 : 1,
-            })}
-          >
-            <History size={18} color={palette.primary} />
-          </Pressable>
+          {!offlineMode && (
+            <Pressable
+              onPress={() => router.push("/(main)/predict/history")}
+              style={({ pressed }) => ({
+                width: 36,
+                height: 36,
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: 10,
+                backgroundColor:
+                  scheme === "dark"
+                    ? "rgba(71, 85, 105, 0.35)"
+                    : "rgba(47, 127, 52, 0.08)",
+                opacity: pressed ? 0.9 : 1,
+              })}
+            >
+              <History size={18} color={palette.primary} />
+            </Pressable>
+          )}
 
           <Pressable
             onPress={() => setDropdownOpen((v) => !v)}
@@ -137,7 +146,7 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
         </View>
       ),
     });
-  }, [navigation, predictMode, palette, scheme, t, isLocalCameraActive, router]);
+  }, [navigation, predictMode, palette, scheme, t, isLocalCameraActive, router, offlineMode]);
 
   // ── Step 1: Pick image ───────────────────────────────────────────
 
@@ -568,6 +577,7 @@ export default function PredictScreen({ offlineMode = false }: { offlineMode?: b
               onChange={setPlantContext}
               cardBg={cardBg}
               borderColor={borderColor}
+              offlineMode={offlineMode}
             />
           </>
         )}

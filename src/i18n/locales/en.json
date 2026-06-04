@@ -1825,6 +1825,9 @@
   },
   "offline": {
     "title": "Offline Mode",
+    "aiDiagnosticsTitle": "AI Diagnostics",
+    "aiPredictTitle": "Scan Plant Disease",
+    "aiPredictSubtitle": "Use local AI to detect issues offline",
     "dashboard": "Dashboard",
     "plants": "My Plants",
     "farmTab": "My Farm",

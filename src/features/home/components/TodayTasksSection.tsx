@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { View, Text, TouchableOpacity, ActivityIndicator } from "react-native";
 import { CalendarDays, ArrowRight } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
@@ -62,16 +62,56 @@ export function TodayTasksSection() {
   const updateEventMutation = useUpdatePlantEventMutation();
   const toggleTaskMutation = useToggleTaskMutation();
 
-  const handleToggleComplete = (event: PlantEventResponse) => {
-    updateEventMutation.mutate({
-      eventId: event.id,
-      body: { completed: !event.completed },
-    });
-  };
+  // ── Local optimistic state ───────────────────────────────────────────
+  const [localEvents, setLocalEvents] = useState<PlantEventResponse[]>(events);
 
-  const handleToggleTask = (event: PlantEventResponse, taskIndex: number) => {
-    toggleTaskMutation.mutate({ eventId: event.id, taskIndex });
-  };
+  // Sync local state when server data arrives (refetch / filter change)
+  useEffect(() => {
+    setLocalEvents(events);
+  }, [events]);
+
+  const handleToggleComplete = useCallback((event: PlantEventResponse) => {
+    const next = !event.completed;
+    // Optimistic update
+    setLocalEvents((prev) =>
+      prev.map((e) => (e.id === event.id ? { ...e, completed: next } : e)),
+    );
+    updateEventMutation.mutate(
+      { eventId: event.id, body: { completed: next } },
+      {
+        onError: () => {
+          // Rollback
+          setLocalEvents((prev) =>
+            prev.map((e) => (e.id === event.id ? { ...e, completed: event.completed } : e)),
+          );
+        },
+      },
+    );
+  }, [updateEventMutation]);
+
+  const handleToggleTask = useCallback((event: PlantEventResponse, taskIndex: number) => {
+    // Optimistic flip for the task
+    setLocalEvents((prev) =>
+      prev.map((e) => {
+        if (e.id !== event.id || !e.tasks) return e;
+        const newTasks = e.tasks.map((task, idx) =>
+          idx === taskIndex ? { ...task, completed: !task.completed } : task,
+        );
+        return { ...e, tasks: newTasks };
+      }),
+    );
+    toggleTaskMutation.mutate(
+      { eventId: event.id, taskIndex },
+      {
+        onError: () => {
+          // Rollback to original task state
+          setLocalEvents((prev) =>
+            prev.map((e) => (e.id === event.id ? event : e)),
+          );
+        },
+      },
+    );
+  }, [toggleTaskMutation]);
 
   const handleNavigateToEvent = (eventId: string) => {
     router.push(`/(main)/plant-events/${eventId}`);
@@ -93,6 +133,7 @@ export function TodayTasksSection() {
       "ROUTINE_CARE",
       "HEALTH_MEDICAL",
       "GROWTH_LIFECYCLE",
+      "ALERTS",
     ];
 
     return (
@@ -157,7 +198,7 @@ export function TodayTasksSection() {
             </Text>
           </View>
         ) : (
-          renderGroupedEvents(events)
+          renderGroupedEvents(localEvents)
         )}
       </View>
 

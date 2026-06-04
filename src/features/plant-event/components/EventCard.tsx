@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   LayoutAnimation,
   Text,
   TouchableOpacity,
@@ -45,8 +46,14 @@ export function EventCard({
   const colors = getEventCategoryColors(event.eventType);
   const Icon = getEventTypeIcon(event.eventType);
   const [expanded, setExpanded] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
   const category = EVENT_CATEGORY_MAP[event.eventType] ?? "ROUTINE_CARE";
   const dotColor = CATEGORY_DOT_COLORS[category] ?? "#3B82F6";
+
+  // Clear the pending spinner once the parent re-renders with the updated value
+  useEffect(() => {
+    setIsToggling(false);
+  }, [event.completed]);
 
   const hasDetails =
     !!event.description ||
@@ -96,7 +103,10 @@ export function EventCard({
     : event.trackingGranularity === "ZONE";
 
   return (
-    <View className="mb-2 overflow-hidden rounded-xl bg-white shadow-sm dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+    <View
+      className="mb-2 overflow-hidden rounded-xl bg-white shadow-sm dark:bg-slate-900 border border-slate-100 dark:border-slate-800"
+      style={isToggling ? { opacity: 0.72 } : undefined}
+    >
       {/* ── Main row ─────────────────────────────────────────────── */}
       <TouchableOpacity
         className="flex-row items-center"
@@ -114,12 +124,18 @@ export function EventCard({
           {/* Complete toggle */}
           {onToggleComplete && !readonly && (
             <TouchableOpacity
-              onPress={() => onToggleComplete(event)}
+              onPress={() => {
+                if (isToggling) return;
+                setIsToggling(true);
+                onToggleComplete(event);
+              }}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               activeOpacity={0.6}
               className="mr-2"
             >
-              {event.completed ? (
+              {isToggling ? (
+                <ActivityIndicator size={16} color={dotColor} />
+              ) : event.completed ? (
                 <CheckCircle2
                   size={20}
                   color="#10B981"

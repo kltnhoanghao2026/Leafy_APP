@@ -49,6 +49,20 @@ export function ChildEventNode({
   const targetIcon = event.targetType ? TARGET_TYPE_ICONS[event.targetType] : null;
   const TargetIconCmp = targetIcon ?? Sprout;
 
+  // Build a compact date label from the event's calculated dates
+  const dateLabel = (() => {
+    const start = event.calculatedStartDate;
+    const end = event.calculatedEndDate;
+    if (!start) return null;
+    // Format YYYY-MM-DD → DD/MM
+    const fmt = (d: string) => {
+      const parts = d.split("-");
+      return parts.length === 3 ? `${parts[2]}/${parts[1]}` : d;
+    };
+    if (end && end !== start) return `${fmt(start)} – ${fmt(end)}`;
+    return fmt(start);
+  })();
+
   return (
     <View className="mb-2">
       <View className="flex-row items-start gap-3 rounded-xl px-2 py-2.5">

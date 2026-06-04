@@ -209,14 +209,23 @@ export function PlantEventHubScreen({
   if (eventsQuery.data && eventsQuery.data.length > 0) {
     stableEventsRef.current = eventsQuery.data;
   }
-  const events = eventsQuery.data ?? stableEventsRef.current;
+  // Map of eventId → optimistic completed override
+  const [optimisticOverrides, setOptimisticOverrides] = useState<Record<string, boolean>>({});
+
+  const rawEvents = eventsQuery.data ?? stableEventsRef.current;
+  const events = rawEvents.map((e) =>
+    e.id in optimisticOverrides ? { ...e, completed: optimisticOverrides[e.id] } : e,
+  );
 
   // ── Toggle handlers ───────────────────────────────────────────────────
   const handleToggleComplete = async (event: PlantEventResponse) => {
+    const next = !event.completed;
+    // Apply optimistic override immediately
+    setOptimisticOverrides((prev) => ({ ...prev, [event.id]: next }));
     try {
       const response = await updateEventMutation.mutateAsync({
         eventId: event.id,
-        body: { completed: !event.completed },
+        body: { completed: next },
       });
       // plantEventApi.updateEvent returns Axios response; extract the actual event
       const updated: PlantEventResponse | undefined =
@@ -235,7 +244,19 @@ export function PlantEventHubScreen({
         });
       }
     } catch {
-      // Mutation error is handled by react-query
+      // Rollback the optimistic override on error
+      setOptimisticOverrides((prev) => {
+        const next2 = { ...prev };
+        delete next2[event.id];
+        return next2;
+      });
+    } finally {
+      // Clear override once server state has been re-fetched
+      setOptimisticOverrides((prev) => {
+        const next2 = { ...prev };
+        delete next2[event.id];
+        return next2;
+      });
     }
   };
 
