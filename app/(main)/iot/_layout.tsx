@@ -1,83 +1,115 @@
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
+import { Bell } from "lucide-react-native";
+import { Pressable, View } from "react-native";
+
+import BackButton from "@/src/components/ui/BackButton";
+import Colors from "@/src/constants/Colors";
+import { useColorScheme } from "@/src/hooks/useColorScheme";
+
+function HeaderNotificationButton() {
+  const router = useRouter();
+  const scheme = useColorScheme() ?? "light";
+  const palette = Colors[scheme];
+
+  return (
+    <Pressable
+      accessibilityLabel="Notifications"
+      accessibilityRole="button"
+      onPress={() => router.push("/(main)/notifications" as never)}
+      style={{
+        alignItems: "center",
+        backgroundColor: scheme === "dark" ? "#1E293B" : "#F1F5F9",
+        borderRadius: 999,
+        height: 40,
+        justifyContent: "center",
+        width: 40,
+      }}
+    >
+      <Bell color={palette.primary} size={20} />
+    </Pressable>
+  );
+}
 
 export default function IotLayout() {
+  const scheme = useColorScheme() ?? "light";
+  const palette = Colors[scheme];
+
   return (
-    <Stack>
+    <Stack
+      screenOptions={{
+        headerStyle: { backgroundColor: palette.background },
+        headerTitleAlign: "center",
+        headerTitleStyle: { color: palette.text, fontWeight: "700" },
+        headerShadowVisible: false,
+        headerLeft: () => <BackButton fallback="/(main)/iot" />,
+        headerRight: () => <HeaderNotificationButton />,
+      }}
+    >
       <Stack.Screen
         name="index"
         options={{
-          headerShown: false,
-          title: "Thiết bị IoT",
+          headerLeft: () => <View style={{ width: 40 }} />,
+          headerTitle: "Thiết bị IoT",
         }}
       />
       <Stack.Screen
         name="devices/[deviceId]/index"
         options={{
-          headerShown: false,
-          title: "Chi tiết thiết bị",
+          headerTitle: "Chi tiết thiết bị",
         }}
       />
       <Stack.Screen
         name="devices/[deviceId]/config"
         options={{
-          headerShown: false,
-          title: "Cấu hình thiết bị",
+          headerTitle: "Cấu hình thiết bị",
         }}
       />
       <Stack.Screen
         name="onboarding"
         options={{
-          headerShown: false,
-          title: "Thêm thiết bị",
+          headerTitle: "Thêm thiết bị",
         }}
       />
       <Stack.Screen
         name="qr-scan"
         options={{
-          headerShown: false,
-          title: "Quét QR",
+          headerTitle: "Quét QR",
         }}
       />
       <Stack.Screen
         name="dashboard"
         options={{
-          headerShown: false,
-          title: "Tổng quan IoT",
+          headerTitle: "Tổng quan IoT",
         }}
       />
       <Stack.Screen
         name="camera-schedules"
         options={{
-          headerShown: false,
-          title: "Lịch camera",
+          headerTitle: "Quản lý kế hoạch",
         }}
       />
       <Stack.Screen
         name="zones/[zoneId]"
         options={{
-          headerShown: false,
-          title: "Số liệu khu vực",
+          headerTitle: "Biểu đồ telemetry",
         }}
       />
       <Stack.Screen
         name="alerts"
         options={{
-          headerShown: false,
-          title: "Cảnh báo IoT",
+          headerTitle: "Cảnh báo thiết bị",
         }}
       />
       <Stack.Screen
         name="alerts/rules"
         options={{
-          headerShown: false,
-          title: "Quy tắc cảnh báo",
+          headerTitle: "Quy tắc cảnh báo",
         }}
       />
       <Stack.Screen
         name="alerts/[alertId]"
         options={{
-          headerShown: false,
-          title: "Chi tiết cảnh báo",
+          headerTitle: "Chi tiết cảnh báo",
         }}
       />
     </Stack>

@@ -678,7 +678,16 @@
       "PHENOLOGY": "Vật hậu học",
       "REPOT": "Thay chậu",
       "HARVEST": "Thu hoạch",
-      "ALERT_TRIGGERED": "Cảnh báo"
+      "ALERT_TRIGGERED": "Cảnh báo cảm biến"
+    },
+    "alertDetails": {
+      "title": "Cảnh báo cảm biến",
+      "type": "Loại cảnh báo",
+      "severity": "Mức độ",
+      "sensor": "Cảm biến",
+      "measuredValue": "Giá trị ghi nhận",
+      "safeRange": "Ngưỡng an toàn",
+      "device": "Thiết bị"
     },
     "eventCategory": {
       "ROUTINE_CARE": "Chăm sóc hàng ngày",
@@ -1689,6 +1698,14 @@
       "unknownDevice": "Không rõ thiết bị",
       "unknownZone": "Không rõ khu vực",
       "unknownFarm": "Không rõ vườn",
+      "type": {
+        "THRESHOLD_HIGH": "Vượt ngưỡng cao",
+        "THRESHOLD_LOW": "Dưới ngưỡng thấp",
+        "THRESHOLD_RANGE": "Ngoài khoảng an toàn",
+        "DEVICE_OFFLINE": "Thiết bị mất kết nối",
+        "DEVICE_ONLINE": "Thiết bị hoạt động trở lại",
+        "UNKNOWN": "Cảnh báo"
+      },
       "disease": {
         "type": "Phát hiện bệnh",
         "titleGeneric": "Phát hiện bệnh từ camera",

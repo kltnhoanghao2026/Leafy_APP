@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { ArrowLeft, RefreshCw } from "lucide-react-native";
+import { RefreshCw } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -129,11 +129,6 @@ export function AlertEventDetailScreen() {
       }
       style={styles.screen}
     >
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>{t("iot.alerts.title")}</Text>
-      </Pressable>
-
       <View style={styles.header}>
         <Text style={styles.kicker}>{t("iot.alerts.detailKicker")}</Text>
         <Text style={styles.title}>{t("iot.alerts.detailTitle")}</Text>

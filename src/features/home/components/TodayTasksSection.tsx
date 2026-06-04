@@ -50,6 +50,7 @@ export function TodayTasksSection() {
 
   // ── Calendar query with filters ──────────────────────────────────────
   const { data: events = [], isLoading } = usePlantEventsCalendar({
+    ...(profileId ? { profileId } : {}),
     startDate: todayStr,
     endDate: todayStr,
     ...(activeFilter.farmPlotId ? { farmPlotId: activeFilter.farmPlotId } : {}),

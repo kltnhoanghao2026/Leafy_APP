@@ -1,5 +1,4 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -80,11 +79,6 @@ export function ZoneMetricsScreen() {
       }
       style={styles.screen}
     >
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>{t("iot.metrics.dashboard.title")}</Text>
-      </Pressable>
-
       <View style={styles.header}>
         <Text style={styles.kicker}>{t("iot.metrics.zone.kicker")}</Text>
         <Text style={styles.title}>{t("iot.metrics.zone.title")}</Text>

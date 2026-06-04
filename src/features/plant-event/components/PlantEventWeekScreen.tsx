@@ -94,15 +94,18 @@ export function PlantEventWeekScreen() {
 
   const calendarParams: CalendarParams = useMemo(
     () => ({
-      ...(targetType === "FARM_PLOT"
-        ? { farmPlotId: selectedId }
-        : targetType === "FARM_ZONE"
-          ? { farmZoneId: selectedId }
-          : { plantId: selectedId }),
+      ...(profileId ? { profileId } : {}),
+      ...(selectedId
+        ? targetType === "FARM_PLOT"
+          ? { farmPlotId: selectedId }
+          : targetType === "FARM_ZONE"
+            ? { farmZoneId: selectedId }
+            : { plantId: selectedId }
+        : {}),
       startDate: weekStartStr,
       endDate: weekEndStr,
     }),
-    [targetType, selectedId, weekStartStr, weekEndStr],
+    [targetType, selectedId, weekStartStr, weekEndStr, profileId],
   );
 
   const eventsQuery = usePlantEventsCalendar(calendarParams);

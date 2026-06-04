@@ -1,5 +1,4 @@
-import { useRouter } from "expo-router";
-import { ArrowLeft, BellRing, Gauge, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react-native";
+import { BellRing, Gauge, Pencil, Plus, SlidersHorizontal, Trash2 } from "lucide-react-native";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -55,6 +54,8 @@ const getThresholdMax = (rule: AlertRuleResponse) =>
 
 const TECHNICAL_IDENTIFIER_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const isTechnicalIdentifier = (value?: string | null) => {
   if (!value) return false;
@@ -63,6 +64,11 @@ const isTechnicalIdentifier = (value?: string | null) => {
     TECHNICAL_IDENTIFIER_PATTERN.test(trimmed) ||
     (trimmed.length >= 24 && /^[0-9a-f-]+$/i.test(trimmed))
   );
+};
+
+const asSensorTypeId = (value?: string | null) => {
+  const trimmed = value?.trim();
+  return trimmed && UUID_PATTERN.test(trimmed) ? trimmed : undefined;
 };
 
 const toFormState = (rule: AlertRuleResponse): FormState => ({
@@ -76,7 +82,6 @@ const toFormState = (rule: AlertRuleResponse): FormState => ({
 
 export function AlertRulesScreen() {
   const { t } = useTranslation();
-  const router = useRouter();
   const rulesQuery = useAlertRules();
   const createRule = useCreateAlertRuleMutation();
   const updateRule = useUpdateAlertRuleMutation();
@@ -145,11 +150,12 @@ export function AlertRulesScreen() {
   const buildPayload = (): AlertRuleRequest => {
     const min = form.thresholdMin.trim() ? Number(form.thresholdMin) : null;
     const max = form.thresholdMax.trim() ? Number(form.thresholdMax) : null;
+    const sensorType = form.sensorType.trim();
 
     return {
       name: form.name.trim(),
-      sensorType: form.sensorType.trim(),
-      sensorTypeId: form.sensorType.trim(),
+      sensorType,
+      sensorTypeId: asSensorTypeId(sensorType),
       thresholdMin: min,
       thresholdMax: max,
       minThreshold: min,
@@ -194,12 +200,13 @@ export function AlertRulesScreen() {
     if (!ruleId) return;
 
     try {
+      const sensorType = rule.sensorType ?? rule.sensorTypeCode ?? rule.sensorTypeId ?? "";
       await updateRule.mutateAsync({
         ruleId,
         payload: {
           name: rule.name,
-          sensorType: rule.sensorType ?? rule.sensorTypeId ?? "",
-          sensorTypeId: rule.sensorTypeId ?? rule.sensorType,
+          sensorType,
+          sensorTypeId: asSensorTypeId(rule.sensorTypeId ?? rule.sensorType),
           thresholdMin: getThresholdMin(rule),
           thresholdMax: getThresholdMax(rule),
           minThreshold: getThresholdMin(rule),
@@ -251,11 +258,6 @@ export function AlertRulesScreen() {
       }
       ListHeaderComponent={
         <View style={styles.headerWrap}>
-          <Pressable style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft color="#0f172a" size={20} />
-            <Text style={styles.backText}>{t("iot.common.back")}</Text>
-          </Pressable>
-
           <View style={styles.hero}>
             <View style={styles.heroIcon}>
               <BellRing color="#166534" size={22} />

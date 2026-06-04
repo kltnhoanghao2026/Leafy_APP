@@ -22,6 +22,7 @@ import { DeviceCard } from "../components/DeviceCard";
 import { DeviceEmptyState } from "../components/DeviceEmptyState";
 import { EditDeviceSheet } from "../components/EditDeviceSheet";
 import { ReleaseDeviceConfirmDialog } from "../components/ReleaseDeviceConfirmDialog";
+import { useIotTheme } from "../components/IoTUi";
 import {
   useMyDevices,
   useReleaseDeviceMutation,
@@ -60,6 +61,9 @@ const getDeviceLabel = (
   fallback = "Selected device",
 ) => device?.deviceName?.trim() || device?.deviceCode?.trim() || fallback;
 
+const getDeviceId = (device: DeviceResponse): string | undefined =>
+  device.id || device.deviceId || device.deviceUid;
+
 const getManagementError = (
   error: unknown,
   t: ReturnType<typeof useTranslation>["t"],
@@ -83,6 +87,7 @@ const getManagementError = (
 
 export function DeviceListScreen() {
   const { t } = useTranslation();
+  const theme = useIotTheme();
   const router = useRouter();
   const profileQuery = useQuery(getMyProfileQueryOptions());
   const farmsQuery = useFarmPlots(profileQuery.data?.id);
@@ -124,33 +129,36 @@ export function DeviceListScreen() {
   }, [allZoneQueries]);
 
   const openDevice = (device: DeviceResponse) => {
+    const deviceId = getDeviceId(device);
+    if (!deviceId) return;
+
     router.push({
       pathname: "/iot/devices/[deviceId]",
-      params: { deviceId: device.id },
+      params: { deviceId },
     });
   };
 
   if (devicesQuery.isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator color="#15803d" size="large" />
-        <Text style={styles.loadingText}>{t("iot.devices.list.loading")}</Text>
+      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+        <ActivityIndicator color={theme.primary} size="large" />
+        <Text style={[styles.loadingText, { color: theme.subtle }]}>{t("iot.devices.list.loading")}</Text>
       </View>
     );
   }
 
   if (devicesQuery.isError && !devices.length) {
     return (
-      <View style={styles.screen}>
+      <View style={[styles.screen, { backgroundColor: theme.background }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>{t("iot.devices.list.title")}</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: theme.text }]}>{t("iot.devices.list.title")}</Text>
+          <Text style={[styles.subtitle, { color: theme.subtle }]}>
             {t("iot.devices.list.errorSubtitle")}
           </Text>
         </View>
-        <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>{t("iot.devices.list.loadFailed")}</Text>
-          <Text style={styles.errorText}>{getFriendlyError(devicesQuery.error, t)}</Text>
+        <View style={[styles.errorBox, { backgroundColor: theme.dangerSoft, borderColor: theme.tone("danger").border }]}>
+          <Text style={[styles.errorTitle, { color: theme.danger }]}>{t("iot.devices.list.loadFailed")}</Text>
+          <Text style={[styles.errorText, { color: theme.danger }]}>{getFriendlyError(devicesQuery.error, t)}</Text>
           <Pressable style={styles.retryButton} onPress={() => devicesQuery.refetch()}>
             <Text style={styles.retryButtonText}>{t("iot.common.retry")}</Text>
           </Pressable>
@@ -161,9 +169,12 @@ export function DeviceListScreen() {
 
   const updateDevice = async (payload: UpdateDeviceRequest) => {
     if (!editingDevice) return;
+    const deviceId = getDeviceId(editingDevice);
+    if (!deviceId) return;
+
     try {
       await updateDeviceMutation.mutateAsync({
-        deviceId: editingDevice.id,
+        deviceId,
         payload,
       });
       setEditingDevice(null);
@@ -176,8 +187,11 @@ export function DeviceListScreen() {
 
   const releaseDevice = async () => {
     if (!releasingDevice) return;
+    const deviceId = getDeviceId(releasingDevice);
+    if (!deviceId) return;
+
     try {
-      await releaseDeviceMutation.mutateAsync({ deviceId: releasingDevice.id });
+      await releaseDeviceMutation.mutateAsync({ deviceId });
       setReleasingDevice(null);
       Alert.alert(t("iot.devices.release.success"));
       devicesQuery.refetch();
@@ -187,55 +201,56 @@ export function DeviceListScreen() {
   };
 
   return (
-    <>
+    <View style={[styles.screen, { backgroundColor: theme.background, padding: 0 }]}>
       <FlatList
-      contentContainerStyle={styles.listContent}
-      data={devices}
-      keyExtractor={(item) => item.id}
-      ListEmptyComponent={<DeviceEmptyState />}
-      ListHeaderComponent={
-        <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View style={styles.headerText}>
-              <Text style={styles.kicker}>{t("iot.devices.list.kicker")}</Text>
-              <Text style={styles.title}>{t("iot.devices.list.title")}</Text>
-              <Text style={styles.subtitle}>
-                {t("iot.devices.list.description")}
-              </Text>
+        contentContainerStyle={[styles.listContent, { backgroundColor: theme.background }]}
+        style={[styles.list, { backgroundColor: theme.background }]}
+        data={devices}
+        keyExtractor={(item, index) => getDeviceId(item) ?? `device-${index}`}
+        ListEmptyComponent={<DeviceEmptyState />}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <View style={styles.headerTop}>
+              <View style={styles.headerText}>
+                <Text style={[styles.kicker, { color: theme.primary }]}>{t("iot.devices.list.kicker")}</Text>
+                <Text style={[styles.title, { color: theme.text }]}>{t("iot.devices.list.title")}</Text>
+                <Text style={[styles.subtitle, { color: theme.subtle }]}>
+                  {t("iot.devices.list.description")}
+                </Text>
+              </View>
+              <Pressable
+                style={[styles.addButton, { backgroundColor: theme.primary }]}
+                onPress={() => router.push("/iot/onboarding")}
+              >
+                <Plus color={theme.primaryText} size={18} />
+                <Text style={[styles.addButtonText, { color: theme.primaryText }]}>{t("iot.common.add")}</Text>
+              </Pressable>
             </View>
             <Pressable
-              style={styles.addButton}
-              onPress={() => router.push("/iot/onboarding")}
+              style={[styles.dashboardButton, { backgroundColor: theme.primarySoft, borderColor: theme.tone("primary").border }]}
+              onPress={() => router.push("/iot/dashboard")}
             >
-              <Plus color="#ffffff" size={18} />
-              <Text style={styles.addButtonText}>{t("iot.common.add")}</Text>
+              <BarChart3 color={theme.primary} size={18} />
+              <Text style={[styles.dashboardButtonText, { color: theme.primary }]}>{t("iot.devices.list.viewDashboard")}</Text>
             </Pressable>
           </View>
-          <Pressable
-            style={styles.dashboardButton}
-            onPress={() => router.push("/iot/dashboard")}
-          >
-            <BarChart3 color="#166534" size={18} />
-            <Text style={styles.dashboardButtonText}>{t("iot.devices.list.viewDashboard")}</Text>
-          </Pressable>
-        </View>
-      }
-      refreshControl={
-        <RefreshControl
-          onRefresh={devicesQuery.refetch}
-          refreshing={devicesQuery.isRefetching}
-          tintColor="#15803d"
-        />
-      }
-      renderItem={({ item }) => (
-        <DeviceCard
-          device={item}
-          farmLabel={item.farmPlotId ? farmNameById.get(item.farmPlotId) : undefined}
-          zoneLabel={item.zoneId ? zoneNameById.get(item.zoneId) : undefined}
-          onMorePress={setActionsDevice}
-          onPress={openDevice}
-        />
-      )}
+        }
+        refreshControl={
+          <RefreshControl
+            onRefresh={devicesQuery.refetch}
+            refreshing={devicesQuery.isRefetching}
+            tintColor={theme.primary}
+          />
+        }
+        renderItem={({ item }) => (
+          <DeviceCard
+            device={item}
+            farmLabel={item.farmPlotId ? farmNameById.get(item.farmPlotId) : undefined}
+            zoneLabel={item.zoneId ? zoneNameById.get(item.zoneId) : undefined}
+            onMorePress={setActionsDevice}
+            onPress={openDevice}
+          />
+        )}
       />
       <DeviceActionsSheet
         deviceLabel={getDeviceLabel(actionsDevice, t("iot.common.selectedDevice"))}
@@ -264,7 +279,7 @@ export function DeviceListScreen() {
         onConfirm={releaseDevice}
         visible={Boolean(releasingDevice)}
       />
-    </>
+    </View>
   );
 }
 
@@ -349,6 +364,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
     flexGrow: 1,
     padding: 18,
+  },
+  list: {
+    backgroundColor: "#f8fafc",
+    flex: 1,
   },
   loadingText: {
     color: "#475569",

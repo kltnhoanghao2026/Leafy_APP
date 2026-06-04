@@ -119,6 +119,11 @@ const normalizeDeviceDetail = (
     : detail.latestMedia,
 });
 
+const normalizeDevice = (device: DeviceResponse): DeviceResponse => ({
+  ...device,
+  id: device.id ?? device.deviceId ?? device.deviceUid,
+});
+
 const isNotFoundError = (error: unknown): boolean => {
   if (typeof error !== "object" || error === null) {
     return false;
@@ -137,7 +142,12 @@ export const collectorApi = {
       { params: cleanParams(params) },
     );
 
-    return normalizePagedResponse(unwrapResponseData(response.data));
+    const paged = normalizePagedResponse(unwrapResponseData(response.data));
+    return {
+      ...paged,
+      items: paged.items.map(normalizeDevice),
+      content: (paged.content ?? paged.items).map(normalizeDevice),
+    };
   },
 
   async getAlertEvents(
@@ -228,7 +238,7 @@ export const collectorApi = {
       payload,
     );
 
-    return unwrapResponseData(response.data);
+    return normalizeDevice(unwrapResponseData(response.data));
   },
 
   async releaseDevice(deviceId: string): Promise<DeviceResponse> {
@@ -236,7 +246,7 @@ export const collectorApi = {
       API_ENDPOINTS.IOT.DEVICES.RELEASE(deviceId),
     );
 
-    return unwrapResponseData(response.data);
+    return normalizeDevice(unwrapResponseData(response.data));
   },
 
   async getDeviceLatestReadings(
@@ -257,7 +267,7 @@ export const collectorApi = {
       payload,
     );
 
-    return unwrapResponseData(response.data);
+    return normalizeDevice(unwrapResponseData(response.data));
   },
 
   async connectDevice(payload: ConnectDeviceRequest): Promise<DeviceResponse> {
@@ -267,7 +277,7 @@ export const collectorApi = {
         payload,
       );
 
-      return unwrapResponseData(response.data);
+      return normalizeDevice(unwrapResponseData(response.data));
     } catch (error) {
       if (!isNotFoundError(error)) {
         throw error;
@@ -300,7 +310,7 @@ export const collectorApi = {
       payload,
     );
 
-    return unwrapResponseData(response.data);
+    return normalizeDevice(unwrapResponseData(response.data));
   },
 
   async getDeviceChart(
@@ -380,6 +390,12 @@ export const collectorApi = {
     );
 
     return unwrapResponseData(response.data);
+  },
+
+  async deleteDeviceMediaEvent(mediaEventId: string): Promise<void> {
+    await apiClient.delete<ApiResponse<void>>(
+      API_ENDPOINTS.IOT.MEDIA_EVENT(mediaEventId),
+    );
   },
 
   async captureDeviceImage(

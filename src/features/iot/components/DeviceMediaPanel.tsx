@@ -18,6 +18,7 @@ import {
 import {
   useCreateDeviceCameraScheduleMutation,
   useCaptureDeviceImageMutation,
+  useDeleteDeviceMediaEventMutation,
   useDeleteDeviceCameraScheduleMutation,
   useDetectCameraDiseaseMutation,
   useDeviceCameraSchedules,
@@ -32,8 +33,10 @@ import type {
   CameraScheduleRecurrence,
   DeviceCameraSchedule,
   DeviceMediaEvent,
+  DeviceStatus,
 } from "../types";
 import type { DisplayDeviceCameraSchedule, DisplayDeviceMediaEvent } from "../utils/iotDisplay";
+import { IoTButton, IoTEmptyCard, IoTStatusBadge, mediaStatusTone, useIotTheme } from "./IoTUi";
 
 const RECURRENCE_OPTIONS: CameraScheduleRecurrence[] = ["DAILY", "WEEKLY", "MONTHLY"];
 const RESOLUTION_OPTIONS: CameraCaptureResolution[] = ["QVGA", "VGA", "HD"];
@@ -64,6 +67,7 @@ const isHttpUrl = (value: string) => {
 type DeviceMediaPanelProps = {
   deviceId: string;
   deviceUid?: string | null;
+  deviceStatus?: DeviceStatus | null;
 };
 
 const translateEnum = (
@@ -88,6 +92,9 @@ const isDiseaseDetected = (media?: DeviceMediaEvent | null) =>
   media?.analysis?.status === "DISEASE_DETECTED" ||
   media?.analysis?.diseaseDetected === true;
 
+const getMediaEventId = (media?: DeviceMediaEvent | null) =>
+  media?.id ?? media?.mediaEventId ?? media?.analysis?.mediaEventId;
+
 const normalizeSchedules = (value: unknown): DisplayableSchedule[] => {
   if (Array.isArray(value)) {
     return value as DisplayableSchedule[];
@@ -109,8 +116,9 @@ const normalizeSchedules = (value: unknown): DisplayableSchedule[] => {
   return [];
 };
 
-export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps) {
+export function DeviceMediaPanel({ deviceId, deviceUid, deviceStatus }: DeviceMediaPanelProps) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
   const mediaQuery = useDeviceMedia(deviceId);
   const schedulesQuery = useDeviceCameraSchedules(deviceUid ?? undefined);
   const captureMutation = useCaptureDeviceImageMutation(deviceId);
@@ -119,6 +127,7 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
   );
   const updateScheduleMutation = useUpdateDeviceCameraScheduleMutation(deviceUid ?? undefined);
   const deleteScheduleMutation = useDeleteDeviceCameraScheduleMutation(deviceUid ?? undefined);
+  const deleteMediaMutation = useDeleteDeviceMediaEventMutation(deviceId, deviceUid ?? undefined);
   const runScheduleMutation = useRunCameraScheduleNowMutation(deviceUid ?? undefined);
   const detectMutation = useDetectCameraDiseaseMutation(deviceUid ?? undefined);
   const [timeOfDay, setTimeOfDay] = useState("08:00:00");
@@ -144,6 +153,8 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
       null,
     [mediaEvents],
   );
+  const deviceOnline = deviceStatus?.toUpperCase() === "ONLINE";
+  const capturePending = captureMutation.isPending || detectMutation.isPending;
 
   const showError = (message: string) => {
     Alert.alert(t("iot.cameraSchedules.errorTitle"), message);
@@ -301,6 +312,10 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
       showError(t("iot.devices.media.requiresDeviceUid"));
       return;
     }
+    if (!deviceOnline) {
+      showError(t("iot.devices.media.captureRequiresOnline", { defaultValue: "Thiết bị đang offline nên chưa thể chụp ảnh." }));
+      return;
+    }
 
     try {
       const capture = await captureMutation.mutateAsync({ quality, resolution });
@@ -342,28 +357,60 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
     }
   };
 
+  const deleteMedia = (media: DeviceMediaEvent) => {
+    const mediaEventId = getMediaEventId(media);
+    if (!mediaEventId) {
+      showError(t("iot.devices.media.deleteMissingId", { defaultValue: "Không tìm thấy mã ảnh để xóa." }));
+      return;
+    }
+
+    Alert.alert(
+      t("iot.devices.media.deleteTitle", { defaultValue: "Xóa ảnh chụp?" }),
+      t("iot.devices.media.deleteConfirm", { defaultValue: "Ảnh này sẽ bị xóa khỏi lịch sử ảnh chụp của thiết bị." }),
+      [
+        { text: t("common.cancel", { defaultValue: "Hủy" }), style: "cancel" },
+        {
+          text: t("iot.devices.media.deleteAction", { defaultValue: "Xóa" }),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteMediaMutation.mutateAsync(mediaEventId);
+              setSelectedMedia(null);
+              Alert.alert(
+                t("iot.devices.media.deleteSuccessTitle", { defaultValue: "Đã xóa ảnh" }),
+                t("iot.devices.media.deleteSuccess", { defaultValue: "Danh sách ảnh đã được cập nhật." }),
+              );
+            } catch {
+              showError(t("iot.devices.media.deleteFailed", { defaultValue: "Không thể xóa ảnh. Vui lòng thử lại." }));
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View style={styles.section}>
       <View style={styles.header}>
-        <View style={styles.headerIcon}>
-          <Camera color="#166534" size={20} />
+        <View style={[styles.headerIcon, { backgroundColor: theme.primarySoft }]}>
+          <Camera color={theme.primary} size={20} />
         </View>
         <View style={styles.headerText}>
-          <Text style={styles.title}>{t("iot.devices.media.title")}</Text>
-          <Text style={styles.subtitle}>{t("iot.devices.media.description")}</Text>
+          <Text style={[styles.title, { color: theme.text }]}>{t("iot.devices.media.title")}</Text>
+          <Text style={[styles.subtitle, { color: theme.subtle }]}>{t("iot.devices.media.description")}</Text>
         </View>
       </View>
 
       {mediaQuery.isLoading ? (
         <View style={styles.loadingRow}>
-          <ActivityIndicator color="#15803d" size="small" />
-          <Text style={styles.muted}>{t("iot.devices.media.loading")}</Text>
+          <ActivityIndicator color={theme.primary} size="small" />
+          <Text style={[styles.muted, { color: theme.subtle }]}>{t("iot.devices.media.loading")}</Text>
         </View>
       ) : null}
 
       {mediaQuery.isError ? (
-        <View style={styles.warningBox}>
-          <Text style={styles.warningText}>{t("iot.devices.media.loadFailed")}</Text>
+        <View style={[styles.warningBox, { backgroundColor: theme.warningSoft, borderColor: theme.tone("warning").border }]}>
+          <Text style={[styles.warningText, { color: theme.warning }]}>{t("iot.devices.media.loadFailed")}</Text>
           <Pressable style={styles.inlineButton} onPress={() => mediaQuery.refetch()}>
             <Text style={styles.inlineButtonText}>{t("iot.common.retry")}</Text>
           </Pressable>
@@ -374,21 +421,22 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
 
       <View style={styles.quickActions}>
         <Pressable
-          disabled={!deviceUid || captureMutation.isPending || detectMutation.isPending}
+          accessibilityState={{ disabled: !deviceUid || !deviceOnline || capturePending }}
           onPress={captureAndAnalyze}
           style={({ pressed }) => [
             styles.primaryButton,
-            (!deviceUid || captureMutation.isPending || detectMutation.isPending) && styles.disabledButton,
-            pressed && styles.pressedButton,
+            { backgroundColor: theme.primary },
+            (!deviceUid || !deviceOnline || capturePending) && styles.disabledButton,
+            pressed && !capturePending && styles.pressedButton,
           ]}
         >
-          {captureMutation.isPending || detectMutation.isPending ? (
-            <ActivityIndicator color="#ffffff" size="small" />
+          {capturePending ? (
+            <ActivityIndicator color={theme.primaryText} size="small" />
           ) : (
-            <Camera color="#ffffff" size={16} />
+            <Camera color={theme.primaryText} size={18} />
           )}
-          <Text style={styles.primaryButtonText}>
-            {captureMutation.isPending || detectMutation.isPending
+          <Text style={[styles.primaryButtonText, { color: theme.primaryText }]}>
+            {capturePending
               ? t("iot.devices.media.capturingAnalyzing")
               : t("iot.devices.media.captureAndAnalyze")}
           </Text>
@@ -397,24 +445,27 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
 
       <View style={styles.subsection}>
         <View style={styles.rowBetween}>
-          <Text style={styles.subsectionTitle}>{t("iot.cameraSchedules.title")}</Text>
+          <Text style={[styles.subsectionTitle, { color: theme.text }]}>{t("iot.cameraSchedules.title")}</Text>
           {schedulesQuery.isFetching ? (
-            <ActivityIndicator color="#15803d" size="small" />
+            <ActivityIndicator color={theme.primary} size="small" />
           ) : null}
         </View>
 
         {schedulesQuery.isError ? (
-          <Text style={styles.errorText}>{t("iot.cameraSchedules.loadFailed")}</Text>
+          <Text style={[styles.errorText, { color: theme.danger }]}>{t("iot.cameraSchedules.loadFailed")}</Text>
         ) : schedules.length === 0 ? (
-          <Text style={styles.muted}>{t("iot.cameraSchedules.empty")}</Text>
+          <IoTEmptyCard title={t("iot.cameraSchedules.empty")} />
         ) : (
           <View style={styles.list}>
             {schedules.map((schedule) => (
-              <View key={schedule.scheduleId ?? schedule.id} style={styles.scheduleItem}>
+              <View
+                key={schedule.scheduleId ?? schedule.id}
+                style={[styles.scheduleItem, { backgroundColor: theme.card, borderColor: theme.border }]}
+              >
                 <View style={styles.rowBetween}>
-                  <View>
-                    <Text style={styles.scheduleTime}>{schedule.display?.timeLabel ?? t("iot.common.noData")}</Text>
-                    <Text style={styles.scheduleSummary}>
+                  <View style={styles.cardTitleWrap}>
+                    <Text style={[styles.scheduleTime, { color: theme.text }]}>{schedule.display?.timeLabel ?? t("iot.common.noData")}</Text>
+                    <Text style={[styles.scheduleSummary, { color: theme.subtle }]}>
                       {schedule.display?.recurrenceLabel ?? t("iot.common.unknown")} ·{" "}
                       {schedule.display?.resolutionLabel ?? t("iot.common.unknown")} ·{" "}
                       {schedule.display?.qualityLabel ?? t("iot.common.unknown")}
@@ -425,16 +476,16 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
                 <View style={styles.scheduleMediaRow}>
                   <MediaThumbnail media={schedule.lastMediaEvent} compact />
                   <View style={styles.scheduleMediaText}>
-                    <Text style={styles.metaText}>
+                    <Text style={[styles.metaText, { color: theme.subtle }]}>
                       {t("iot.cameraSchedules.status")}:{" "}
                       {schedule.display?.lastMediaStatusLabel ??
                         schedule.lastMediaEvent?.display?.statusLabel ??
                         t("iot.common.unknownStatus")}
                     </Text>
-                    <Text style={styles.metaText}>
-                      {t("iot.devices.media.analysisStatus")}:{" "}
-                      {schedule.lastMediaEvent?.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")}
-                    </Text>
+                    <IoTStatusBadge
+                      label={schedule.lastMediaEvent?.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")}
+                      tone={mediaStatusTone(schedule.lastMediaEvent?.analysis?.analysisStatus ?? schedule.lastMediaEvent?.analysis?.status)}
+                    />
                   </View>
                 </View>
                 <View style={styles.scheduleStats}>
@@ -442,21 +493,21 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
                   <ScheduleStat label={t("iot.cameraSchedules.lastRunAt")} value={schedule.display?.lastRunLabel ?? t("iot.common.noData")} />
                 </View>
                 <View style={styles.actionRow}>
-                  <Pressable style={styles.inlineAction} onPress={() => runScheduleNow(schedule)}>
-                    <Play color="#166534" size={14} />
-                    <Text style={styles.inlineActionText}>
+                  <Pressable style={[styles.inlineAction, { backgroundColor: theme.primarySoft }]} onPress={() => runScheduleNow(schedule)}>
+                    <Play color={theme.primary} size={14} />
+                    <Text style={[styles.inlineActionText, { color: theme.primary }]}>
                       {t("iot.cameraSchedules.runNow")}
                     </Text>
                   </Pressable>
-                  <Pressable style={styles.inlineAction} onPress={() => editSchedule(schedule)}>
-                    <Pencil color="#166534" size={14} />
-                    <Text style={styles.inlineActionText}>
+                  <Pressable style={[styles.inlineAction, { backgroundColor: theme.primarySoft }]} onPress={() => editSchedule(schedule)}>
+                    <Pencil color={theme.primary} size={14} />
+                    <Text style={[styles.inlineActionText, { color: theme.primary }]}>
                       {t("iot.cameraSchedules.editSchedule")}
                     </Text>
                   </Pressable>
-                  <Pressable style={styles.dangerAction} onPress={() => deleteSchedule(schedule)}>
-                    <Trash2 color="#991b1b" size={14} />
-                    <Text style={styles.dangerActionText}>
+                  <Pressable style={[styles.dangerAction, { backgroundColor: theme.dangerSoft }]} onPress={() => deleteSchedule(schedule)}>
+                    <Trash2 color={theme.danger} size={14} />
+                    <Text style={[styles.dangerActionText, { color: theme.danger }]}>
                       {t("iot.cameraSchedules.deleteSchedule")}
                     </Text>
                   </Pressable>
@@ -467,8 +518,8 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
         )}
       </View>
 
-      <View style={styles.form}>
-        <Text style={styles.subsectionTitle}>
+      <View style={[styles.form, { backgroundColor: theme.card, borderColor: theme.border }]}>
+        <Text style={[styles.subsectionTitle, { color: theme.text }]}>
           {editingScheduleId
             ? t("iot.cameraSchedules.editSchedule")
             : t("iot.cameraSchedules.create")}
@@ -478,15 +529,16 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
           onPress={submitSchedule}
           style={({ pressed }) => [
             styles.primaryButton,
+            { backgroundColor: theme.primary },
             (!deviceUid || createScheduleMutation.isPending || updateScheduleMutation.isPending) &&
               styles.disabledButton,
             pressed && styles.pressedButton,
           ]}
         >
           {createScheduleMutation.isPending || updateScheduleMutation.isPending ? (
-            <ActivityIndicator color="#ffffff" size="small" />
+            <ActivityIndicator color={theme.primaryText} size="small" />
           ) : null}
-          <Text style={styles.primaryButtonText}>
+          <Text style={[styles.primaryButtonText, { color: theme.primaryText }]}>
             {createScheduleMutation.isPending || updateScheduleMutation.isPending
               ? t("iot.cameraSchedules.creating")
               : editingScheduleId
@@ -496,10 +548,10 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
         </Pressable>
 
         <View style={styles.optionGroup}>
-          <Text style={styles.inputLabel}>{t("iot.cameraSchedules.timeOfDay")}</Text>
-          <Pressable style={styles.timePickerButton} onPress={() => setShowTimePicker(true)}>
-            <Clock color="#166534" size={18} />
-            <Text style={styles.timePickerText}>{timeOfDay.slice(0, 5)}</Text>
+          <Text style={[styles.inputLabel, { color: theme.subtle }]}>{t("iot.cameraSchedules.timeOfDay")}</Text>
+          <Pressable style={[styles.timePickerButton, { backgroundColor: theme.cardAlt, borderColor: theme.border }]} onPress={() => setShowTimePicker(true)}>
+            <Clock color={theme.primary} size={18} />
+            <Text style={[styles.timePickerText, { color: theme.text }]}>{timeOfDay.slice(0, 5)}</Text>
           </Pressable>
           {showTimePicker ? (
             <DateTimePicker
@@ -540,48 +592,53 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
           autoCapitalize="none"
           placeholder={t("iot.cameraSchedules.uploadEndpointPlaceholder")}
           placeholderTextColor="#94a3b8"
-          style={styles.input}
+          style={[styles.input, { backgroundColor: theme.cardAlt, borderColor: theme.border, color: theme.text }]}
           value={uploadEndpoint}
           onChangeText={setUploadEndpoint}
         />
-        <Text style={styles.helperText}>{t("iot.cameraSchedules.customUploadHelp")}</Text>
+        <Text style={[styles.helperText, { color: theme.subtle }]}>{t("iot.cameraSchedules.customUploadHelp")}</Text>
 
-        {formError ? <Text style={styles.errorText}>{formError}</Text> : null}
+        {formError ? <Text style={[styles.errorText, { color: theme.danger }]}>{formError}</Text> : null}
 
         {editingScheduleId ? (
           <Pressable style={styles.inlineButton} onPress={resetForm}>
-            <Text style={styles.inlineButtonText}>{t("common.cancel")}</Text>
+            <Text style={[styles.inlineButtonText, { color: theme.primary }]}>{t("common.cancel")}</Text>
           </Pressable>
         ) : null}
       </View>
 
       <View style={styles.subsection}>
-        <Text style={styles.subsectionTitle}>{t("iot.devices.media.mediaHistory")}</Text>
+        <Text style={[styles.subsectionTitle, { color: theme.text }]}>{t("iot.devices.media.mediaHistory")}</Text>
         {mediaEvents.length === 0 ? (
-          <Text style={styles.muted}>{t("iot.devices.media.noEvents")}</Text>
+          <IoTEmptyCard title={t("iot.devices.media.noEvents")} />
         ) : (
           <View style={styles.list}>
             {mediaEvents.map((media) => (
               <Pressable
                 key={media.id}
                 onPress={() => setSelectedMedia(media)}
-                style={({ pressed }) => [styles.historyItem, pressed && styles.pressedButton]}
+                style={({ pressed }) => [
+                  styles.historyItem,
+                  { backgroundColor: theme.card, borderColor: theme.border },
+                  pressed && styles.pressedButton,
+                ]}
               >
                 <MediaThumbnail media={media} compact />
                 <View style={styles.historyContent}>
                   <View style={styles.rowBetween}>
-                    <Text style={styles.historyTitle}>
+                    <Text style={[styles.historyTitle, { color: theme.text }]}>
                       {media.display?.triggerTypeLabel ?? t("iot.common.unknown")}
                     </Text>
-                    <Text style={styles.badge}>
-                      {media.display?.statusLabel ?? t("iot.common.unknownStatus")}
-                    </Text>
+                    <IoTStatusBadge
+                      label={media.display?.statusLabel ?? t("iot.common.unknownStatus")}
+                      tone={mediaStatusTone(media.status)}
+                    />
                   </View>
-                  <Text style={styles.metaText}>{media.display?.timestampLabel ?? t("iot.common.noData")}</Text>
+                  <Text style={[styles.metaText, { color: theme.subtle }]}>{media.display?.timestampLabel ?? t("iot.common.noData")}</Text>
                   <MediaAnalysis media={media} compact />
                   <View style={styles.viewDetailRow}>
-                    <Eye color="#166534" size={14} />
-                    <Text style={styles.inlineActionText}>{t("iot.devices.media.viewDetail")}</Text>
+                    <Eye color={theme.primary} size={14} />
+                    <Text style={[styles.inlineActionText, { color: theme.primary }]}>{t("iot.devices.media.viewDetail")}</Text>
                   </View>
                 </View>
               </Pressable>
@@ -593,8 +650,10 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
       <MediaDetailModal
         media={selectedMedia}
         analyzing={detectMutation.isPending}
+        deleting={deleteMediaMutation.isPending}
         onAnalyze={triggerAnalysis}
         onClose={() => setSelectedMedia(null)}
+        onDelete={deleteMedia}
       />
     </View>
   );
@@ -602,32 +661,32 @@ export function DeviceMediaPanel({ deviceId, deviceUid }: DeviceMediaPanelProps)
 
 function LatestMediaCard({ media }: { media?: DisplayableMedia | null }) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
 
   return (
-    <View style={styles.latestCard}>
+    <View style={[styles.latestCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
       <MediaThumbnail media={media} />
       <View style={styles.latestInfo}>
         <View style={styles.rowBetween}>
-          <Text style={styles.latestTitle}>{t("iot.devices.media.latestImage")}</Text>
+          <Text style={[styles.latestTitle, { color: theme.text }]}>{t("iot.devices.media.latestImage")}</Text>
           {isDiseaseDetected(media) ? (
-            <View style={styles.alertBadge}>
-              <ShieldAlert color="#991b1b" size={14} />
-              <Text style={styles.alertBadgeText}>
-                {t("iot.devices.media.alertBadge")}
-              </Text>
-            </View>
+            <IoTStatusBadge
+              icon={<ShieldAlert color={theme.tone("danger").text} size={14} />}
+              label={t("iot.devices.media.alertBadge")}
+              tone="danger"
+            />
           ) : null}
         </View>
         {media ? (
           <>
-            <Text style={styles.metaText}>
-              {t("iot.cameraSchedules.status")}:{" "}
-              {media.display?.statusLabel ?? t("iot.common.unknownStatus")}
-            </Text>
+            <IoTStatusBadge
+              label={media.display?.statusLabel ?? t("iot.common.unknownStatus")}
+              tone={mediaStatusTone(media.status)}
+            />
             <MediaAnalysis media={media} />
           </>
         ) : (
-          <Text style={styles.muted}>{t("iot.devices.media.noImage")}</Text>
+          <Text style={[styles.muted, { color: theme.subtle }]}>{t("iot.devices.media.noImage")}</Text>
         )}
       </View>
     </View>
@@ -644,27 +703,29 @@ function MediaThumbnail({
   large?: boolean;
 }) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
   const directUrl = media?.fileUrl ?? media?.analysis?.fileUrl ?? null;
-  const imageUrlQuery = useMediaImageUrl(directUrl ? undefined : media?.fileId);
-  const uri = directUrl ?? imageUrlQuery.data;
+  const imageUrlQuery = useMediaImageUrl(directUrl ?? media?.fileId);
+  const uri = imageUrlQuery.data;
 
   if (!uri) {
     return (
       <View
-        style={
+        style={[
           large
             ? styles.thumbnailPlaceholderLarge
             : compact
               ? styles.thumbnailPlaceholderSmall
-              : styles.thumbnailPlaceholder
-        }
+              : styles.thumbnailPlaceholder,
+          { backgroundColor: theme.cardAlt, borderColor: theme.border },
+        ]}
       >
         {imageUrlQuery.isLoading ? (
-          <ActivityIndicator color="#15803d" size="small" />
+          <ActivityIndicator color={theme.primary} size="small" />
         ) : (
-          <Camera color="#94a3b8" size={24} />
+          <Camera color={theme.muted} size={24} />
         )}
-        <Text style={styles.thumbnailText}>{t("iot.devices.media.placeholderImage")}</Text>
+        <Text style={[styles.thumbnailText, { color: theme.subtle }]}>{t("iot.devices.media.placeholderImage")}</Text>
       </View>
     );
   }
@@ -680,27 +741,28 @@ function MediaThumbnail({
 
 function MediaAnalysis({ media, compact = false }: { media: DisplayableMedia; compact?: boolean }) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
   const analysis = media.analysis;
   const status = analysis?.analysisStatus ?? analysis?.status;
 
   if (!analysis && !status) {
-    return <Text style={styles.metaText}>{t("iot.devices.media.noAnalysis")}</Text>;
+    return <IoTStatusBadge label={t("iot.devices.media.noAnalysis")} tone="neutral" />;
   }
 
   return (
     <View style={styles.analysisBox}>
-      <Text style={styles.metaText}>
-        {t("iot.devices.media.analysisStatus")}:{" "}
-        {media.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")}
-      </Text>
+      <IoTStatusBadge
+        label={media.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")}
+        tone={mediaStatusTone(status)}
+      />
       {!compact && (analysis?.diseaseType || analysis?.diseaseName) ? (
-        <Text style={styles.metaText}>
+        <Text style={[styles.metaText, { color: theme.subtle }]}>
           {t("iot.devices.media.diseaseType")}:{" "}
           {media.display?.analysis.diseaseLabel ?? t("iot.common.unknownValue")}
         </Text>
       ) : null}
       {!compact && analysis?.severity ? (
-        <Text style={styles.metaText}>
+        <Text style={[styles.metaText, { color: theme.subtle }]}>
           {t("iot.devices.media.severity")}:{" "}
           {media.display?.analysis.severityLabel ?? t("iot.common.unknownStatus")}
         </Text>
@@ -717,24 +779,27 @@ function ScheduleStatusButton({
   onPress: () => void;
 }) {
   const { t } = useTranslation();
+  const label =
+    schedule.display?.enabledLabel ??
+    (schedule.enabled ? t("iot.cameraSchedules.enabled") : t("iot.cameraSchedules.disabled"));
+
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.statusPill, schedule.enabled ? styles.statusPillOn : styles.statusPillOff]}
+      style={styles.statusPill}
     >
-      <Text style={schedule.enabled ? styles.statusPillOnText : styles.statusPillOffText}>
-        {schedule.display?.enabledLabel ??
-          (schedule.enabled ? t("iot.cameraSchedules.enabled") : t("iot.cameraSchedules.disabled"))}
-      </Text>
+      <IoTStatusBadge label={label} tone={schedule.enabled ? "success" : "neutral"} />
     </Pressable>
   );
 }
 
 function ScheduleStat({ label, value }: { label: string; value: string }) {
+  const theme = useIotTheme();
+
   return (
-    <View style={styles.scheduleStat}>
-      <Text style={styles.scheduleStatLabel}>{label}</Text>
-      <Text style={styles.scheduleStatValue}>{value}</Text>
+    <View style={[styles.scheduleStat, { backgroundColor: theme.cardAlt }]}>
+      <Text style={[styles.scheduleStatLabel, { color: theme.muted }]}>{label}</Text>
+      <Text style={[styles.scheduleStatValue, { color: theme.text }]}>{value}</Text>
     </View>
   );
 }
@@ -742,33 +807,38 @@ function ScheduleStat({ label, value }: { label: string; value: string }) {
 function MediaDetailModal({
   media,
   analyzing,
+  deleting,
   onAnalyze,
   onClose,
+  onDelete,
 }: {
   media: DisplayableMedia | null;
   analyzing: boolean;
+  deleting: boolean;
   onAnalyze: (media: DeviceMediaEvent) => void;
   onClose: () => void;
+  onDelete: (media: DeviceMediaEvent) => void;
 }) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
   if (!media) return null;
 
   return (
     <Modal animationType="slide" visible={Boolean(media)} onRequestClose={onClose}>
-      <ScrollView style={styles.modalScreen} contentContainerStyle={styles.modalContent}>
+      <ScrollView style={[styles.modalScreen, { backgroundColor: theme.background }]} contentContainerStyle={styles.modalContent}>
         <View style={styles.modalHeader}>
           <View>
-            <Text style={styles.title}>{t("iot.devices.media.detailTitle")}</Text>
-            <Text style={styles.subtitle}>{media.display?.timestampLabel ?? t("iot.common.noData")}</Text>
+            <Text style={[styles.title, { color: theme.text }]}>{t("iot.devices.media.detailTitle")}</Text>
+            <Text style={[styles.subtitle, { color: theme.subtle }]}>{media.display?.timestampLabel ?? t("iot.common.noData")}</Text>
           </View>
-          <Pressable style={styles.closeButton} onPress={onClose}>
-            <X color="#0f172a" size={20} />
+          <Pressable style={[styles.closeButton, { backgroundColor: theme.cardAlt }]} onPress={onClose}>
+            <X color={theme.text} size={20} />
           </Pressable>
         </View>
 
         <MediaThumbnail media={media} large />
 
-        <View style={styles.detailCard}>
+        <View style={[styles.detailCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <InfoLine label={t("iot.devices.media.captureTime")} value={media.display?.capturedAt ?? media.display?.timestampLabel ?? t("iot.common.noData")} />
           <InfoLine label={t("iot.devices.media.uploadStatus")} value={media.display?.statusLabel ?? t("iot.common.unknownStatus")} />
           <InfoLine label={t("iot.devices.media.analysisStatus")} value={media.display?.analysis.statusLabel ?? t("iot.common.unknownStatus")} />
@@ -777,30 +847,33 @@ function MediaDetailModal({
           <InfoLine label={t("iot.devices.media.fileSize")} value={media.display?.sizeLabel ?? t("iot.common.noData")} />
         </View>
 
-        <Pressable
-          disabled={analyzing || (!media.fileId && !media.fileUrl)}
+        <IoTButton
+          disabled={analyzing || deleting || (!media.fileId && !media.fileUrl)}
+          icon={<Wand2 color={theme.primaryText} size={18} />}
+          label={analyzing ? t("iot.devices.media.analyzing") : t("iot.devices.media.triggerAnalysis")}
+          loading={analyzing}
           onPress={() => onAnalyze(media)}
-          style={({ pressed }) => [
-            styles.primaryButton,
-            (analyzing || (!media.fileId && !media.fileUrl)) && styles.disabledButton,
-            pressed && styles.pressedButton,
-          ]}
-        >
-          <Wand2 color="#ffffff" size={16} />
-          <Text style={styles.primaryButtonText}>
-            {analyzing ? t("iot.devices.media.analyzing") : t("iot.devices.media.triggerAnalysis")}
-          </Text>
-        </Pressable>
+        />
+        <IoTButton
+          disabled={analyzing || deleting}
+          icon={<Trash2 color={theme.danger} size={18} />}
+          label={deleting ? t("iot.devices.media.deleting", { defaultValue: "Đang xóa..." }) : t("iot.devices.media.deleteAction", { defaultValue: "Xóa ảnh" })}
+          loading={deleting}
+          onPress={() => onDelete(media)}
+          tone="danger"
+        />
       </ScrollView>
     </Modal>
   );
 }
 
 function InfoLine({ label, value }: { label: string; value: string }) {
+  const theme = useIotTheme();
+
   return (
-    <View style={styles.infoLine}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+    <View style={[styles.infoLine, { borderBottomColor: theme.border }]}>
+      <Text style={[styles.infoLabel, { color: theme.muted }]}>{label}</Text>
+      <Text style={[styles.infoValue, { color: theme.text }]}>{value}</Text>
     </View>
   );
 }
@@ -819,10 +892,11 @@ function OptionGroup<T extends string>({
   onChange: (nextValue: T) => void;
 }) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
 
   return (
     <View style={styles.optionGroup}>
-      <Text style={styles.inputLabel}>{label}</Text>
+      <Text style={[styles.inputLabel, { color: theme.subtle }]}>{label}</Text>
       <View style={styles.chipRow}>
         {options.map((option) => {
           const selected = option === value;
@@ -830,9 +904,13 @@ function OptionGroup<T extends string>({
             <Pressable
               key={option}
               onPress={() => onChange(option)}
-              style={[styles.chip, selected && styles.chipSelected]}
+              style={[
+                styles.chip,
+                { backgroundColor: theme.cardAlt, borderColor: theme.border },
+                selected && { backgroundColor: theme.primarySoft, borderColor: theme.tone("primary").border },
+              ]}
             >
-              <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+              <Text style={[styles.chipText, { color: selected ? theme.primary : theme.subtle }]}>
                 {translateEnum(t, keyPrefix, option)}
               </Text>
             </Pressable>
@@ -920,6 +998,10 @@ const styles = StyleSheet.create({
   },
   chipTextSelected: {
     color: "#166534",
+  },
+  cardTitleWrap: {
+    flex: 1,
+    minWidth: 0,
   },
   disabledButton: {
     opacity: 0.55,

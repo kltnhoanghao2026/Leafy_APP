@@ -678,7 +678,16 @@
       "PHENOLOGY": "Phenology",
       "REPOT": "Repot",
       "HARVEST": "Harvest",
-      "ALERT_TRIGGERED": "Alert"
+      "ALERT_TRIGGERED": "Sensor alert"
+    },
+    "alertDetails": {
+      "title": "Sensor alert",
+      "type": "Alert type",
+      "severity": "Severity",
+      "sensor": "Sensor",
+      "measuredValue": "Measured value",
+      "safeRange": "Safe range",
+      "device": "Device"
     },
     "eventCategory": {
       "ROUTINE_CARE": "Routine care",
@@ -1689,6 +1698,14 @@
       "unknownDevice": "Unknown device",
       "unknownZone": "Unknown zone",
       "unknownFarm": "Unknown farm",
+      "type": {
+        "THRESHOLD_HIGH": "High threshold exceeded",
+        "THRESHOLD_LOW": "Below low threshold",
+        "THRESHOLD_RANGE": "Outside safe range",
+        "DEVICE_OFFLINE": "Device offline",
+        "DEVICE_ONLINE": "Device online",
+        "UNKNOWN": "Alert"
+      },
       "disease": {
         "type": "Disease detected",
         "titleGeneric": "Disease detected from camera",

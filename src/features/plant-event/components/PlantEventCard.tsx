@@ -14,6 +14,7 @@ import { formatDateShort } from "@/src/utils/date";
 import type { PlantEventResponse } from "./plant-event.types";
 import { getEventCategoryColors, getEventCategory } from "./plant-event.types";
 import { CATEGORY_DOT_COLORS } from "./calendarConstants";
+import { getPlantEventDisplayText } from "../utils/alertEventDetails";
 
 type Props = {
   event: PlantEventResponse;
@@ -49,6 +50,7 @@ export function PlantEventCard({ event, onEdit, onDelete }: Props) {
   const colors = getEventCategoryColors(event.eventType);
   const category = getEventCategory(event.eventType);
   const dotColor = CATEGORY_DOT_COLORS[category] ?? "#94a3b8";
+  const { title, subtitle } = getPlantEventDisplayText(event);
 
   return (
     <View className="mb-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -68,8 +70,16 @@ export function PlantEventCard({ event, onEdit, onDelete }: Props) {
               className="text-base font-bold text-slate-800 dark:text-slate-100"
               numberOfLines={1}
             >
-              {event.note}
+              {title}
             </Text>
+            {subtitle ? (
+              <Text
+                className="text-[11px] text-slate-500 dark:text-slate-400"
+                numberOfLines={1}
+              >
+                {subtitle}
+              </Text>
+            ) : null}
             <Text
               className={`text-xs font-semibold ${colors.text} ${colors.darkText}`}
               numberOfLines={1}

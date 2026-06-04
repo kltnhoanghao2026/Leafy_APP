@@ -64,7 +64,7 @@ import { useMyApplies } from "../../plan/queries/plan.queries";
 
 const SELECTED_DAY_COLOR = "#2F7F34";
 
-type ViewType = "month" | "week" | "timeline";
+export type ViewType = "month" | "week" | "timeline";
 
 export type PlantEventHubScreenProps = {
   defaultView?: ViewType;
@@ -173,6 +173,7 @@ export function PlantEventHubScreen({
   // ── Single data fetch, range adapts to active view ────────────────────
   const calendarParams: CalendarParams = useMemo(
     () => ({
+      ...(profileId ? { profileId } : {}),
       // If no farmPlotId is selected, we default to “all farms” (no farmPlotId filter)
       ...(activeFilter.farmPlotId ? { farmPlotId: activeFilter.farmPlotId } : {}),
       ...(activeFilter.farmZoneId ? { farmZoneId: activeFilter.farmZoneId } : {}),
@@ -197,6 +198,7 @@ export function PlantEventHubScreen({
       monthStart,
       monthEnd,
       selectedApplyId,
+      profileId,
     ],
   );
 

@@ -1,14 +1,11 @@
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-  ArrowLeft,
   BarChart3,
   Bell,
-  ChevronRight,
   MoreHorizontal,
   SlidersHorizontal,
 } from "lucide-react-native";
-import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -34,6 +31,7 @@ import { EditDeviceSheet } from "../components/EditDeviceSheet";
 import { DeviceMediaPanel } from "../components/DeviceMediaPanel";
 import { ReleaseDeviceConfirmDialog } from "../components/ReleaseDeviceConfirmDialog";
 import { DeviceStatusBadge } from "../components/DeviceStatusBadge";
+import { IoTActionCard, useIotTheme } from "../components/IoTUi";
 import { RangeSelector } from "../components/RangeSelector";
 import { SensorChartCard } from "../components/SensorChartCard";
 import { SensorSelector } from "../components/SensorSelector";
@@ -117,6 +115,7 @@ const getDeviceLabel = (
 
 export function DeviceDetailScreen() {
   const { t } = useTranslation();
+  const theme = useIotTheme();
   const router = useRouter();
   const queryClient = useQueryClient();
   const scrollRef = useRef<ScrollViewType>(null);
@@ -219,9 +218,9 @@ export function DeviceDetailScreen() {
 
   if (!deviceId) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorTitle}>{t("iot.devices.detail.missingDeviceId")}</Text>
-        <Text style={styles.errorText}>{t("iot.devices.detail.missingDeviceIdDescription")}</Text>
+      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+        <Text style={[styles.errorTitle, { color: theme.danger }]}>{t("iot.devices.detail.missingDeviceId")}</Text>
+        <Text style={[styles.errorText, { color: theme.danger }]}>{t("iot.devices.detail.missingDeviceIdDescription")}</Text>
         <Pressable style={styles.retryButton} onPress={() => router.back()}>
           <Text style={styles.retryButtonText}>{t("iot.common.back")}</Text>
         </Pressable>
@@ -231,23 +230,19 @@ export function DeviceDetailScreen() {
 
   if (detailQuery.isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator color="#15803d" size="large" />
-        <Text style={styles.loadingText}>{t("iot.devices.detail.loading")}</Text>
+      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+        <ActivityIndicator color={theme.primary} size="large" />
+        <Text style={[styles.loadingText, { color: theme.subtle }]}>{t("iot.devices.detail.loading")}</Text>
       </View>
     );
   }
 
   if ((detailQuery.isError && !device) || !device) {
     return (
-      <View style={styles.screen}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft color="#0f172a" size={20} />
-          <Text style={styles.backText}>{t("iot.common.back")}</Text>
-        </Pressable>
-        <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>{t("iot.devices.detail.loadFailed")}</Text>
-          <Text style={styles.errorText}>{getFriendlyError(detailQuery.error, t)}</Text>
+      <View style={[styles.screen, { backgroundColor: theme.background }]}>
+        <View style={[styles.errorBox, { backgroundColor: theme.dangerSoft, borderColor: theme.tone("danger").border }]}>
+          <Text style={[styles.errorTitle, { color: theme.danger }]}>{t("iot.devices.detail.loadFailed")}</Text>
+          <Text style={[styles.errorText, { color: theme.danger }]}>{getFriendlyError(detailQuery.error, t)}</Text>
           <Pressable style={styles.retryButton} onPress={refresh}>
             <Text style={styles.retryButtonText}>{t("iot.common.retry")}</Text>
           </Pressable>
@@ -264,22 +259,17 @@ export function DeviceDetailScreen() {
         <RefreshControl
           onRefresh={refresh}
           refreshing={isRefreshing}
-          tintColor="#15803d"
+          tintColor={theme.primary}
         />
       }
-      style={styles.screen}
+      style={[styles.screen, { backgroundColor: theme.background }]}
     >
-      <Pressable style={styles.backButton} onPress={() => router.back()}>
-        <ArrowLeft color="#0f172a" size={20} />
-        <Text style={styles.backText}>{t("iot.devices.list.title")}</Text>
-      </Pressable>
-
-      <View style={styles.hero}>
+      <View style={[styles.hero, { backgroundColor: theme.card, borderColor: theme.border }]}>
         <View style={styles.heroHeader}>
           <View style={styles.heroText}>
-            <Text style={styles.kicker}>{t("iot.devices.detail.kicker")}</Text>
-            <Text style={styles.title}>{device.deviceName || device.deviceCode || t("iot.common.selectedDevice")}</Text>
-            <Text style={styles.code}>
+            <Text style={[styles.kicker, { color: theme.primary }]}>{t("iot.devices.detail.kicker")}</Text>
+            <Text style={[styles.title, { color: theme.text }]}>{device.deviceName || device.deviceCode || t("iot.common.selectedDevice")}</Text>
+            <Text style={[styles.code, { color: theme.subtle }]}>
               {device.deviceCode ? formatDeviceCode(device.deviceCode) : t("iot.devices.noCode")}
             </Text>
           </View>
@@ -289,10 +279,10 @@ export function DeviceDetailScreen() {
         <Pressable
           accessibilityLabel={t("iot.devices.actions.more")}
           onPress={() => setActionsVisible(true)}
-          style={styles.manageButton}
+          style={[styles.manageButton, { backgroundColor: theme.primarySoft, borderColor: theme.tone("primary").border }]}
         >
-          <MoreHorizontal color="#166534" size={20} />
-          <Text style={styles.manageButtonText}>{t("iot.devices.actions.more")}</Text>
+          <MoreHorizontal color={theme.primary} size={20} />
+          <Text style={[styles.manageButtonText, { color: theme.primary }]}>{t("iot.devices.actions.more")}</Text>
         </Pressable>
 
         {device.status !== "ONLINE" ? (
@@ -303,7 +293,7 @@ export function DeviceDetailScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t("iot.devices.detail.basicInfo")}</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t("iot.devices.detail.basicInfo")}</Text>
         <View style={styles.infoGrid}>
           <InfoCard
             label={t("iot.devices.detail.type")}
@@ -322,14 +312,14 @@ export function DeviceDetailScreen() {
 
       <View style={styles.section} onLayout={captureChartSection}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t("iot.devices.detail.latestReadings")}</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>{t("iot.devices.detail.latestReadings")}</Text>
           {readingsQuery.isFetching ? (
-            <ActivityIndicator color="#15803d" size="small" />
+            <ActivityIndicator color={theme.primary} size="small" />
           ) : null}
         </View>
         {readingsQuery.isError && !readings.length ? (
-          <View style={styles.warningBox}>
-            <Text style={styles.warningText}>
+          <View style={[styles.warningBox, { backgroundColor: theme.warningSoft, borderColor: theme.tone("warning").border }]}>
+            <Text style={[styles.warningText, { color: theme.warning }]}>
               {t("iot.devices.detail.readingsLoadFailed")}
             </Text>
           </View>
@@ -339,9 +329,9 @@ export function DeviceDetailScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t("iot.devices.detail.sensorChart")}</Text>
+        <Text style={[styles.sectionTitle, { color: theme.text }]}>{t("iot.devices.detail.sensorChart")}</Text>
         <View style={styles.selectorBlock}>
-          <Text style={styles.selectorLabel}>{t("iot.metrics.zone.sensor")}</Text>
+          <Text style={[styles.selectorLabel, { color: theme.subtle }]}>{t("iot.metrics.zone.sensor")}</Text>
           <SensorSelector
             onChange={setSelectedSensor}
             readings={readings}
@@ -349,7 +339,7 @@ export function DeviceDetailScreen() {
           />
         </View>
         <View style={styles.selectorBlock}>
-          <Text style={styles.selectorLabel}>{t("iot.metrics.zone.range")}</Text>
+          <Text style={[styles.selectorLabel, { color: theme.subtle }]}>{t("iot.metrics.zone.range")}</Text>
           <RangeSelector onChange={setSelectedRange} value={selectedRange} />
         </View>
         <SensorChartCard
@@ -362,13 +352,13 @@ export function DeviceDetailScreen() {
 
       <DeviceChartsPanel deviceId={deviceId} />
 
-      <DeviceMediaPanel deviceId={deviceId} deviceUid={device.deviceUid} />
+      <DeviceMediaPanel deviceId={deviceId} deviceUid={device.deviceUid} deviceStatus={device.status} />
 
       <View style={styles.actions}>
-        <PlaceholderAction
-          icon={<SlidersHorizontal color="#64748b" size={18} />}
+        <IoTActionCard
+          icon={<SlidersHorizontal color={theme.primary} size={20} />}
           title={t("iot.devices.detail.configAction")}
-          subtitle={t("iot.devices.detail.configActionDescription")}
+          description={t("iot.devices.detail.configActionDescription")}
           onPress={() =>
             router.push({
               pathname: "/iot/devices/[deviceId]/config",
@@ -376,16 +366,16 @@ export function DeviceDetailScreen() {
             })
           }
         />
-        <PlaceholderAction
-          icon={<BarChart3 color="#64748b" size={18} />}
+        <IoTActionCard
+          icon={<BarChart3 color={theme.primary} size={20} />}
           title={t("iot.devices.detail.chartAction")}
-          subtitle={t("iot.devices.detail.chartActionDescription")}
+          description={t("iot.devices.detail.chartActionDescription")}
           onPress={scrollToCharts}
         />
-        <PlaceholderAction
-          icon={<Bell color="#64748b" size={18} />}
+        <IoTActionCard
+          icon={<Bell color={theme.primary} size={20} />}
           title={t("iot.devices.detail.alertAction")}
-          subtitle={t("iot.devices.detail.alertActionDescription")}
+          description={t("iot.devices.detail.alertActionDescription")}
           onPress={() =>
             router.push({
               pathname: "/iot/alerts",
@@ -426,41 +416,13 @@ export function DeviceDetailScreen() {
 }
 
 function InfoCard({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.infoCard}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
-    </View>
-  );
-}
+  const theme = useIotTheme();
 
-function PlaceholderAction({
-  icon,
-  title,
-  subtitle,
-  onPress,
-}: {
-  icon: ReactNode;
-  title: string;
-  subtitle: string;
-  onPress?: () => void;
-}) {
   return (
-    <Pressable
-      disabled={!onPress}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.placeholderAction,
-        pressed && styles.placeholderActionPressed,
-      ]}
-    >
-      <View style={styles.placeholderIcon}>{icon}</View>
-      <View style={styles.placeholderTextWrap}>
-        <Text style={styles.placeholderTitle}>{title}</Text>
-        <Text style={styles.placeholderSubtitle}>{subtitle}</Text>
-      </View>
-      <ChevronRight color="#16a34a" size={18} />
-    </Pressable>
+    <View style={[styles.infoCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <Text style={[styles.infoLabel, { color: theme.muted }]}>{label}</Text>
+      <Text style={[styles.infoValue, { color: theme.text }]}>{value}</Text>
+    </View>
   );
 }
 

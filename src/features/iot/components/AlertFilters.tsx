@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { PickerModal } from "@/src/components/ui/PickerModal";
 import type { AlertEventsParams, AlertSeverity, AlertStatus } from "../types";
+import { useIotTheme } from "./IoTUi";
 import { DevicePicker, type DevicePickerOption } from "./DevicePicker";
 import { FarmPicker, type FarmPickerOption } from "./FarmPicker";
 import { ZonePicker, type ZonePickerOption } from "./ZonePicker";
@@ -67,6 +68,7 @@ export function AlertFilters({
   onChange,
 }: AlertFiltersProps) {
   const { t } = useTranslation();
+  const theme = useIotTheme();
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const update = (
@@ -91,8 +93,8 @@ export function AlertFilters({
   };
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.title}>{t("iot.alerts.filters.title")}</Text>
+    <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <Text style={[styles.title, { color: theme.text }]}>{t("iot.alerts.filters.title")}</Text>
       <SelectDropdown
         label={t("iot.alerts.filters.status")}
         options={statusOptions.map((option) => ({
@@ -152,10 +154,10 @@ export function AlertFilters({
         onChange={(zone) => update({ zoneId: zone?.id ?? "" })}
       />
       <Pressable
-        style={styles.advancedButton}
+        style={[styles.advancedButton, { backgroundColor: theme.cardAlt }]}
         onPress={() => setShowAdvancedFilters((visible) => !visible)}
       >
-        <Text style={styles.advancedButtonText}>
+        <Text style={[styles.advancedButtonText, { color: theme.text }]}>
           {showAdvancedFilters
             ? t("iot.common.hideTechnicalDetails")
             : t("iot.common.advancedFilters")}
@@ -168,7 +170,7 @@ export function AlertFilters({
             onChangeText={(text) => update({ deviceId: text })}
             placeholder={t("iot.alerts.filters.manualDeviceIdentifier")}
             placeholderTextColor="#94a3b8"
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.cardAlt, borderColor: theme.border, color: theme.text }]}
             value={deviceId}
           />
           <TextInput
@@ -176,7 +178,7 @@ export function AlertFilters({
             onChangeText={(text) => update({ zoneId: text })}
             placeholder={t("iot.alerts.filters.manualZoneIdentifier")}
             placeholderTextColor="#94a3b8"
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.cardAlt, borderColor: theme.border, color: theme.text }]}
             value={zoneId}
           />
         </View>
@@ -196,28 +198,30 @@ function SelectDropdown<T extends string>({
   options: { label: string; value?: T }[];
   onSelect: (value?: T) => void;
 }) {
+  const theme = useIotTheme();
   const [open, setOpen] = useState(false);
   const selectedOption =
     options.find((option) => option.value === value) ?? options[0];
 
   return (
     <View style={styles.group}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: theme.subtle }]}>{label}</Text>
       <Pressable
         onPress={() => setOpen(true)}
         style={({ pressed }) => [
           styles.dropdown,
+          { backgroundColor: theme.cardAlt, borderColor: theme.border },
           pressed && styles.dropdownPressed,
         ]}
       >
         <View style={styles.dropdownTextWrap}>
-          <Text style={styles.dropdownTitle}>{label}</Text>
-          <Text numberOfLines={1} style={styles.dropdownLabel}>
+          <Text style={[styles.dropdownTitle, { color: theme.primary }]}>{label}</Text>
+          <Text numberOfLines={1} style={[styles.dropdownLabel, { color: theme.text }]}>
             {selectedOption?.label}
           </Text>
         </View>
-        <View style={styles.dropdownIcon}>
-          <ChevronDown color="#ffffff" size={20} />
+        <View style={[styles.dropdownIcon, { backgroundColor: theme.primarySoft }]}>
+          <ChevronDown color={theme.primary} size={20} />
         </View>
       </Pressable>
       <PickerModal
@@ -246,6 +250,7 @@ function SelectDropdown<T extends string>({
               <Text
                 style={[
                   styles.optionLabel,
+                  { color: selected ? theme.primary : theme.text },
                   selected && styles.optionLabelSelected,
                 ]}
               >

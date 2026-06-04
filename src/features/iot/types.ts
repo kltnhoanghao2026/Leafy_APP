@@ -114,6 +114,7 @@ export type PagedResponse<T> = {
 
 export type DeviceResponse = {
   id: string;
+  deviceId?: string | null;
   deviceUid: string;
   deviceCode: string;
   deviceName?: string | null;

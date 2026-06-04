@@ -77,15 +77,18 @@ export function PlantEventTimelineScreen() {
 
   const calendarParams: CalendarParams = useMemo(
     () => ({
-      ...(targetType === "FARM_PLOT"
-        ? { farmPlotId: selectedId }
-        : targetType === "FARM_ZONE"
-          ? { farmZoneId: selectedId }
-          : { plantId: selectedId }),
+      ...(profileId ? { profileId } : {}),
+      ...(selectedId
+        ? targetType === "FARM_PLOT"
+          ? { farmPlotId: selectedId }
+          : targetType === "FARM_ZONE"
+            ? { farmZoneId: selectedId }
+            : { plantId: selectedId }
+        : {}),
       startDate: monthStart,
       endDate: monthEnd,
     }),
-    [targetType, selectedId, monthStart, monthEnd],
+    [targetType, selectedId, monthStart, monthEnd, profileId],
   );
 
   const eventsQuery = usePlantEventsCalendar(calendarParams);
